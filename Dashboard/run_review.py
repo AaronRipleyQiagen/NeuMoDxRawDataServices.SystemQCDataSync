@@ -22,9 +22,7 @@ layout = dbc.Container(
 def Add_Dash(app):
     app = Dash(__name__, server=app,
                url_base_pathname=url_base,
-               use_pages=True,
-               pages_folder="modules", external_stylesheets=[dbc.themes.YETI])
+               use_pages=True, external_stylesheets=[dbc.themes.COSMO])
 
     apply_layout_with_auth(app, layout)
-
     return app.server

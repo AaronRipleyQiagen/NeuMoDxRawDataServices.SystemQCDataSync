@@ -29,7 +29,6 @@ register_page(__name__, path="/results/")
 class nmdx_file_parser:
     """
     A class used to read raw data file(s) and convert to flat format.
-
     Methods
     -------
     scrapeFile(file=None, env=None)
@@ -1052,7 +1051,6 @@ class SampleJson:
     def create_sample_json(self, sample_data):
         """
         Used to convert line data for a given sample to a sample json file
-
         Parameters
         ----------
         sample_data (pandas.DataFrame): A slice of a Pandas DataFrame that represents all data for a NeuMoDx Sample
@@ -1101,7 +1099,6 @@ class SampleJson:
 class SampleJSONReader:
     """
     A class used to read sampleJSON style data from NeuMoDxResultsDB into a Pandas DataFrame
-
     Methods
     -------
     getCOC: Reads SampleCOC information from sampleJSON file.
@@ -1656,31 +1653,16 @@ layout = html.Div(children=[
                           dcc.Graph(id="curves", figure=fig),
                           dash_table.DataTable(
                               id='sample-results', row_selectable='Multi', sort_action='native'),
-                          dbc.Modal(
-                    [
-                        dbc.ModalHeader(dbc.ModalTitle("Header")),
-                        dbc.ModalBody(
-                            "This is the content of the modal"),
-                        dbc.ModalFooter(
-                            dbc.Button(
-                                "Close", id="close", className="ms-auto", n_clicks=0
-                            )
-                        ),
-                    ],
-                    id="modal",
-                    is_open=False,
-                ),
-
-                    dbc.Button("Create Run Review from Dataset",
-                               id='create-run-review'),
-                    html.H1(id='run-review-confirmation')])
+                          dbc.Button("Create Run Review from Dataset",
+                                     id='create-run-review'),
+                          html.H1(id='run-review-confirmation')])
 ])
 
 
-@ callback([Output('channel-selector', 'value'),
+@callback([Output('channel-selector', 'value'),
            Output('process-step-selector', 'value'),
            Output('sample-info', 'data')],
-           [Input('selected-cartridge-sample-ids', 'data')])
+          [Input('selected-cartridge-sample-ids', 'data')])
 def get_sample_ids_from_dcc_store(selected_cartridge_sample_ids):
 
     selected_sample_ids = []
@@ -1712,10 +1694,10 @@ def get_sample_ids_from_dcc_store(selected_cartridge_sample_ids):
     return SPC2_channel, 'Normalized', dataframe.to_dict(orient='records'),
 
 
-@ callback([Output('curves', 'figure'), Output('sample-results', 'data')],
-           [Input('channel-selector', 'value'),
-           Input('process-step-selector', 'value'),
-           Input('sample-info', 'data')], prevent_initial_call=True)
+@callback([Output('curves', 'figure'), Output('sample-results', 'data')],
+          [Input('channel-selector', 'value'),
+          Input('process-step-selector', 'value'),
+          Input('sample-info', 'data')], prevent_initial_call=True)
 def update_pcr_curves(channel, process_step, data):
     dataframe = pd.DataFrame.from_dict(data)
     dataframe['Channel'] = dataframe['Channel'].replace('Far_Red', 'Far Red')
@@ -1743,16 +1725,14 @@ def update_pcr_curves(channel, process_step, data):
     return fig, df_Channel_Step[['XPCR Module Serial', 'XPCR Module Lane', 'Sample ID', 'Target Name', 'Localized Result', 'Overall Result', 'Ct', 'End Point Fluorescence', 'Max Peak Height', 'EPR']].round(1).to_dict('records')
 
 
-@ callback([Output('run-review-confirmation', 'children')], [State('sample-info', 'data'),
-           Input('create-run-review', 'n_clicks')], prevent_initial_call=True)
-@ callback([Output('run-review-confirmation', 'children')],
-           [State('sample-info', 'data'),
+@callback([Output('run-review-confirmation', 'children')],
+          [State('sample-info', 'data'),
            Input('create-run-review', 'n_clicks')], prevent_initial_call=True)
 def create_run_review(data, n):
     dataframe = pd.DataFrame.from_dict(data)
 
     dataframe.drop_duplicates(['Test Guid', 'Replicate Number'], inplace=True)
-
+    print(dataframe)
     for idx in dataframe.index:
         sample = {}
         sample['rawDataDatabaseId'] = dataframe.loc[idx, 'RawDataDatabaseId']
