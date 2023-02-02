@@ -117,6 +117,10 @@ def get_run_options(module):
           prevent_inital_call=True)
 def get_selected_samples(n, selected_cartridge_ids, cartridge_sample_ids):
     print("getting selected samples")
+
+    if selected_cartridge_ids == None:
+        return dash.no_update
+
     selected_cartridge_sample_ids = cartridge_sample_ids.copy()
 
     for cartridge_id in cartridge_sample_ids:
