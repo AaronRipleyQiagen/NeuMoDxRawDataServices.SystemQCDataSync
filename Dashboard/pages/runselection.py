@@ -11,7 +11,7 @@ register_page(__name__, path="/")
 def update_modules():
     modules_update = {}
     module_results = requests.get(
-        "https://localhost:7107/api/xpcrmodules", verify=False).json()
+        "https://20.119.0.26/api/xpcrmodules", verify=False).json()
     for module in module_results:
         if pd.isnull(module['xpcrModuleSerial']) == False:
             modules_update[module['id']] = module['xpcrModuleSerial']
@@ -19,7 +19,7 @@ def update_modules():
 
 
 def getXPCRModuleCartridges(module_id):
-    request_url = "https://localhost:7107/api/xpcrmodules/{}/xpcrmoduleconfigurations".format(
+    request_url = "https://20.119.0.26/api/xpcrmodules/{}/xpcrmoduleconfigurations".format(
         module_id)
 
     module_data = pd.DataFrame(
@@ -31,17 +31,17 @@ def getXPCRModuleCartridges(module_id):
             cartridge['validFrom'], cartridge['validTo'], cartridge['sampleCount'], cartridge['assays']]
 
     xpcrModule = requests.get(
-        "https://localhost:7107/api/xpcrmodules/{}/xpcrmoduleconfigurations".format(module_id), verify=False).json()
+        "https://20.119.0.26/api/xpcrmodules/{}/xpcrmoduleconfigurations".format(module_id), verify=False).json()
     cartridge_samples = {}
     for xpcrconfiguration in xpcrModule['xpcrModuleConfigurations']:
 
         xpcrconfiguration = requests.get(
-            "https://localhost:7107/api/xpcrmoduleconfigurations/{}/cartridges".format(xpcrconfiguration['id']), verify=False).json()
+            "https://20.119.0.26/api/xpcrmoduleconfigurations/{}/cartridges".format(xpcrconfiguration['id']), verify=False).json()
 
         for cartridge in xpcrconfiguration['cartridges']:
 
             cartridge_details = requests.get(
-                "https://localhost:7107/api/cartridges/{}/samples/assays".format(cartridge['id']), verify=False).json()
+                "https://20.119.0.26/api/cartridges/{}/samples/assays".format(cartridge['id']), verify=False).json()
             sample_ids = []
             cartridge_assays = []
             for sample in cartridge_details['samples']:
