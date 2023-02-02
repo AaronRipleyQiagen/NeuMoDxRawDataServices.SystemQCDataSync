@@ -6,6 +6,7 @@ import json
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
+import os
 
 fig = go.Figure()
 
@@ -1631,7 +1632,7 @@ def getSampleDataAsync(sample_ids):
 
             tasks = []
             for sample_id in sample_ids:
-                url = 'https://localhost:7107/api/samples/{}/info-channelsummary-readings'.format(
+                url = os.environ['API_HOST'] + '/api/samples/{}/info-channelsummary-readings'.format(
                     sample_id)
                 tasks.append(asyncio.ensure_future(
                     getSampleData(session, url)))
