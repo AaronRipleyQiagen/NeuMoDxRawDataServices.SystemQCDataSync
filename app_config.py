@@ -1,7 +1,7 @@
 import os
 
 b2c_tenant = "qianims"
-signupsignin_user_flow = "B2C_1_nimsdev_signupsignin"
+signupsignin_user_flow = "B2C_1_systems_qc_susi"
 # editprofile_user_flow = "B2C_1_profileediting1"
 
 # resetpassword_user_flow = "B2C_1_passwordreset1"  # Note: Legacy setting.
