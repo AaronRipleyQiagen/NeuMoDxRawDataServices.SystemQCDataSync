@@ -12,8 +12,11 @@ class User:
         self.surname = id_token_claims.get("family_name")
         self.emails = id_token_claims.get("emails")
         self.job_title = id_token_claims.get("jobTitle")
+        self.group_id = None
+        self.group_display = None
 
     def get_groups(self):
+
         try:
             roles = {'73b01a3f-0cd6-4809-9661-52633b67fd63': 'System QC Reviewer',
                      '7fdd3800-5468-4550-af37-f803e667a22c': 'System QC Tech',

@@ -32,6 +32,8 @@ def login_required(f):
     def decorated_function(*args, **kwargs):
         if not session.get("user"):
             return redirect(url_for('main.login'))
+        elif session['user'].group_id == None:
+            return redirect(url_for('main.access_error'))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -41,6 +43,11 @@ def index():
     if not session.get("user"):
         return render_template('index.html', user=None, title='Home')
     return render_template('index.html', user=session["user"], version=msal.__version__, title='Home')
+
+
+@server_bp.route("/restricted-access")
+def access_error():
+    return render_template('access_error.html', user=session["user"], version=msal.__version__, title='Restricted Access')
 
 
 @server_bp.route("/login")
