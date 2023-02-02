@@ -1,0 +1,16 @@
+{% extends "base.html" %} {% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+    {% if session.get("user")%}
+    <h1>Welcome {{ user.first_name }}!</h1>
+    <h2>You are apart of the {{user.group_display}} group</h2>
+    {% else %}
+    <h1>Welcome, Please Login to Continue</h1>
+    {% endif %}
+</body>
+</html>
+{% endblock content %}
