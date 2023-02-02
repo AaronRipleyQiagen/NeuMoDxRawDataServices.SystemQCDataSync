@@ -7,7 +7,7 @@ from flask_session import Session  # https://pythonhosted.org/Flask-Session
 import msal
 import app_config
 
-
+##Some random comment
 def create_app():
     server = Flask(__name__)
     server.secret_key = app_config.SECRET_KEY
