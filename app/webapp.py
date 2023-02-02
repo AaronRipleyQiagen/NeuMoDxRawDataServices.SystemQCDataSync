@@ -48,7 +48,6 @@ def login():
     # Technically we could use empty list [] as scopes to do just sign in,
     # here we choose to also collect end user consent upfront
     session["flow"] = _build_auth_code_flow(scopes=app_config.SCOPE)
-    print(session['flow'])
     return redirect(session["flow"]["auth_uri"])
 
 
@@ -60,7 +59,7 @@ def authorized():
             session.get("flow", {}), request.args)
         user = User(result.get("id_token_claims"))
         user.get_groups()
-
+        print('yes')
         if "error" in result:
             return render_template("auth_error.html", result=result)
         session["user"] = user
@@ -146,7 +145,7 @@ def _build_msal_app(cache=None, authority=None):
 
 def _build_auth_code_flow(authority=None, scopes=None):
     return _build_msal_app(authority=authority).initiate_auth_code_flow(app_config.SCOPE,
-                                                                        redirect_uri=url_for("main.authorized", _external=True))
+                                                                        redirect_uri=url_for("main.authorized", _external=True, _scheme='https'))
 
 
 def _get_token_from_cache(scope=None):
