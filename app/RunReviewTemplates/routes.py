@@ -8,4 +8,4 @@ from RunReview import run_review
 @blueprint.route('/', methods=['GET'])
 @login_required
 def runreview():
-    return render_template('run-review.html', dash_url=run_review.url_base)
+    return render_template('run-review.html', dash_url=run_review.url_base+"/run-review")

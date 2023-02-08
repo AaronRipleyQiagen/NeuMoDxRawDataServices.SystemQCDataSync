@@ -1662,13 +1662,7 @@ layout = html.Div(children=[
     dcc.Loading(id='pending-post', type='cube', fullscreen='true', children=[dbc.Modal(
         [
             dbc.ModalHeader(dbc.ModalTitle("Run Review Creation Result")),
-            dbc.ModalBody("Run Review was successfully created"),
-            dbc.ModalFooter(
-                dbc.Button(
-                    "Close", id="close-confirmation-button", className="ms-auto", n_clicks=0
-                )
-            ),
-
+            dbc.ModalBody("Run Review was successfully created")
         ],
         id="post-response",
         is_open=False,
@@ -1779,10 +1773,9 @@ def update_pcr_curves(channel, process_step, data):
 
 
 @callback(Output('post-response', 'is_open'),
-          [Input('submit-button', 'n_clicks'),
-           Input('close-confirmation-button', 'n_clicks')],
-          [State('sample-info', 'data'), State('runset-type-options', 'value'), State('post-response', 'is_open')], prevent_initial_call=True)
-def create_run_review(submit_clicks, close_clicks, data, runset_selection, is_open):
+          [Input('submit-button', 'n_clicks')],
+          [State('sample-info', 'data'), State('runset-type-options', 'value'), State('runset-type-options', 'label'), State('post-response', 'is_open')], prevent_initial_call=True)
+def create_run_review(submit_clicks, data, runset_selection_id, runset_selection_label, is_open):
 
     if submit_clicks:
         dataframe = pd.DataFrame.from_dict(data)
@@ -1792,13 +1785,9 @@ def create_run_review(submit_clicks, close_clicks, data, runset_selection, is_op
         """
         This Block creates the run review dataset.
         """
-
-        print(runset_selection)
-
         runset = {}
         runset['userId'] = session['user'].id
-        runset['name'] = 'blah'
-        runset['description'] = 'blah blah'
+        runset['description'] = ""
         runset['number'] = 0
         runset['runSetStartDate'] = dataframe['Start Date Time'].astype(
             'datetime64[ms]').min().isoformat(timespec='milliseconds')
@@ -1806,10 +1795,12 @@ def create_run_review(submit_clicks, close_clicks, data, runset_selection, is_op
             'datetime64[ms]').max().isoformat(timespec='milliseconds')
 
         runset['runSetType'] = requests.get(os.environ['RUN_REVIEW_API_BASE'] +
-                                            "RunSetTypes/{}".format(runset_selection), verify=False).json()
+                                            "RunSetTypes/{}".format(runset_selection_id), verify=False).json()
         runset['samples'] = []
+
         for idx in dataframe.index:
             sample = {}
+
             sample['rawDataDatabaseId'] = dataframe.loc[idx, 'RawDataDatabaseId']
             sample['cosmosDatabaseId'] = dataframe.loc[idx, 'cosmosId']
             sample['neuMoDxSystem'] = NeuMoDxSystem(
@@ -1843,6 +1834,10 @@ def create_run_review(submit_clicks, close_clicks, data, runset_selection, is_op
             runset["parseRunSetCartridges"] = True
             runset["parseRunSetXPCRModuleLanes"] = True
 
+        runset['samplecount'] = len(runset['samples'])
+        runset['name'] = dataframe.loc[idx, 'XPCR Module Serial'] + " " + \
+            runset['runSetType']['description']
+
         with open("data.json", "w") as file:
             json.dump(runset, file)
 
@@ -1851,9 +1846,7 @@ def create_run_review(submit_clicks, close_clicks, data, runset_selection, is_op
         resp = requests.post(url=os.environ['RUN_REVIEW_API_BASE'] +
                              "RunSets", json=runset, verify=False)
 
-        print(resp.status_code)
-
-    if close_clicks or submit_clicks:
+    if submit_clicks:
         return not is_open
 
     return is_open

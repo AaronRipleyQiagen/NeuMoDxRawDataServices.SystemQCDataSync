@@ -1,22 +1,10 @@
-from flask import redirect, url_for
-from dash import Dash, dcc, html, Input, Output, State, dash_table, callback, register_page
-import dash_bootstrap_components as dbc
-import pandas as pd
-import dash_ag_grid as dag
 import os
 import requests
-
-register_page(__name__, path="/run-review/review-queue/")
-
-"""
-Access API Endpoint to retreieve runsets from database.
-"""
-# api_url = os.environ['RUN_REVIEW_API_BASE']
-api_url = "https://localhost:7191/api/"
+import pandas as pd
 
 
 def populate_review_queue():
-    runsets_url = api_url + "RunSets"
+    runsets_url = os.environ['RUN_REVIEW_API_BASE'] + "RunSets"
 
     runsets = requests.get(url=runsets_url, verify=False).json()
 
@@ -49,25 +37,3 @@ def populate_review_queue():
                 df_columnDefs.append(
                     {"headerName": column, "field": column, "filter": True})
     return df.to_dict('records'), df_columnDefs
-
-
-intial_data, initial_columnDefs = populate_review_queue()
-
-review_queue = dag.AgGrid(
-    enableEnterpriseModules=True,
-    # licenseKey=os.environ['AGGRID_ENTERPRISE'],
-    columnDefs=initial_columnDefs,
-    rowData=intial_data,
-    columnSize="sizeToFit",
-    defaultColDef=dict(
-        resizable=True,
-    ),
-    rowSelection='single',
-    setRowId="id",
-    id='review-queue-table'
-)
-
-test_hello = html.H1(id='test-hello')
-refresh_button = dbc.Button("Refresh Data", id='refresh-review-queue')
-load_review_queue = html.Div(id='review_queue_loading')
-layout = [review_queue, refresh_button, test_hello]

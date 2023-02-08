@@ -61,9 +61,9 @@ def getXPCRModuleCartridges(module_id):
     module_data.sort_values('Run Start Time', inplace=True, ascending=False)
     module_data.dropna(subset=['Run Start Time'], inplace=True)
     module_data['Run Start Time'] = module_data['Run Start Time'].astype(
-        'datetime64').dt.strftime("%d%B%Y %H:%M:%S")
+        'datetime64').dt.strftime("%d %B %Y %H:%M:%S")
     module_data['Run End Time'] = module_data['Run End Time'].astype(
-        'datetime64').dt.strftime("%d%B%Y %H:%M:%S")
+        'datetime64').dt.strftime("%d %B %Y %H:%M:%S")
     return module_data.reset_index().to_dict('records'), cartridge_samples
 
 

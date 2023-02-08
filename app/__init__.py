@@ -4,7 +4,7 @@ from flask import Flask, render_template, session, request, redirect, url_for
 from flask.helpers import get_root_path
 from DataExplorer import data_explorer
 from RunReview import run_review
-from flask_session import Session  # https://pythonhosted.org/Flask-Session
+from flask_session import Session
 import msal
 import app_config
 
@@ -21,6 +21,7 @@ def create_app():
     register_blueprints(server)
 
     server = data_explorer.Add_Dash(server)
+
     server = run_review.Add_Dash(server)
     return server
 
