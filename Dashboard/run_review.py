@@ -12,9 +12,12 @@ cartridge_sample_ids = dcc.Store(
 selected_cartridge_sample_ids = dcc.Store(
     id='selected-cartridge-sample-ids', storage_type='session')
 sample_info = dcc.Store(id='sample-info', storage_type='session')
+runset_type_selection = dcc.Store(
+    id='runset-type-selection', storage_type='session')
+
 
 layout = dbc.Container(
-    [loader, cartridge_sample_ids, selected_cartridge_sample_ids, sample_info,
+    [loader, cartridge_sample_ids, selected_cartridge_sample_ids, sample_info, runset_type_selection,
         dash.page_container, dcc.Location(id="url", refresh=True)],
 )
 
