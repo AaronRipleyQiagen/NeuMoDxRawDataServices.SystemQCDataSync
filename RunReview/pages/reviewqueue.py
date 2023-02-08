@@ -11,8 +11,8 @@ register_page(__name__, path="/run-review/review-queue/")
 """
 Access API Endpoint to retreieve runsets from database.
 """
-# api_url = os.environ['RUN_REVIEW_API_BASE']
-api_url = "https://localhost:7191/api/"
+api_url = os.environ['RUN_REVIEW_API_BASE']
+# api_url = "https://localhost:7191/api/"
 
 
 def populate_review_queue():
