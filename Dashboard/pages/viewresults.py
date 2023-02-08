@@ -7,6 +7,8 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 import os
+import requests
+from flask import session
 
 fig = go.Figure()
 
@@ -1655,14 +1657,52 @@ layout = html.Div(children=[
                           dash_table.DataTable(
                               id='sample-results', row_selectable='Multi', sort_action='native'),
                           dbc.Button("Create Run Review from Dataset",
-                                     id='create-run-review'),
-                          html.H1(id='run-review-confirmation')])
+                                     id='create-run-review-button'),
+                          html.H1(id='run-review-confirmation')]),
+    dcc.Loading(id='pending-post', type='cube', fullscreen='true', children=[dbc.Modal(
+        [
+            dbc.ModalHeader(dbc.ModalTitle("Run Review Creation Result")),
+            dbc.ModalBody("Run Review was successfully created"),
+            dbc.ModalFooter(
+                dbc.Button(
+                    "Close", id="close-confirmation-button", className="ms-auto", n_clicks=0
+                )
+            ),
+
+        ],
+        id="post-response",
+        is_open=False,
+    )]),
+    dbc.Modal(
+        [
+            dbc.ModalHeader(dbc.ModalTitle("Run Type Selector")),
+            dbc.ModalBody("Please Make A Run Type Selection"),
+            dcc.Dropdown(
+                id="runset-type-options"
+            ),
+
+            dbc.ModalFooter(
+                [dbc.Button(
+                    "Submit", id="submit-button", className="ms-auto", n_clicks=0
+                ),
+
+
+                    dbc.Button(
+                    "Cancel", id="cancel-button", className="ms-auto", n_clicks=0
+                )]
+            ),
+
+        ],
+        id="runset-selector-modal",
+        is_open=False,
+    )
 ])
 
 
 @callback([Output('channel-selector', 'value'),
            Output('process-step-selector', 'value'),
-           Output('sample-info', 'data')],
+           Output('sample-info', 'data'),
+           Output('runset-type-options', 'options')],
           [Input('selected-cartridge-sample-ids', 'data')])
 def get_sample_ids_from_dcc_store(selected_cartridge_sample_ids):
 
@@ -1681,7 +1721,7 @@ def get_sample_ids_from_dcc_store(selected_cartridge_sample_ids):
     jsonReader = SampleJSONReader(json.dumps(sample_data))
     jsonReader.standardDecode()
     dataframe = jsonReader.DataFrame
-    dataframe.to_csv('test3.csv')
+    # dataframe.to_csv('test3.csv')
     dataframe['RawDataDatabaseId'] = dataframe.reset_index()['id'].values
     dataframe['Channel'] = dataframe['Channel'].replace('Far_Red', 'Far Red')
 
@@ -1692,7 +1732,19 @@ def get_sample_ids_from_dcc_store(selected_cartridge_sample_ids):
     else:
         SPC2_channel = 'Red'
 
-    return SPC2_channel, 'Normalized', dataframe.to_dict(orient='records'),
+    """
+    Get Run Set Type Options based on Result Codes contained in DataFrame
+    """
+
+    runsettypeoptions = {}
+    for resultcode in dataframe['Result Code'].unique():
+        request_url = os.environ['RUN_REVIEW_API_BASE'] + \
+            "QualificationAssays/{}".format(resultcode)
+        resp = requests.get(request_url, verify=False).json()
+        for runsettype in resp['runSetTypes']:
+            runsettypeoptions[runsettype['id']] = runsettype['description']
+
+    return SPC2_channel, 'Normalized', dataframe.to_dict(orient='records'), runsettypeoptions
 
 
 @callback([Output('curves', 'figure'), Output('sample-results', 'data')],
@@ -1726,37 +1778,94 @@ def update_pcr_curves(channel, process_step, data):
     return fig, df_Channel_Step[['XPCR Module Serial', 'XPCR Module Lane', 'Sample ID', 'Target Name', 'Localized Result', 'Overall Result', 'Ct', 'End Point Fluorescence', 'Max Peak Height', 'EPR']].round(1).to_dict('records')
 
 
-@callback([Output('run-review-confirmation', 'children')],
-          [State('sample-info', 'data'),
-           Input('create-run-review', 'n_clicks')], prevent_initial_call=True)
-def create_run_review(data, n):
-    dataframe = pd.DataFrame.from_dict(data)
+@callback(Output('post-response', 'is_open'),
+          [Input('submit-button', 'n_clicks'),
+           Input('close-confirmation-button', 'n_clicks')],
+          [State('sample-info', 'data'), State('runset-type-options', 'value'), State('post-response', 'is_open')], prevent_initial_call=True)
+def create_run_review(submit_clicks, close_clicks, data, runset_selection, is_open):
 
-    dataframe.drop_duplicates(['Test Guid', 'Replicate Number'], inplace=True)
-    print(dataframe)
-    for idx in dataframe.index:
-        sample = {}
-        sample['rawDataDatabaseId'] = dataframe.loc[idx, 'RawDataDatabaseId']
-        sample['cosmosDatabaseId'] = dataframe.loc[idx, 'cosmosId']
-        sample['neuMoDxSystem'] = NeuMoDxSystem(
-            dataframe.loc[[idx]]).create_object()
-        sample['neuMoDxSystem']['RawDataDatabaseId'] = dataframe.loc[idx,
-                                                                     'NeuMoDx System Id']
-        sample['xpcrModule'] = XPCRModule(dataframe.loc[[idx]]).create_object()
-        sample['xpcrModule']['RawDataDatabaseId'] = dataframe.loc[idx,
-                                                                  'XPCR Module Id']
-        sample['cartridge'] = {}
-        sample['cartridge']['barcode'] = dataframe.loc[idx, 'Cartridge Barcode']
-        sample['cartridge']['lot'] = dataframe.loc[idx, 'Cartridge Lot']
-        sample['cartridge']['serial'] = dataframe.loc[idx, 'Cartridge Serial']
-        sample['cartridge']['expirationDate'] = dataframe.loc[idx,
+    if submit_clicks:
+        dataframe = pd.DataFrame.from_dict(data)
+        dataframe.drop_duplicates(
+            ['Test Guid', 'Replicate Number'], inplace=True)
+
+        """
+        This Block creates the run review dataset.
+        """
+
+        print(runset_selection)
+
+        runset = {}
+        runset['userId'] = session['user'].id
+        runset['name'] = 'blah'
+        runset['description'] = 'blah blah'
+        runset['number'] = 0
+        runset['runSetStartDate'] = dataframe['Start Date Time'].astype(
+            'datetime64[ms]').min().isoformat(timespec='milliseconds')
+        runset['runSetEndDate'] = dataframe['End Date Time'].astype(
+            'datetime64[ms]').max().isoformat(timespec='milliseconds')
+
+        runset['runSetType'] = requests.get(os.environ['RUN_REVIEW_API_BASE'] +
+                                            "RunSetTypes/{}".format(runset_selection), verify=False).json()
+        runset['samples'] = []
+        for idx in dataframe.index:
+            sample = {}
+            sample['rawDataDatabaseId'] = dataframe.loc[idx, 'RawDataDatabaseId']
+            sample['cosmosDatabaseId'] = dataframe.loc[idx, 'cosmosId']
+            sample['neuMoDxSystem'] = NeuMoDxSystem(
+                dataframe.loc[[idx]]).create_object()
+            sample['neuMoDxSystem']['RawDataDatabaseId'] = dataframe.loc[idx,
+                                                                         'NeuMoDx System Id']
+            sample['xpcrModule'] = XPCRModule(
+                dataframe.loc[[idx]]).create_object()
+            sample['xpcrModule']['RawDataDatabaseId'] = dataframe.loc[idx,
+                                                                      'XPCR Module Id']
+            sample['cartridge'] = {}
+            sample['cartridge']['barcode'] = dataframe.loc[idx,
+                                                           'Cartridge Barcode']
+            sample['cartridge']['lot'] = dataframe.loc[idx, 'Cartridge Lot']
+            sample['cartridge']['serial'] = dataframe.loc[idx, 'Cartridge Serial']
+            sample['cartridge']['expiration'] = dataframe.loc[idx,
                                                               'Cartridge Expiration']
-        sample['cartridge']['RawDataDatabaseId'] = dataframe.loc[idx,
-                                                                 'Cartridge Id']
+            sample['cartridge']['RawDataDatabaseId'] = dataframe.loc[idx,
+                                                                     'Cartridge Id']
 
-        sample['xpcrModuleLane'] = XPCRModuleLane(
-            dataframe.loc[[idx]].rename({'XPCR Module Lane': 'Pcr Cartridge Lane'}, axis=1)).create_object()
-        sample['xpcrModuleLane']
-        print(sample)
+            sample['xpcrModuleLane'] = {}
+            sample['xpcrModuleLane']['moduleLane'] = int(dataframe.loc[idx,
+                                                                       'XPCR Module Lane'])
+            sample['xpcrModuleLane']['RawDataDatabaseId'] = dataframe.loc[idx,
+                                                                          'xpcrModuleLaneId']
+
+            runset['samples'].append(sample)
+
+            runset["parseRunSetNeuMoDxSystems"] = True
+            runset["parseRunSetXPCRModules"] = True
+            runset["parseRunSetCartridges"] = True
+            runset["parseRunSetXPCRModuleLanes"] = True
+
+        with open("data.json", "w") as file:
+            json.dump(runset, file)
+
         print("--"*30)
-    return ['confirmed']
+        print(json.dumps(runset))
+        resp = requests.post(url=os.environ['RUN_REVIEW_API_BASE'] +
+                             "RunSets", json=runset, verify=False)
+
+        print(resp.status_code)
+
+    if close_clicks or submit_clicks:
+        return not is_open
+
+    return is_open
+
+
+@ callback(Output("runset-selector-modal", "is_open"),
+           [Input("create-run-review-button", "n_clicks"), Input("submit-button",
+                                                                 "n_clicks"), Input("cancel-button", "n_clicks")],
+           [State("runset-selector-modal", "is_open")],
+           prevent_initial_call=True)
+def switch_runset_selector(create_clicks, submit_clicks, cancel_clicks, is_open):
+    if create_clicks or cancel_clicks or submit_clicks:
+        return not is_open
+
+    return is_open
