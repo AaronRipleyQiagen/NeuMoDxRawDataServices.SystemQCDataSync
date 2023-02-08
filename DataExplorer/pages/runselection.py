@@ -91,7 +91,7 @@ layout = html.Div([
     ]),
     html.Div([
         dbc.Button('Get Data', id='view-run-data',
-                   n_clicks=0, href="/run-review/results"),
+                   n_clicks=0, href="/dashboard/data-explorer/results"),
     ])
 
 

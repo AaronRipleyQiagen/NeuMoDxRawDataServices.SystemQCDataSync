@@ -1,11 +1,10 @@
 from dash import Dash, html, dcc, Output, Input, State
 import dash_bootstrap_components as dbc
 import dash
-from .appbuildhelpers import apply_layout_with_auth2, apply_layout_with_auth
+from .appbuildhelpers import apply_layout_with_auth
 import pandas as pd
-import requests
 
-url_base = '/run-review/'
+url_base = '/dashboard/data-explorer/'
 loader = html.Div(id='loader')
 cartridge_sample_ids = dcc.Store(
     id='cartridge-sample-ids', storage_type='session')

@@ -33,8 +33,13 @@
           </li>
           
           <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('dashboards.runreview')}}"
+            <a class="nav-link" href="{{ url_for('dataexplorer.dataexplorer')}}"
               >Find Data</a
+            >
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('runreview.runreview')}}"
+              >Review Data</a
             >
           </li>
           {% if not session.get("user") %}

@@ -2,12 +2,15 @@ import dash
 import requests
 from flask import Flask, render_template, session, request, redirect, url_for
 from flask.helpers import get_root_path
-from Dashboard import run_review
+from DataExplorer import data_explorer
+from RunReview import run_review
 from flask_session import Session  # https://pythonhosted.org/Flask-Session
 import msal
 import app_config
 
-##Some random comment
+# Some random comment
+
+
 def create_app():
     server = Flask(__name__)
     server.secret_key = app_config.SECRET_KEY
@@ -17,6 +20,7 @@ def create_app():
     # register_extensions(server)
     register_blueprints(server)
 
+    server = data_explorer.Add_Dash(server)
     server = run_review.Add_Dash(server)
     return server
 
@@ -33,7 +37,7 @@ def register_blueprints(server):
     from app.webapp import server_bp
 
     server.register_blueprint(server_bp)
-    for module_name in (['DashboardTemplates']):
+    for module_name in (['DataExplorerTemplates', 'RunReviewTemplates']):
         print(module_name)
         module = import_module('app.{}.routes'.format(module_name))
 

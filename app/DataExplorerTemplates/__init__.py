@@ -1,9 +1,9 @@
 from flask import Blueprint
 
 blueprint = Blueprint(
-    'dashboards',
+    'dataexplorer',
     __name__,
-    url_prefix='/dashboards',
+    url_prefix='/data-explorer',
     template_folder='templates',
     static_folder='static'
 )
