@@ -24,7 +24,7 @@ remediation_actions = [{'label': 'Increase Jack Pressure', 'value': 1},
                        {'label': 'Perform Optics Calibration', 'value': 3},
                        {'label': 'Repeat Testing As Is', 'value': 4}]
 
-run_review_description = html.H1(id='run-review-description', children=["yes"])
+run_review_description = html.H1(id='run-review-description')
 run_review_channel_selector = dcc.Dropdown(
     ['Yellow', 'Green', 'Orange', 'Red', 'Far Red'], value='Yellow', id='run-review-channel-selector')
 run_review_process_step_selector = dcc.Dropdown(
