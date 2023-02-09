@@ -67,7 +67,7 @@ review_queue = dag.AgGrid(
     id='review-queue-table'
 )
 
-test_hello = html.H1(id='test-hello')
 refresh_button = dbc.Button("Refresh Data", id='refresh-review-queue')
 load_review_queue = html.Div(id='review_queue_loading')
-layout = [review_queue, refresh_button, test_hello]
+get_runset_data = dbc.Button('Review Data', id='get-runset-data')
+layout = [review_queue, html.Div([refresh_button]), get_runset_data]
