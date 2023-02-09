@@ -137,7 +137,7 @@ def Add_Dash(app):
             'Far_Red', 'Far Red')
         dataframe = dataframe.set_index(
             'RawDataDatabaseId').join(runset_map_df).reset_index()
-        dataframe.to_csv('test-merged.csv')
+        # dataframe.to_csv('test-merged.csv')
         # print(runset_data['name'] + " " + str(runset_data['number']))
         return dataframe.to_dict('records')
 

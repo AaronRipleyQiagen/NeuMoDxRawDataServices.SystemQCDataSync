@@ -1709,9 +1709,9 @@ def get_sample_ids_from_dcc_store(selected_cartridge_sample_ids):
     sample_data = getSampleDataAsync(selected_sample_ids)
 
     # the json file where the output must be stored
-    out_file = open("myfile.json", "w")
+    # out_file = open("myfile.json", "w")
 
-    json.dump(sample_data, out_file)
+    # json.dump(sample_data, out_file)
     jsonReader = SampleJSONReader(json.dumps(sample_data))
     jsonReader.standardDecode()
     dataframe = jsonReader.DataFrame
