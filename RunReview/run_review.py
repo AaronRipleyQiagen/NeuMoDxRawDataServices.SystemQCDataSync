@@ -8,7 +8,25 @@ import os
 import requests
 import json
 import pandas as pd
+import numpy as np
+import warnings
+import plotly.graph_objects as go
 
+warnings.filterwarnings('ignore')
+
+colorDict = {1: '#FF0000',  # Red 1
+             2: '#00B050',  # Green 2
+             3: '#0070C0',  # Blue 3
+             4: '#7030A0',  # Purple 4
+             5: '#808080',  # Light Grey 5
+             6: '#FF6600',  # Orange 6
+             7: '#FFCC00',  # Yellow 7
+             8: '#9999FF',  # Light Purple 8
+             9: '#333333',  # Black 9
+             10: '#808000',  # Goldish 10
+             11: '#FF99CC',  # Hot Pink 11
+             12: '#003300',  # Dark Green 12
+             }
 
 url_base = '/dashboard/'
 # the style arguments for the sidebar. We use position:fixed and a fixed width
@@ -83,15 +101,18 @@ def Add_Dash(app):
         print(runsetsample_url)
         _runset_samples = requests.get(runsetsample_url, verify=False).json()
         return _runset_samples
+        #    Output('run-review-channel-selector', 'options'),
+        #    Output('run-review-process-step-selector', 'options')],
 
     @app.callback(Output("runset-sample-data", "data"),
                   [Input('get-runset-data', 'n_clicks'),
                    State('runset-selection-data', 'data')],
                   prevent_inital_call=True)
     def get_runset_samples(n, runset_data):
+        print("trying...")
         runset_sample_ids = []
         runset_map_df = pd.DataFrame(columns=['RawDataDatabaseId', 'RunSetXPCRModuleLaneId',
-                                     'RunSetCartridgeId', 'RunSetXPCRModuleId', 'RunSetNeuMoDxSystemId'])
+                                              'RunSetCartridgeId', 'RunSetXPCRModuleId', 'RunSetNeuMoDxSystemId'])
         idx = 0
         for runsetsample in runset_data['runSetSamples']:
             runset_sample_ids.append(
@@ -107,10 +128,6 @@ def Add_Dash(app):
         runset_map_df.set_index('RawDataDatabaseId', inplace=True)
         sample_data = getSampleDataAsync(runset_sample_ids)
 
-        # # the json file where the output must be stored
-        # out_file = open("myfile.json", "w")
-
-        # json.dump(sample_data, out_file)
         jsonReader = SampleJSONReader(json.dumps(sample_data))
         jsonReader.standardDecode()
         dataframe = jsonReader.DataFrame
@@ -121,8 +138,40 @@ def Add_Dash(app):
         dataframe = dataframe.set_index(
             'RawDataDatabaseId').join(runset_map_df).reset_index()
         dataframe.to_csv('test-merged.csv')
-        return sample_data
+        # print(runset_data['name'] + " " + str(runset_data['number']))
+        return dataframe.to_dict('records')
 
+    @app.callback([Output('run-review-description', 'children'), Output('run-review-curves', 'figure'), Output('runset-sample-results', 'data')],
+                  [Input('run-review-channel-selector', 'value'),
+                   Input('run-review-process-step-selector', 'value'),
+                   Input('runset-sample-data', 'data'),
+                   State('runset-selection-data', 'data')], prevent_initial_call=True)
+    def update_pcr_curves(channel, process_step, data, runset_data):
+        dataframe = pd.DataFrame.from_dict(data)
+        dataframe['Channel'] = dataframe['Channel'].replace(
+            'Far_Red', 'Far Red')
+        # Start making graph...
+        fig = go.Figure()
+        df = dataframe.reset_index().set_index(
+            ['Channel', 'Processing Step', 'XPCR Module Serial'])
+        df_Channel = df.loc[channel]
+
+        df_Channel_Step = df_Channel.loc[process_step].reset_index()
+        df_Channel_Step.sort_values('XPCR Module Lane', inplace=True)
+
+        for idx in df_Channel_Step.index:
+            X = np.array(
+                [read for read in df_Channel_Step.loc[idx, 'Readings Array']][0])
+            Y = np.array(
+                [read for read in df_Channel_Step.loc[idx, 'Readings Array']][1])
+            _name = str(df_Channel_Step.loc[idx, 'XPCR Module Lane'])
+            fig.add_trace(go.Scatter(x=X,
+                                     y=Y,
+                                     mode='lines',
+                                     name=_name,
+                                     line=dict(color=colorDict[df_Channel_Step.loc[idx, 'XPCR Module Lane']])))
+
+        return [runset_data['name'] + " Attempt # " + str(runset_data['number'])], fig, df_Channel_Step[['XPCR Module Serial', 'XPCR Module Lane', 'Sample ID', 'Target Name', 'Localized Result', 'Overall Result', 'Ct', 'End Point Fluorescence', 'Max Peak Height', 'EPR']].round(1).to_dict('records')
     return app.server
 
 
