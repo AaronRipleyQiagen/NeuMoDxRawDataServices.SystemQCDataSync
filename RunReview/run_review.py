@@ -82,9 +82,12 @@ runset_channel_options = dcc.Store(
     id='runset-channel-options', storage_type='session')
 runset_severity_options = dcc.Store(
     id='runset-severity-options', storage_type='session')
+runset_run_options = dcc.Store(id='runset-run-options', storage_type='session')
 channel_selected = dcc.Store(id='channel-selected')
+run_option_selected = dcc.Store(id='run-option-selected')
+
 layout = html.Div([review_loader, dcc.Loading(id='run-review-href-loader', fullscreen=True, type='dot', children=[dcc.Location(
-    id="run-review-url", refresh=True)]), sidebar, content, runset_selection, runset_sample_data, runset_review_id, runset_severity_options, runset_channel_options, channel_selected])
+    id="run-review-url", refresh=True)]), sidebar, content, runset_selection, runset_sample_data, runset_review_id, runset_severity_options, runset_channel_options, channel_selected, runset_run_options, run_option_selected])
 
 
 def Add_Dash(app):
@@ -115,7 +118,8 @@ def Add_Dash(app):
                    Output("run-review-url", "href"),
                    Output('runset-review-id', 'data'),
                    Output('runset-severity-options', 'data'),
-                   Output('runset-channel-options', 'data')],
+                   Output('runset-channel-options', 'data'),
+                   Output('runset-run-options', 'data')],
                   [Input('get-runset-data', 'n_clicks'),
                    State('runset-selection-data', 'data')],
                   prevent_inital_call=True)
@@ -184,13 +188,33 @@ def Add_Dash(app):
         for channel in channels_data:
             channel_options[channel['id']] = channel['channel']
 
+        dataframe.sort_values(['Start Date Time'], inplace=True)
+
+        """
+        Get Run Options
+        """
+        i = 0
+        run_options = {}
+        run_options['NoFilter'] = 'All'
+        for run in dataframe['RunSetCartridgeId'].unique():
+            i += 1
+            run_options[run] = "Run "+str(i)
+        dataframe.to_csv('test.csv')
+
+        dataframe['Run'] = dataframe['RunSetCartridgeId'].replace(
+            run_options)
+
+        dataframe['Run'] = dataframe['Run'].str.replace(
+            'Run ', '').astype(int)
+        dataframe.to_csv('test.csv')
+
         """
         Return Data associated with Runset, URL for RunsetReview Page, Runset Review Id, Severity Options.
         """
 
-        return dataframe.to_dict('records'), '/dashboard/run-review/view-results', resp['id'], severity_options, channel_options
+        return dataframe.to_dict('records'), '/dashboard/run-review/view-results', resp['id'], severity_options, channel_options, run_options
 
-    @app.callback([Output('sample-issue-options', 'options'), Output('lane-issue-options', 'options'), Output('module-issue-options', 'options')],
+    @app.callback([Output('sample-issue-options', 'options'), Output('lane-issue-options', 'options'), Output('module-issue-options', 'options'), Output('run-issue-options', 'options')],
                   Input('submit-sample-issue', 'children'))
     def getIssueTypes(_):
 
@@ -227,7 +251,7 @@ def Add_Dash(app):
                     {'label': issueType['name'], 'value': issueType['id']})
             issueTypeOptions[endpoint] = issue_type_options
 
-        return issueTypeOptions['SampleIssueTypes'], issueTypeOptions['XPCRModuleLaneIssueTypes'], issueTypeOptions['XPCRModuleIssueTypes']
+        return issueTypeOptions['SampleIssueTypes'], issueTypeOptions['XPCRModuleLaneIssueTypes'], issueTypeOptions['XPCRModuleIssueTypes'], issueTypeOptions['CartridgeIssueTypes']
 
     @app.callback([Output('sample-issue-severity-options', 'options'),
                    Output('lane-issue-severity-options', 'options'),
@@ -241,10 +265,11 @@ def Add_Dash(app):
     @app.callback([Output('run-review-description', 'children'), Output('run-review-curves', 'figure'), Output('runset-sample-results', 'data')],
                   [Input('channel-selected', 'data'),
                    Input('run-review-process-step-selector', 'value'),
+                   Input('run-review-color-selector', 'value'),
                    State('runset-sample-data', 'data'),
                    State('runset-selection-data', 'data'),
                    State('runset-channel-options', 'data')], prevent_initial_call=True)
-    def update_pcr_curves(channel_selected, process_step, data, runset_data, channel_options):
+    def update_pcr_curves(channel_selected, process_step, color_option_selected, data, runset_data, channel_options):
         if channel_selected == None:
             channel = 'Yellow'
         else:
@@ -260,19 +285,19 @@ def Add_Dash(app):
         df_Channel = df.loc[channel]
 
         df_Channel_Step = df_Channel.loc[process_step].reset_index()
-        df_Channel_Step.sort_values('XPCR Module Lane', inplace=True)
+        df_Channel_Step.sort_values(color_option_selected, inplace=True)
 
         for idx in df_Channel_Step.index:
             X = np.array(
                 [read for read in df_Channel_Step.loc[idx, 'Readings Array']][0])
             Y = np.array(
                 [read for read in df_Channel_Step.loc[idx, 'Readings Array']][1])
-            _name = str(df_Channel_Step.loc[idx, 'XPCR Module Lane'])
+            _name = str(df_Channel_Step.loc[idx, color_option_selected])
             fig.add_trace(go.Scatter(x=X,
                                      y=Y,
                                      mode='lines',
                                      name=_name,
-                                     line=dict(color=colorDict[df_Channel_Step.loc[idx, 'XPCR Module Lane']])))
+                                     line=dict(color=colorDict[df_Channel_Step.loc[idx, color_option_selected]])))
 
         return [runset_data['name'] + " Attempt # " + str(runset_data['number'])], fig, df_Channel_Step[['XPCR Module Serial', 'XPCR Module Lane', 'Sample ID', 'Target Name', 'Localized Result', 'Overall Result', 'Ct', 'End Point Fluorescence', 'Max Peak Height', 'EPR']].round(1).to_dict('records')
 
@@ -290,9 +315,11 @@ def Add_Dash(app):
                    Input('lane-issue-channel-options', 'value'),
                    Input('run-issue-channel-options', 'value'),
                    Input('module-issue-channel-options', 'value'),
-                   Input('run-review-channel-selector', 'value')], prevent_initial_call=True
+                   Input('run-review-channel-selector', 'value'),
+                   Input('runset-sample-data', 'data'),
+                   State('runset-channel-options', 'data')], prevent_initial_call=True
                   )
-    def update_channel_selection(sample_issue_channel, lane_issue_channel, run_issue_channel, module_issue_channel, run_review_channel):
+    def update_channel_selection(sample_issue_channel, lane_issue_channel, run_issue_channel, module_issue_channel, run_review_channel, data, channel_options):
         channel_adjusted = ctx.triggered_id
         if channel_adjusted == 'sample-issue-channel-options':
             return sample_issue_channel
@@ -304,15 +331,57 @@ def Add_Dash(app):
             return module_issue_channel
         elif channel_adjusted == 'run-review-channel-selector':
             return run_review_channel
+        elif channel_adjusted == 'runset-sample-data':
+            print('looking for SPC channel')
+            dataframe = pd.DataFrame.from_dict(data)
+            spc2_channel = dataframe.loc[dataframe['TargetName'].str.contains(
+                'SPC'), 'Channel'].values[0]
+
+            for channel_id in channel_options:
+                if channel_options[channel_id] == spc2_channel:
+                    return channel_id
+
+            return channel_id
 
     @app.callback([Output('sample-issue-channel-options', 'value'),
                    Output('lane-issue-channel-options', 'value'),
                    Output('run-issue-channel-options', 'value'),
                    Output('module-issue-channel-options', 'value'),
                    Output('run-review-channel-selector', 'value')],
-                  Input('channel-selected', 'data'), prevent_initial_call=True)
+                  Input('channel-selected', 'data'))
     def update_channel_selection_value(channel):
         return channel, channel, channel, channel, channel
+
+    @app.callback([Output('run-issue-run-options', 'options'),
+                   Output('sample-issue-run-options', 'options'),
+                   Output('run-review-run-selector', 'options')],
+                  Input('runset-run-options', 'data'))
+    def update_run_options(data):
+        return data, data, data
+
+    @app.callback([Output('run-issue-run-options', 'value'),
+                   Output('sample-issue-run-options', 'value'),
+                   Output('run-review-run-selector', 'value')],
+                  Input('run-option-selected', 'data'))
+    def update_run_option_selected(data):
+        return data, data, data
+
+    @app.callback(Output('run-option-selected', 'data'),
+                  [Input('run-issue-run-options', 'value'),
+                   Input('sample-issue-run-options', 'value'),
+                   Input('run-review-run-selector', 'value')], prevent_initial_call=True
+                  )
+    def update_run_option_selections(run_issue_run_selection, sample_issue_run_selection, run_review_run_selection):
+
+        run_option_selected = ctx.triggered_id
+
+        if run_option_selected == 'run-issue-run-options':
+            return run_issue_run_selection
+        elif run_option_selected == 'sample-issue-run-options':
+            return sample_issue_run_selection
+        elif run_option_selected == 'run-review-run-selector':
+            return run_review_run_selection
+
     return app.server
 
 

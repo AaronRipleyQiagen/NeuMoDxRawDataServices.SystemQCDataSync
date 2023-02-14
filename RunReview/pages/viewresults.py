@@ -7,7 +7,12 @@ import plotly.graph_objects as go
 register_page(__name__, path="/run-review/view-results/")
 
 fig = go.Figure()
-
+halfstyle = {'width': '50%', 'display': 'inline-block',
+             'vertical-align': 'middle', 'horizontal-align': 'left'}
+quarterstyle = {'width': '35%', 'display': 'inline-block',
+                'vertical-align': 'middle', 'horizontal-align': 'left'}
+threequarterstyle = {'width': '65%', 'display': 'inline-block',
+                     'vertical-align': 'middle', 'horizontal-align': 'right'}
 remediation_actions = [{'label': 'Increase Jack Pressure', 'value': 1},
                        {'label': 'Reflange Fluid Line', 'value': 2},
                        {'label': 'Perform Optics Calibration', 'value': 3},
@@ -15,8 +20,23 @@ remediation_actions = [{'label': 'Increase Jack Pressure', 'value': 1},
 
 run_review_description = html.H1(id='run-review-description')
 run_review_channel_selector = dcc.Dropdown(id='run-review-channel-selector')
+
+run_review_run_selector_label = html.P(
+    "Filter for specific runs", style=quarterstyle)
+run_review_run_selector = dcc.Dropdown(
+    id='run-review-run-selector', style=threequarterstyle)
+run_review_lane_selector_label = html.P(
+    "Filter for specific lanes", style=quarterstyle)
+run_review_lane_selector = dcc.Dropdown(
+    id='run-review-lane-selector', style=threequarterstyle)
+run_review_color_selector_label = html.P(
+    "Choose Color Attribute", style=quarterstyle)
+run_review_color_selector = dcc.Dropdown(options=['XPCR Module Lane', 'Run'], value='XPCR Module Lane',
+                                         id='run-review-color-selector', style=threequarterstyle)
+run_review_process_step_selector_label = html.P(
+    "Choose Process Step", style=quarterstyle)
 run_review_process_step_selector = dcc.Dropdown(
-    ['Normalized', 'Raw', '2nd'], value='Normalized', id='run-review-process-step-selector')
+    ['Normalized', 'Raw', '2nd'], value='Normalized', id='run-review-process-step-selector', style=threequarterstyle)
 run_review_curves = dcc.Graph(id="run-review-curves", figure=fig)
 run_review_line_data = dash_table.DataTable(
     id='runset-sample-results', row_selectable='Multi', sort_action='native')
@@ -130,6 +150,16 @@ tabs = dbc.Tabs(
         dbc.Tab(remediation_action_content, label='Assign Remediation Action')
     ]
 )
-layout = [dcc.Loading(id='run-review-loading', type='graph', children=[
-                      run_review_description, run_review_channel_selector, run_review_process_step_selector, run_review_curves, tabs])]  # , run_review_channel_selector,
-# run_review_process_step_selector, run_review_curves, run_review_line_data, run_review_submit_button]
+layout = [
+    run_review_description,
+    run_review_channel_selector,
+
+
+    html.Div([html.Div([run_review_process_step_selector_label, run_review_process_step_selector], style=halfstyle),
+              html.Div([run_review_color_selector_label, run_review_color_selector], style=halfstyle)]),
+    html.Div([html.Div([run_review_run_selector_label, run_review_run_selector], style=halfstyle),
+              html.Div([run_review_lane_selector_label, run_review_lane_selector], style=halfstyle)]),
+
+    dcc.Loading(id='run-review-loading', type='graph',
+                children=[run_review_curves]),
+    tabs]  # , run_review_channel_selector,
