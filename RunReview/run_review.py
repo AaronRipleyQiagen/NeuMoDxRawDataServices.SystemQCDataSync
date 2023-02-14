@@ -298,8 +298,10 @@ def Add_Dash(app):
                    Input('run-review-color-selector', 'value'),
                    State('runset-sample-data', 'data'),
                    State('runset-selection-data', 'data'),
-                   State('runset-channel-options', 'data')], prevent_initial_call=True)
-    def update_pcr_curves(channel_selected, process_step, color_option_selected, data, runset_data, channel_options):
+                   State('runset-channel-options', 'data'),
+                   Input('xpcrmodulelane-selected', 'data'),
+                   Input('run-option-selected', 'data')], prevent_initial_call=True)
+    def update_pcr_curves(channel_selected, process_step, color_option_selected, data, runset_data, channel_options, lane_selection, run_selection):
         if channel_selected == None:
             channel = 'Yellow'
         else:
@@ -313,6 +315,16 @@ def Add_Dash(app):
         df = dataframe.reset_index().set_index(
             ['Channel', 'Processing Step', 'XPCR Module Serial'])
         df_Channel = df.loc[channel]
+
+        """Filter Dataframe with current Run & Module Lane Selections"""
+
+        if lane_selection != 'NoFilter':
+            df_Channel = df_Channel[df_Channel['RunSetXPCRModuleLaneId']
+                                    == lane_selection]
+
+        if run_selection != 'NoFilter':
+            df_Channel = df_Channel[df_Channel['RunSetCartridgeId']
+                                    == run_selection]
 
         df_Channel_Step = df_Channel.loc[process_step].reset_index()
         df_Channel_Step.sort_values(color_option_selected, inplace=True)
@@ -421,7 +433,6 @@ def Add_Dash(app):
                    Output('run-review-lane-selector', 'options')],
                   Input('runset-xpcrmodulelane-options', 'data'))
     def updatse_lane_options(data):
-        print("initializing lane option lists.")
         return data, data, data
 
     @app.callback([Output('lane-issue-lane-options', 'value'),
@@ -429,7 +440,6 @@ def Add_Dash(app):
                    Output('run-review-lane-selector', 'value')],
                   Input('xpcrmodulelane-selected', 'data'), prevent_initial_call=True)
     def update_lane_option_selected(data):
-        print('3. Updating Lane Option Selections.')
         return data, data, data
 
     @app.callback(Output('xpcrmodulelane-selected', 'data'),
@@ -438,18 +448,17 @@ def Add_Dash(app):
                    Input('run-review-lane-selector', 'value')], prevent_initial_call=True
                   )
     def update_lane_option_selections(lane_issue_lane_selection, sample_issue_lane_selection, run_review_lane_selection):
-        print('2. Updating Lane Option selection.')
-        lane_option_selected = ctx.triggered_id
-        print('trigger: ', lane_option_selected)
-        if lane_option_selected == 'lane-issue-lane-options':
+        trigger = ctx.triggered_id
+
+        if trigger == 'lane-issue-lane-options':
             if lane_issue_lane_selection == None:
                 return "NoFilter"
             return lane_issue_lane_selection
-        elif lane_option_selected == 'sample-issue-lane-options':
+        elif trigger == 'sample-issue-lane-options':
             if sample_issue_lane_selection == None:
                 return "NoFilter"
             return sample_issue_lane_selection
-        elif lane_option_selected == 'run-review-lane-selector':
+        elif trigger == 'run-review-lane-selector':
             if run_review_lane_selection == None:
                 return "NoFilter"
             return run_review_lane_selection
