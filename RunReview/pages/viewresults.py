@@ -141,19 +141,20 @@ remediation_action_content = dbc.Card(
 
 tabs = dbc.Tabs(
     children=[
-        dbc.Tab(line_data_content, label="View Line Data"),
+        dbc.Tab(line_data_content, label="View Line Data",
+                tab_id='run-review-line-data'),
         dbc.Tab(module_issue_content, label="Note Module Issue",
-                id='run-review-module-issues'),
+                tab_id='run-review-module-issues'),
         dbc.Tab(run_issue_content, label="Note Run Issue",
-                id='run-review-run-issues'),
+                tab_id='run-review-run-issues'),
         dbc.Tab(module_lane_issue_content, label="Note Lane Issue",
-                id='run-review-module-lane-issues'),
+                tab_id='run-review-module-lane-issues'),
         dbc.Tab(sample_issue_content, label="Note Sample Issue",
-                id='run-review-sample-issues'),
+                tab_id='run-review-sample-issues'),
         dbc.Tab(active_issues_content, label='View Active Issues',
-                id='run-review-active-issues'),
+                tab_id='run-review-active-issues'),
         dbc.Tab(remediation_action_content, label='Assign Remediation Action',
-                id='run-review-remediation-actions')
+                tab_id='run-review-remediation-actions')
     ], id='review-tabs'
 )
 layout = [

@@ -411,19 +411,30 @@ def Add_Dash(app):
     @app.callback(Output('run-option-selected', 'data'),
                   [Input('run-issue-run-options', 'value'),
                    Input('sample-issue-run-options', 'value'),
-                   Input('run-review-run-selector', 'value')], prevent_initial_call=True
+                   Input('run-review-run-selector', 'value'),
+                   Input('review-tabs', 'active_tab'),
+                   State('run-option-selected', 'data')], prevent_initial_call=True
                   )
-    def update_run_option_selections(run_issue_run_selection, sample_issue_run_selection, run_review_run_selection):
-        run_option_selected = ctx.triggered_id
-        if run_option_selected == 'run-issue-run-options':
-            if run_issue_run_selection == None:
+    def update_run_option_selections(run_issue_run_selection, sample_issue_run_selection, run_review_run_selection, tab_selected, current_selection):
+        trigger = ctx.triggered_id
+
+        if trigger == 'review-tabs':
+            if tab_selected == 'run-review-module-issues':
+                return "NoFilter"
+            if tab_selected == 'run-review-module-lane-issues':
+                return "NoFilter"
+            else:
+                return current_selection
+
+        if trigger == 'run-issue-run-options':
+            if trigger == None:
                 return "NoFilter"
             return run_issue_run_selection
-        elif run_option_selected == 'sample-issue-run-options':
+        elif trigger == 'sample-issue-run-options':
             if sample_issue_run_selection == None:
                 return "NoFilter"
             return sample_issue_run_selection
-        elif run_option_selected == 'run-review-run-selector':
+        elif trigger == 'run-review-run-selector':
             if run_review_run_selection == None:
                 return "NoFilter"
             return run_review_run_selection
@@ -432,7 +443,7 @@ def Add_Dash(app):
                    Output('sample-issue-lane-options', 'options'),
                    Output('run-review-lane-selector', 'options')],
                   Input('runset-xpcrmodulelane-options', 'data'))
-    def updatse_lane_options(data):
+    def update_lane_options(data):
         return data, data, data
 
     @app.callback([Output('lane-issue-lane-options', 'value'),
@@ -445,10 +456,20 @@ def Add_Dash(app):
     @app.callback(Output('xpcrmodulelane-selected', 'data'),
                   [Input('lane-issue-lane-options', 'value'),
                    Input('sample-issue-lane-options', 'value'),
-                   Input('run-review-lane-selector', 'value')], prevent_initial_call=True
+                   Input('run-review-lane-selector', 'value'),
+                   Input('review-tabs', 'active_tab'),
+                   State('xpcrmodulelane-selected', 'data')], prevent_initial_call=True
                   )
-    def update_lane_option_selections(lane_issue_lane_selection, sample_issue_lane_selection, run_review_lane_selection):
+    def update_lane_option_selections(lane_issue_lane_selection, sample_issue_lane_selection, run_review_lane_selection, tab_selected, current_selection):
         trigger = ctx.triggered_id
+
+        if trigger == 'review-tabs':
+            if tab_selected == 'run-review-module-issues':
+                return "NoFilter"
+            if tab_selected == 'run-review-run-issues':
+                return "NoFilter"
+            else:
+                return current_selection
 
         if trigger == 'lane-issue-lane-options':
             if lane_issue_lane_selection == None:
@@ -463,6 +484,25 @@ def Add_Dash(app):
                 return "NoFilter"
             return run_review_lane_selection
 
+    @app.callback(Output('run-review-run-selector', 'disabled'),
+                  Input('review-tabs', 'active_tab')
+                  )
+    def control_run_selector_validity(tab_selected):
+
+        if tab_selected in ['run-review-module-issues', 'run-review-module-lane-issues']:
+            return True
+        else:
+            return False
+
+    @app.callback(Output('run-review-lane-selector', 'disabled'),
+                  Input('review-tabs', 'active_tab')
+                  )
+    def control_run_selector_validity(tab_selected):
+
+        if tab_selected in ['run-review-module-issues', 'run-review-run-issues']:
+            return True
+        else:
+            return False
     return app.server
 
 
