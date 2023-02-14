@@ -1774,8 +1774,8 @@ def update_pcr_curves(channel, process_step, data):
 
 @callback(Output('post-response', 'is_open'),
           [Input('submit-button', 'n_clicks')],
-          [State('sample-info', 'data'), State('runset-type-options', 'value'), State('runset-type-options', 'label'), State('post-response', 'is_open')], prevent_initial_call=True)
-def create_run_review(submit_clicks, data, runset_selection_id, runset_selection_label, is_open):
+          [State('sample-info', 'data'), State('runset-type-options', 'value'), State('runset-type-options', 'options'), State('post-response', 'is_open')], prevent_initial_call=True)
+def create_run_review(submit_clicks, data, runset_type_selection_id, runset_type_selection_options, is_open):
 
     if submit_clicks:
         dataframe = pd.DataFrame.from_dict(data)
@@ -1794,8 +1794,7 @@ def create_run_review(submit_clicks, data, runset_selection_id, runset_selection
         runset['runSetEndDate'] = dataframe['End Date Time'].astype(
             'datetime64[ms]').max().isoformat(timespec='milliseconds')
 
-        runset['runSetType'] = requests.get(os.environ['RUN_REVIEW_API_BASE'] +
-                                            "RunSetTypes/{}".format(runset_selection_id), verify=False).json()
+        runset['runSetTypeId'] = runset_type_selection_id
         runset['samples'] = []
 
         for idx in dataframe.index:
@@ -1833,16 +1832,15 @@ def create_run_review(submit_clicks, data, runset_selection_id, runset_selection
             runset["parseRunSetXPCRModules"] = True
             runset["parseRunSetCartridges"] = True
             runset["parseRunSetXPCRModuleLanes"] = True
-
+        print(runset_type_selection_options)
         runset['samplecount'] = len(runset['samples'])
         runset['name'] = dataframe.loc[idx, 'XPCR Module Serial'] + " " + \
-            runset['runSetType']['description']
+            runset_type_selection_options[runset_type_selection_id]
 
         with open("data.json", "w") as file:
             json.dump(runset, file)
 
         print("--"*30)
-        print(json.dumps(runset))
         resp = requests.post(url=os.environ['RUN_REVIEW_API_BASE'] +
                              "RunSets", json=runset, verify=False)
 
