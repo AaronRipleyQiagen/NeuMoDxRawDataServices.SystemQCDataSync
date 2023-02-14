@@ -87,6 +87,8 @@ spc_channel = dcc.Store(id='spc-channel', storage_type='session')
 runset_severity_options = dcc.Store(
     id='runset-severity-options', storage_type='session')
 
+severity_selected = dcc.Store(id='severity-selected', storage_type='session')
+
 runset_run_options = dcc.Store(id='runset-run-options', storage_type='session')
 run_option_selected = dcc.Store(
     id='run-option-selected', storage_type='session')
@@ -98,7 +100,7 @@ xpcrmodulelane_selected = dcc.Store(
 
 
 layout = html.Div([review_loader, dcc.Loading(id='run-review-href-loader', fullscreen=True, type='dot', children=[dcc.Location(
-    id="run-review-url", refresh=True)]), sidebar, content, runset_selection, runset_sample_data, runset_review_id, runset_severity_options, runset_channel_options, channel_selected, runset_run_options, run_option_selected, spc_channel, runset_xpcrmodulelane_options, xpcrmodulelane_selected])
+    id="run-review-url", refresh=True)]), sidebar, content, runset_selection, runset_sample_data, runset_review_id, runset_severity_options, runset_channel_options, channel_selected, runset_run_options, run_option_selected, spc_channel, runset_xpcrmodulelane_options, xpcrmodulelane_selected, severity_selected])
 
 
 def Add_Dash(app):
@@ -292,6 +294,33 @@ def Add_Dash(app):
     def update_severity_options(data):
         return data, data, data, data
 
+    @app.callback(Output('severity-selected', 'data'),
+                  [Input('sample-issue-severity-options', 'value'),
+                   Input('lane-issue-severity-options', 'value'),
+                   Input('run-issue-severity-options', 'value'),
+                   Input('module-issue-severity-options', 'value')
+                   ], prevent_initial_call=True
+                  )
+    def update_severity_selection(sample_issue_severity, lane_issue_severity, run_issue_severity, module_issue_severity):
+        trigger = ctx.triggered_id
+        print(trigger)
+        if trigger == 'sample-issue-severity-options':
+            return sample_issue_severity
+        elif trigger == 'lane-issue-severity-options':
+            return lane_issue_severity
+        elif trigger == 'run-issue-severity-options':
+            return run_issue_severity
+        elif trigger == 'module-issue-severity-options':
+            return module_issue_severity
+
+    @app.callback([Output('sample-issue-severity-options', 'value'),
+                   Output('lane-issue-severity-options', 'value'),
+                   Output('run-issue-severity-options', 'value'),
+                   Output('module-issue-severity-options', 'value')],
+                  Input('severity-selected', 'data'), prevent_initial_call=True)
+    def update_channel_selection_value(channel):
+        return channel, channel, channel, channel
+
     @app.callback([Output('run-review-description', 'children'), Output('run-review-curves', 'figure'), Output('runset-sample-results', 'data')],
                   [Input('channel-selected', 'data'),
                    Input('run-review-process-step-selector', 'value'),
@@ -318,14 +347,13 @@ def Add_Dash(app):
 
         """Filter Dataframe with current Run & Module Lane Selections"""
 
-        if lane_selection != 'NoFilter':
+        if lane_selection != 'NoFilter' and lane_selection != None:
             df_Channel = df_Channel[df_Channel['RunSetXPCRModuleLaneId']
                                     == lane_selection]
 
-        if run_selection != 'NoFilter':
+        if run_selection != 'NoFilter' and run_selection != None:
             df_Channel = df_Channel[df_Channel['RunSetCartridgeId']
                                     == run_selection]
-
         df_Channel_Step = df_Channel.loc[process_step].reset_index()
         df_Channel_Step.sort_values(color_option_selected, inplace=True)
 
@@ -497,12 +525,70 @@ def Add_Dash(app):
     @app.callback(Output('run-review-lane-selector', 'disabled'),
                   Input('review-tabs', 'active_tab')
                   )
-    def control_run_selector_validity(tab_selected):
+    def control_lane_selector_validity(tab_selected):
 
         if tab_selected in ['run-review-module-issues', 'run-review-run-issues']:
             return True
         else:
             return False
+
+    @app.callback(Output('issue-post-response', 'is_open'),
+                  [Input('submit-module-issue', 'n_clicks'),
+                   Input('submit-run-issue', 'n_clicks'),
+                   Input('submit-lane-issue', 'n_clicks'),
+                   Input('submit-sample-issue', 'n_clicks'),
+                   State('issue-post-response', 'is_open'),
+                   State('runset-review-id', 'data'),
+                   State('channel-selected', 'data'),
+                   State('severity-selected', 'data')], prevent_intial_call=True)
+    def post_issue(mod_issue, run_issue, lane_issue, sample_issue, is_open, runset_review_id, channel_id, severity_id):
+
+        if mod_issue:
+            """
+            Post information to Sample Issue Endpoint
+            """
+
+            """
+            public Guid RunSetReviewReferrerId { get; set; }
+
+            public Guid RunSetReviewResolverId { get; set; }
+
+            public Guid SeverityRatingId { get; set; }
+
+            public Guid AssayChannelId { get; set; }
+
+            public Guid IssueTypeId { get; set; }
+
+            public Guid SubjectId { get; set; }
+
+            public Guid RunSetSubjectReferrerId { get; set; }
+            """
+            mod_issue_url = os.environ['RUN_REVIEW_API_BASE'] + \
+                "XPCRModuleIssues"
+
+            issue = {}
+            issue['RunSetReviewReferrerId'] = runset_review_id
+            issue['RunSetReviewResolverId'] = runset_review_id
+            issue['SeverityRatingId'] = severity_id
+            issue['AssayChannelId'] = channel_id
+            # issue['IssueTypeId'] =
+            # issue['SubjectId'] =
+            # issue['RunSetSubjectReferrerId'] =
+            # requests.post(url=mod_issue_url, json=issue, verify=False)
+
+            print(issue)
+
+        if sample_issue:
+            """
+            Post information to Sample Issue Endpoint
+            """
+            print('test')
+
+        if mod_issue or run_issue or lane_issue or sample_issue:
+            return not is_open
+
+        return is_open
+
     return app.server
 
 
