@@ -357,13 +357,15 @@ def Add_Dash(app):
                    Output('run-review-run-selector', 'options')],
                   Input('runset-run-options', 'data'))
     def update_run_options(data):
+        print("1. updating run options")
         return data, data, data
 
     @app.callback([Output('run-issue-run-options', 'value'),
                    Output('sample-issue-run-options', 'value'),
                    Output('run-review-run-selector', 'value')],
-                  Input('run-option-selected', 'data'))
+                  Input('run-option-selected', 'data'), prevent_initial_call=True)
     def update_run_option_selected(data):
+        print("3. updating run option selection values")
         return data, data, data
 
     @app.callback(Output('run-option-selected', 'data'),
@@ -374,12 +376,18 @@ def Add_Dash(app):
     def update_run_option_selections(run_issue_run_selection, sample_issue_run_selection, run_review_run_selection):
 
         run_option_selected = ctx.triggered_id
-
+        print("2. updating run option selection", run_option_selected)
         if run_option_selected == 'run-issue-run-options':
+            if run_issue_run_selection == None:
+                return "NoFilter"
             return run_issue_run_selection
         elif run_option_selected == 'sample-issue-run-options':
+            if sample_issue_run_selection == None:
+                return "NoFilter"
             return sample_issue_run_selection
         elif run_option_selected == 'run-review-run-selector':
+            if run_review_run_selection == None:
+                return "NoFilter"
             return run_review_run_selection
 
     return app.server
