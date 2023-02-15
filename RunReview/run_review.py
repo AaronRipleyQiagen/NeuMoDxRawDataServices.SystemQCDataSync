@@ -655,8 +655,10 @@ def Add_Dash(app):
                    State('runset-subject-ids', 'data'),
                    State('xpcrmodule-selected', 'data'),
                    State('run-issue-options', 'value'),
-                   State('run-option-selected', 'data')], prevent_intial_call=True)
-    def post_issue(mod_issue, run_issue, lane_issue, sample_issue, is_open, runset_review_id, channel_id, severity_id, module_issue_id, runset_subject_ids, xpcrmodule_selected, run_issue_id, run_selected):
+                   State('run-option-selected', 'data'),
+                   State('lane-issue-options', 'value'),
+                   State('xpcrmodulelane-selected', 'data')], prevent_intial_call=True)
+    def post_issue(mod_issue, run_issue, lane_issue, sample_issue, is_open, runset_review_id, channel_id, severity_id, module_issue_id, runset_subject_ids, xpcrmodule_selected, run_issue_id, run_selected, lane_issue_id, lane_selected):
         print("attempting post.")
 
         issue = {}
@@ -686,9 +688,18 @@ def Add_Dash(app):
             issue['runSetSubjectReferrerId'] = run_selected
             cartridge_issue_url = os.environ['RUN_REVIEW_API_BASE'] + \
                 "CartridgeIssues"
-            print(issue)
             requests.post(url=cartridge_issue_url, json=issue, verify=False)
-
+        if lane_issue:
+            """
+            Post information to XPCR Module Issue Endpoint
+            """
+            issue['issueTypeId'] = lane_issue_id
+            issue['subjectId'] = runset_subject_ids['XPCRModuleLane'][lane_selected]
+            issue['runSetSubjectReferrerId'] = lane_selected
+            lane_issue_url = os.environ['RUN_REVIEW_API_BASE'] + \
+                "XPCRModuleLaneIssues"
+            print(issue)
+            requests.post(url=lane_issue_url, json=issue, verify=False)
         if sample_issue:
             """
             Post information to Sample Issue Endpoint
