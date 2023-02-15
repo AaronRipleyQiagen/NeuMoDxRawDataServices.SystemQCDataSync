@@ -653,45 +653,41 @@ def Add_Dash(app):
                    State('severity-selected', 'data'),
                    State('module-issue-options', 'value'),
                    State('runset-subject-ids', 'data'),
-                   State('xpcrmodule-selected', 'data')], prevent_intial_call=True)
-    def post_issue(mod_issue, run_issue, lane_issue, sample_issue, is_open, runset_review_id, channel_id, severity_id, module_issue_id, runset_subject_ids, xpcrmodule_selected):
+                   State('xpcrmodule-selected', 'data'),
+                   State('run-issue-options', 'value'),
+                   State('run-option-selected', 'data')], prevent_intial_call=True)
+    def post_issue(mod_issue, run_issue, lane_issue, sample_issue, is_open, runset_review_id, channel_id, severity_id, module_issue_id, runset_subject_ids, xpcrmodule_selected, run_issue_id, run_selected):
         print("attempting post.")
+
+        issue = {}
+        issue['userId'] = session['user'].id
+        issue['runSetReviewReferrerId'] = runset_review_id
+        issue['runSetReviewResolverId'] = '00000000-0000-0000-0000-000000000000'
+        issue['severityRatingId'] = severity_id
+        issue['assayChannelId'] = channel_id
+
         if mod_issue:
             """
-            Post information to Sample Issue Endpoint
+            Post information to XPCR Module Issue Endpoint
             """
-
-            """
-            public Guid RunSetReviewReferrerId { get; set; }
-
-            public Guid RunSetReviewResolverId { get; set; }
-
-            public Guid SeverityRatingId { get; set; }
-
-            public Guid AssayChannelId { get; set; }
-
-            public Guid IssueTypeId { get; set; }
-
-            public Guid SubjectId { get; set; }
-
-            public Guid RunSetSubjectReferrerId { get; set; }
-            """
-            mod_issue_url = os.environ['RUN_REVIEW_API_BASE'] + \
-                "XPCRModuleIssues"
-
-            issue = {}
-            issue['userId'] = session['user'].id
-            issue['runSetReviewReferrerId'] = runset_review_id
-            issue['runSetReviewResolverId'] = runset_review_id
-            issue['severityRatingId'] = severity_id
-            issue['assayChannelId'] = channel_id
             issue['issueTypeId'] = module_issue_id
             issue['subjectId'] = runset_subject_ids['XPCRModule'][xpcrmodule_selected]
             issue['runSetSubjectReferrerId'] = xpcrmodule_selected
-
-            with open("issue.json", "w") as file:
-                json.dump(issue, file)
+            mod_issue_url = os.environ['RUN_REVIEW_API_BASE'] + \
+                "XPCRModuleIssues"
             requests.post(url=mod_issue_url, json=issue, verify=False)
+
+        if run_issue:
+            """
+            Post information to XPCR Module Issue Endpoint
+            """
+            issue['issueTypeId'] = run_issue_id
+            issue['subjectId'] = runset_subject_ids['Cartridge'][run_selected]
+            issue['runSetSubjectReferrerId'] = run_selected
+            cartridge_issue_url = os.environ['RUN_REVIEW_API_BASE'] + \
+                "CartridgeIssues"
+            print(issue)
+            requests.post(url=cartridge_issue_url, json=issue, verify=False)
 
         if sample_issue:
             """
