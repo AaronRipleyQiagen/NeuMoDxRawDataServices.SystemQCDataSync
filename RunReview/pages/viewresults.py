@@ -60,7 +60,7 @@ module_issue_content = dbc.Card(
                       dcc.Dropdown(id='module-issue-channel-options', style={'width': '70%', 'display': 'inline-block', 'vertical-align': 'middle'})]),
             html.Div([html.P("How severe is this issue?", className="card-text", style={'width': '30%', 'display': 'inline-block', 'vertical-align': 'middle'}),
                       dcc.Dropdown(id='module-issue-severity-options', style={'width': '70%', 'display': 'inline-block', 'vertical-align': 'middle'})]),
-            dbc.Button('Submit Module Issue', id='submit-sample-issue')
+            dbc.Button('Submit Module Issue', id='submit-module-issue')
         ]
     ),
     className="mt-3",
@@ -78,7 +78,7 @@ run_issue_content = dbc.Card(
                       dcc.Dropdown(id='run-issue-channel-options', style={'width': '70%', 'display': 'inline-block', 'vertical-align': 'middle'})]),
             html.Div([html.P("How severe is this issue?", className="card-text", style={'width': '30%', 'display': 'inline-block', 'vertical-align': 'middle'}),
                       dcc.Dropdown(id='run-issue-severity-options', style={'width': '70%', 'display': 'inline-block', 'vertical-align': 'middle'})]),
-            dbc.Button('Submit Run Issue', id='submit-sample-issue')
+            dbc.Button('Submit Run Issue', id='submit-run-issue')
         ]
     )
 )
@@ -94,7 +94,7 @@ module_lane_issue_content = dbc.Card(
                       dcc.Dropdown(id='lane-issue-channel-options', style={'width': '70%', 'display': 'inline-block', 'vertical-align': 'middle'})]),
             html.Div([html.P("How severe is this issue?", className="card-text", style={'width': '30%', 'display': 'inline-block', 'vertical-align': 'middle'}),
                       dcc.Dropdown(id='lane-issue-severity-options', style={'width': '70%', 'display': 'inline-block', 'vertical-align': 'middle'})]),
-            dbc.Button('Submit Lane Issue', id='submit-sample-issue')
+            dbc.Button('Submit Lane Issue', id='submit-lane-issue')
         ]
     ),
     className="mt-3",
@@ -157,10 +157,19 @@ tabs = dbc.Tabs(
                 tab_id='run-review-remediation-actions')
     ], id='review-tabs'
 )
+
+
+issue_post_response = dbc.Modal([
+    dbc.ModalHeader(dbc.ModalTitle("Issue Creation Result")),
+    dbc.ModalBody("Issue was added successfully")
+],
+    id="issue-post-response",
+    is_open=False)
+
 layout = [
     run_review_description,
     run_review_channel_selector,
-
+    issue_post_response,
 
     html.Div([html.Div([run_review_process_step_selector_label, run_review_process_step_selector], style=halfstyle),
               html.Div([run_review_color_selector_label, run_review_color_selector], style=halfstyle)]),
