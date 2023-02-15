@@ -98,24 +98,16 @@ runset_xpcrmodulelane_options = dcc.Store(
 xpcrmodulelane_selected = dcc.Store(
     id='xpcrmodulelane-selected', storage_type='session')
 
-runset_neumodxsystem_subject_ids = dcc.Store(
-    id='runset-neumodxsystem-subject-ids', storage_type='session')
-runset_xpcrmodule_subject_ids = dcc.Store(
-    id='runset-xpcrmodule-subject-ids', storage_type='session')
-runset_cartridge_subject_ids = dcc.Store(
-    id='runset-cartridge-subject-ids', storage_type='session')
-runset_xpcrmodulelane_subject_ids = dcc.Store(
-    id='runset-xpcrmodulelane-subject-ids', storage_type='session')
-runset_sample_subject_ids = dcc.Store(
-    id='runset-sample-subject-ids', storage_type='session')
+
+runset_subject_ids = dcc.Store(
+    id='runset-subject-ids', storage_type='session')
 
 layout = html.Div([review_loader, dcc.Loading(id='run-review-href-loader', fullscreen=True, type='dot', children=[dcc.Location(
     id="run-review-url", refresh=True)]), sidebar, content,
     runset_selection, runset_sample_data, runset_review_id, runset_severity_options,
     runset_channel_options, channel_selected, runset_run_options, run_option_selected,
     spc_channel, runset_xpcrmodulelane_options, xpcrmodulelane_selected, severity_selected,
-    runset_neumodxsystem_subject_ids, runset_xpcrmodule_subject_ids, runset_cartridge_subject_ids,
-    runset_xpcrmodulelane_subject_ids, runset_sample_subject_ids])
+    runset_subject_ids])
 
 
 def Add_Dash(app):
@@ -148,7 +140,8 @@ def Add_Dash(app):
                    Output('runset-channel-options', 'data'),
                    Output('runset-run-options', 'data'),
                    Output('spc-channel', 'data'),
-                   Output('runset-xpcrmodulelane-options', 'data')],
+                   Output('runset-xpcrmodulelane-options', 'data'),
+                   Output('runset-subject-ids', 'data')],
                   [Input('get-runset-data', 'n_clicks'),
                    State('runset-selection-data', 'data')],
                   prevent_inital_call=True)
@@ -161,6 +154,7 @@ def Add_Dash(app):
         """
         runset_sample_ids = []
         runset_map_df = pd.DataFrame(columns=['RawDataDatabaseId',
+                                              'RunSetSampleId', 'SampleId',
                                               'XPCRModuleLaneId', 'RunSetXPCRModuleLaneId',
                                               'CartridgeId', 'RunSetCartridgeId',
                                               'XPCRModuleId', 'RunSetXPCRModuleId',
@@ -171,6 +165,8 @@ def Add_Dash(app):
                 runsetsample['sample']['rawDataDatabaseId'])
 
             runset_map = [runsetsample['sample']['rawDataDatabaseId'],
+                          runsetsample['id'],
+                          runsetsample['sample']['id'],
                           runsetsample['sample']['xpcrModuleLaneId'],
                           runsetsample['sample']['runSetXPCRModuleLaneSamples'][0]['runSetXPCRModuleLaneId'],
                           runsetsample['sample']['cartridgeId'],
@@ -266,10 +262,48 @@ def Add_Dash(app):
         Return Data associated with Runset, URL for RunsetReview Page, Runset Review Id, Severity Options.
         """
 
-        return dataframe.to_dict('records'), '/dashboard/run-review/view-results', resp['id'], severity_options, channel_options, run_options, spc_channel, lane_options
+        """
+        Create RunSetSubject / Subject Dictionary
+        """
+        runset_subject_ids = {}
+        runset_sample_subject_ids_dict = {}
+        for idx in dataframe.drop_duplicates(subset=['RunSetSampleId', 'SampleId']).index:
+            runset_sample_subject_ids_dict[dataframe.loc[idx, 'RunSetSampleId']
+                                           ] = dataframe.loc[idx, 'SampleId']
 
-    @app.callback([Output('sample-issue-options', 'options'), Output('lane-issue-options', 'options'), Output('module-issue-options', 'options'), Output('run-issue-options', 'options')],
-                  Input('submit-sample-issue', 'children'))
+        runset_subject_ids['Sample'] = runset_sample_subject_ids_dict
+
+        runset_xpcrmodulelane_subject_ids_dict = {}
+        for idx in dataframe.drop_duplicates(subset=['RunSetXPCRModuleLaneId', 'XPCRModuleLaneId']).index:
+            runset_xpcrmodulelane_subject_ids_dict[dataframe.loc[idx, 'RunSetXPCRModuleLaneId']
+                                                   ] = dataframe.loc[idx, 'XPCRModuleLaneId']
+
+        runset_subject_ids['XPCRModuleLane'] = runset_xpcrmodulelane_subject_ids_dict
+        runset_cartridge_subject_ids_dict = {}
+        for idx in dataframe.drop_duplicates(subset=['RunSetCartridgeId', 'CartridgeId']).index:
+            runset_cartridge_subject_ids_dict[dataframe.loc[idx, 'RunSetCartridgeId']
+                                              ] = dataframe.loc[idx, 'CartridgeId']
+
+        runset_subject_ids['Cartridge'] = runset_cartridge_subject_ids_dict
+
+        runset_xpcrmodule_subject_ids_dict = {}
+        for idx in dataframe.drop_duplicates(subset=['RunSetXPCRModuleId', 'XPCRModuleId']).index:
+            runset_xpcrmodule_subject_ids_dict[dataframe.loc[idx, 'RunSetXPCRModuleId']
+                                               ] = dataframe.loc[idx, 'XPCRModuleId']
+
+        runset_subject_ids['XPCRModule'] = runset_xpcrmodule_subject_ids_dict
+
+        runset_neumodx_subject_ids_dict = {}
+        for idx in dataframe.drop_duplicates(subset=['RunSetNeuMoDxSystemId', 'NeuMoDxSystemId']).index:
+            runset_neumodx_subject_ids_dict[dataframe.loc[idx, 'RunSetNeuMoDxSystemId']
+                                            ] = dataframe.loc[idx, 'NeuMoDxSystemId']
+
+        runset_subject_ids['NeuMoDxSystem'] = runset_neumodx_subject_ids_dict
+
+        return dataframe.to_dict('records'), '/dashboard/run-review/view-results', resp['id'], severity_options, channel_options, run_options, spc_channel, lane_options, runset_subject_ids
+
+    @ app.callback([Output('sample-issue-options', 'options'), Output('lane-issue-options', 'options'), Output('module-issue-options', 'options'), Output('run-issue-options', 'options')],
+                   Input('submit-sample-issue', 'children'))
     def getIssueTypes(_):
 
         async def getIssueTypeOptions(session, url):
@@ -307,22 +341,22 @@ def Add_Dash(app):
 
         return issueTypeOptions['SampleIssueTypes'], issueTypeOptions['XPCRModuleLaneIssueTypes'], issueTypeOptions['XPCRModuleIssueTypes'], issueTypeOptions['CartridgeIssueTypes']
 
-    @app.callback([Output('sample-issue-severity-options', 'options'),
+    @ app.callback([Output('sample-issue-severity-options', 'options'),
                    Output('lane-issue-severity-options', 'options'),
                    Output('run-issue-severity-options', 'options'),
                    Output('module-issue-severity-options', 'options')
-                   ],
-                  Input('runset-severity-options', 'data'))
+                    ],
+                   Input('runset-severity-options', 'data'))
     def update_severity_options(data):
         return data, data, data, data
 
-    @app.callback(Output('severity-selected', 'data'),
-                  [Input('sample-issue-severity-options', 'value'),
+    @ app.callback(Output('severity-selected', 'data'),
+                   [Input('sample-issue-severity-options', 'value'),
                    Input('lane-issue-severity-options', 'value'),
                    Input('run-issue-severity-options', 'value'),
                    Input('module-issue-severity-options', 'value')
-                   ], prevent_initial_call=True
-                  )
+                    ], prevent_initial_call=True
+                   )
     def update_severity_selection(sample_issue_severity, lane_issue_severity, run_issue_severity, module_issue_severity):
         trigger = ctx.triggered_id
         print(trigger)
@@ -335,16 +369,16 @@ def Add_Dash(app):
         elif trigger == 'module-issue-severity-options':
             return module_issue_severity
 
-    @app.callback([Output('sample-issue-severity-options', 'value'),
+    @ app.callback([Output('sample-issue-severity-options', 'value'),
                    Output('lane-issue-severity-options', 'value'),
                    Output('run-issue-severity-options', 'value'),
                    Output('module-issue-severity-options', 'value')],
-                  Input('severity-selected', 'data'), prevent_initial_call=True)
+                   Input('severity-selected', 'data'), prevent_initial_call=True)
     def update_channel_selection_value(channel):
         return channel, channel, channel, channel
 
-    @app.callback([Output('run-review-description', 'children'), Output('run-review-curves', 'figure'), Output('runset-sample-results', 'data')],
-                  [Input('channel-selected', 'data'),
+    @ app.callback([Output('run-review-description', 'children'), Output('run-review-curves', 'figure'), Output('runset-sample-results', 'data')],
+                   [Input('channel-selected', 'data'),
                    Input('run-review-process-step-selector', 'value'),
                    Input('run-review-color-selector', 'value'),
                    State('runset-sample-data', 'data'),
@@ -393,24 +427,24 @@ def Add_Dash(app):
 
         return [runset_data['name'] + " Attempt # " + str(runset_data['number'])], fig, df_Channel_Step[['XPCR Module Serial', 'XPCR Module Lane', 'Sample ID', 'Target Name', 'Localized Result', 'Overall Result', 'Ct', 'End Point Fluorescence', 'Max Peak Height', 'EPR']].round(1).to_dict('records')
 
-    @app.callback([Output('sample-issue-channel-options', 'options'),
+    @ app.callback([Output('sample-issue-channel-options', 'options'),
                    Output('lane-issue-channel-options', 'options'),
                    Output('run-issue-channel-options', 'options'),
                    Output('module-issue-channel-options', 'options'),
                    Output('run-review-channel-selector', 'options')],
-                  Input('runset-channel-options', 'data'))
+                   Input('runset-channel-options', 'data'))
     def update_channel_options(data):
         return data, data, data, data, data
 
-    @app.callback(Output('channel-selected', 'data'),
-                  [Input('sample-issue-channel-options', 'value'),
+    @ app.callback(Output('channel-selected', 'data'),
+                   [Input('sample-issue-channel-options', 'value'),
                    Input('lane-issue-channel-options', 'value'),
                    Input('run-issue-channel-options', 'value'),
                    Input('module-issue-channel-options', 'value'),
                    Input('run-review-channel-selector', 'value'),
                    State('spc-channel', 'data')
-                   ], prevent_initial_call=True
-                  )
+                    ], prevent_initial_call=True
+                   )
     def update_channel_selection(sample_issue_channel, lane_issue_channel, run_issue_channel, module_issue_channel, run_review_channel, spc_channel):
         channel_adjusted = ctx.triggered_id
 
@@ -435,36 +469,36 @@ def Add_Dash(app):
                 return spc_channel
             return run_review_channel
 
-    @app.callback([Output('sample-issue-channel-options', 'value'),
+    @ app.callback([Output('sample-issue-channel-options', 'value'),
                    Output('lane-issue-channel-options', 'value'),
                    Output('run-issue-channel-options', 'value'),
                    Output('module-issue-channel-options', 'value'),
                    Output('run-review-channel-selector', 'value')],
-                  Input('channel-selected', 'data'), prevent_initial_call=True)
+                   Input('channel-selected', 'data'), prevent_initial_call=True)
     def update_channel_selection_value(channel):
         return channel, channel, channel, channel, channel
 
-    @app.callback([Output('run-issue-run-options', 'options'),
+    @ app.callback([Output('run-issue-run-options', 'options'),
                    Output('sample-issue-run-options', 'options'),
                    Output('run-review-run-selector', 'options')],
-                  Input('runset-run-options', 'data'))
+                   Input('runset-run-options', 'data'))
     def update_run_options(data):
         return data, data, data
 
-    @app.callback([Output('run-issue-run-options', 'value'),
+    @ app.callback([Output('run-issue-run-options', 'value'),
                    Output('sample-issue-run-options', 'value'),
                    Output('run-review-run-selector', 'value')],
-                  Input('run-option-selected', 'data'), prevent_initial_call=True)
+                   Input('run-option-selected', 'data'), prevent_initial_call=True)
     def update_run_option_selected(data):
         return data, data, data
 
-    @app.callback(Output('run-option-selected', 'data'),
-                  [Input('run-issue-run-options', 'value'),
+    @ app.callback(Output('run-option-selected', 'data'),
+                   [Input('run-issue-run-options', 'value'),
                    Input('sample-issue-run-options', 'value'),
                    Input('run-review-run-selector', 'value'),
                    Input('review-tabs', 'active_tab'),
                    State('run-option-selected', 'data')], prevent_initial_call=True
-                  )
+                   )
     def update_run_option_selections(run_issue_run_selection, sample_issue_run_selection, run_review_run_selection, tab_selected, current_selection):
         trigger = ctx.triggered_id
 
@@ -489,27 +523,27 @@ def Add_Dash(app):
                 return "NoFilter"
             return run_review_run_selection
 
-    @app.callback([Output('lane-issue-lane-options', 'options'),
+    @ app.callback([Output('lane-issue-lane-options', 'options'),
                    Output('sample-issue-lane-options', 'options'),
                    Output('run-review-lane-selector', 'options')],
-                  Input('runset-xpcrmodulelane-options', 'data'))
+                   Input('runset-xpcrmodulelane-options', 'data'))
     def update_lane_options(data):
         return data, data, data
 
-    @app.callback([Output('lane-issue-lane-options', 'value'),
+    @ app.callback([Output('lane-issue-lane-options', 'value'),
                    Output('sample-issue-lane-options', 'value'),
                    Output('run-review-lane-selector', 'value')],
-                  Input('xpcrmodulelane-selected', 'data'), prevent_initial_call=True)
+                   Input('xpcrmodulelane-selected', 'data'), prevent_initial_call=True)
     def update_lane_option_selected(data):
         return data, data, data
 
-    @app.callback(Output('xpcrmodulelane-selected', 'data'),
-                  [Input('lane-issue-lane-options', 'value'),
+    @ app.callback(Output('xpcrmodulelane-selected', 'data'),
+                   [Input('lane-issue-lane-options', 'value'),
                    Input('sample-issue-lane-options', 'value'),
                    Input('run-review-lane-selector', 'value'),
                    Input('review-tabs', 'active_tab'),
                    State('xpcrmodulelane-selected', 'data')], prevent_initial_call=True
-                  )
+                   )
     def update_lane_option_selections(lane_issue_lane_selection, sample_issue_lane_selection, run_review_lane_selection, tab_selected, current_selection):
         trigger = ctx.triggered_id
 
@@ -534,9 +568,9 @@ def Add_Dash(app):
                 return "NoFilter"
             return run_review_lane_selection
 
-    @app.callback(Output('run-review-run-selector', 'disabled'),
-                  Input('review-tabs', 'active_tab')
-                  )
+    @ app.callback(Output('run-review-run-selector', 'disabled'),
+                   Input('review-tabs', 'active_tab')
+                   )
     def control_run_selector_validity(tab_selected):
 
         if tab_selected in ['run-review-module-issues', 'run-review-module-lane-issues']:
@@ -544,9 +578,9 @@ def Add_Dash(app):
         else:
             return False
 
-    @app.callback(Output('run-review-lane-selector', 'disabled'),
-                  Input('review-tabs', 'active_tab')
-                  )
+    @ app.callback(Output('run-review-lane-selector', 'disabled'),
+                   Input('review-tabs', 'active_tab')
+                   )
     def control_lane_selector_validity(tab_selected):
 
         if tab_selected in ['run-review-module-issues', 'run-review-run-issues']:
@@ -554,8 +588,8 @@ def Add_Dash(app):
         else:
             return False
 
-    @app.callback(Output('issue-post-response', 'is_open'),
-                  [Input('submit-module-issue', 'n_clicks'),
+    @ app.callback(Output('issue-post-response', 'is_open'),
+                   [Input('submit-module-issue', 'n_clicks'),
                    Input('submit-run-issue', 'n_clicks'),
                    Input('submit-lane-issue', 'n_clicks'),
                    Input('submit-sample-issue', 'n_clicks'),
@@ -563,8 +597,9 @@ def Add_Dash(app):
                    State('runset-review-id', 'data'),
                    State('channel-selected', 'data'),
                    State('severity-selected', 'data'),
-                   State('module-issue-options', 'value')], prevent_intial_call=True)
-    def post_issue(mod_issue, run_issue, lane_issue, sample_issue, is_open, runset_review_id, channel_id, severity_id, module_issue_id):
+                   State('module-issue-options', 'value'),
+                   State('runset-subject-ids', 'data')], prevent_intial_call=True)
+    def post_issue(mod_issue, run_issue, lane_issue, sample_issue, is_open, runset_review_id, channel_id, severity_id, module_issue_id, runset_subject_ids):
         print("attempting post.")
         if mod_issue:
             """
@@ -595,7 +630,7 @@ def Add_Dash(app):
             issue['SeverityRatingId'] = severity_id
             issue['AssayChannelId'] = channel_id
             issue['IssueTypeId'] = module_issue_id
-            # issue['SubjectId'] =
+            # issue['SubjectId'] = runset_subject_ids[]
             # issue['RunSetSubjectReferrerId'] =
             # requests.post(url=mod_issue_url, json=issue, verify=False)
 
