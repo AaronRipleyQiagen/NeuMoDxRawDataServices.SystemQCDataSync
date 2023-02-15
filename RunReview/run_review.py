@@ -98,9 +98,24 @@ runset_xpcrmodulelane_options = dcc.Store(
 xpcrmodulelane_selected = dcc.Store(
     id='xpcrmodulelane-selected', storage_type='session')
 
+runset_neumodxsystem_subject_ids = dcc.Store(
+    id='runset-neumodxsystem-subject-ids', storage_type='session')
+runset_xpcrmodule_subject_ids = dcc.Store(
+    id='runset-xpcrmodule-subject-ids', storage_type='session')
+runset_cartridge_subject_ids = dcc.Store(
+    id='runset-cartridge-subject-ids', storage_type='session')
+runset_xpcrmodulelane_subject_ids = dcc.Store(
+    id='runset-xpcrmodulelane-subject-ids', storage_type='session')
+runset_sample_subject_ids = dcc.Store(
+    id='runset-sample-subject-ids', storage_type='session')
 
 layout = html.Div([review_loader, dcc.Loading(id='run-review-href-loader', fullscreen=True, type='dot', children=[dcc.Location(
-    id="run-review-url", refresh=True)]), sidebar, content, runset_selection, runset_sample_data, runset_review_id, runset_severity_options, runset_channel_options, channel_selected, runset_run_options, run_option_selected, spc_channel, runset_xpcrmodulelane_options, xpcrmodulelane_selected, severity_selected])
+    id="run-review-url", refresh=True)]), sidebar, content,
+    runset_selection, runset_sample_data, runset_review_id, runset_severity_options,
+    runset_channel_options, channel_selected, runset_run_options, run_option_selected,
+    spc_channel, runset_xpcrmodulelane_options, xpcrmodulelane_selected, severity_selected,
+    runset_neumodxsystem_subject_ids, runset_xpcrmodule_subject_ids, runset_cartridge_subject_ids,
+    runset_xpcrmodulelane_subject_ids, runset_sample_subject_ids])
 
 
 def Add_Dash(app):
