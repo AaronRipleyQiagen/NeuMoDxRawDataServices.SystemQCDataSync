@@ -75,33 +75,39 @@ review_loader = html.Div(id='run-reviewer-loader')
 content = html.Div(id="run-reviewer-page-content", style=CONTENT_STYLE,
                    children=page_container)
 runset_selection = dcc.Store(
-    id='runset-selection-data', storage_type='session')
-runset_sample_data = dcc.Store(id='runset-sample-data', storage_type='session')
-runset_review_id = dcc.Store(id='runset-review-id', storage_type='session')
+    id='runset-selection-data', storage_type='session', data='')
+runset_sample_data = dcc.Store(
+    id='runset-sample-data', storage_type='session', data='')
+runset_review_id = dcc.Store(
+    id='runset-review-id', storage_type='session', data='')
 
 runset_channel_options = dcc.Store(
-    id='runset-channel-options', storage_type='session')
-channel_selected = dcc.Store(id='channel-selected', storage_type='session')
-spc_channel = dcc.Store(id='spc-channel', storage_type='session')
+    id='runset-channel-options', storage_type='session', data='')
+channel_selected = dcc.Store(
+    id='channel-selected', storage_type='session', data='')
+spc_channel = dcc.Store(id='spc-channel', storage_type='session', data='')
 
 runset_severity_options = dcc.Store(
-    id='runset-severity-options', storage_type='session')
+    id='runset-severity-options', storage_type='session', data='')
 
-severity_selected = dcc.Store(id='severity-selected', storage_type='session')
+severity_selected = dcc.Store(
+    id='severity-selected', storage_type='session', data='')
 
-runset_run_options = dcc.Store(id='runset-run-options', storage_type='session')
+runset_run_options = dcc.Store(
+    id='runset-run-options', storage_type='session', data='')
 run_option_selected = dcc.Store(
-    id='run-option-selected', storage_type='session')
+    id='run-option-selected', storage_type='session', data='')
 
 runset_xpcrmodulelane_options = dcc.Store(
-    id='runset-xpcrmodulelane-options', storage_type='session')
+    id='runset-xpcrmodulelane-options', storage_type='session', data='')
 xpcrmodulelane_selected = dcc.Store(
-    id='xpcrmodulelane-selected', storage_type='session')
-xpcrmodule_options = dcc.Store(id='xpcrmodule-options', storage_type='session')
+    id='xpcrmodulelane-selected', storage_type='session', data='')
+xpcrmodule_options = dcc.Store(
+    id='xpcrmodule-options', storage_type='session', data='')
 xpcrmodule_selected = dcc.Store(
-    id='xpcrmodule-selected', storage_type='session')
+    id='xpcrmodule-selected', storage_type='session', data='')
 runset_subject_ids = dcc.Store(
-    id='runset-subject-ids', storage_type='session')
+    id='runset-subject-ids', storage_type='session', data='')
 
 
 pcrcurve_sample_info = dcc.Store(
@@ -525,6 +531,8 @@ def Add_Dash(app):
                 return "NoFilter"
             if tab_selected == 'run-review-module-lane-issues':
                 return "NoFilter"
+            if tab_selected == 'run-review-line-data':
+                return "NoFilter"
             else:
                 return current_selection
 
@@ -569,6 +577,8 @@ def Add_Dash(app):
             if tab_selected == 'run-review-module-issues':
                 return "NoFilter"
             if tab_selected == 'run-review-run-issues':
+                return "NoFilter"
+            if tab_selected == 'run-review-line-data':
                 return "NoFilter"
             else:
                 return current_selection
@@ -654,7 +664,11 @@ def Add_Dash(app):
     def update_lane_option_selected(data):
         return data, data, data, data, data
 
-    @ app.callback(Output('issue-post-response', 'is_open'),
+    @ app.callback([Output('issue-post-response', 'is_open'),
+                   Output('submit-module-issue', 'n_clicks'),
+                   Output('submit-run-issue', 'n_clicks'),
+                   Output('submit-lane-issue', 'n_clicks'),
+                   Output('submit-sample-issue', 'n_clicks')],
                    [Input('submit-module-issue', 'n_clicks'),
                    Input('submit-run-issue', 'n_clicks'),
                    Input('submit-lane-issue', 'n_clicks'),
@@ -728,9 +742,9 @@ def Add_Dash(app):
             requests.post(url=sample_issue_url, json=issue, verify=False)
 
         if mod_issue or run_issue or lane_issue or sample_issue:
-            return not is_open
+            return not is_open, None, None, None, None
 
-        return is_open
+        return is_open, None, None, None, None
 
     return app.server
 
