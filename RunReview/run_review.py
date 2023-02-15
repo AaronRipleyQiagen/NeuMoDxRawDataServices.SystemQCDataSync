@@ -145,17 +145,24 @@ def Add_Dash(app):
         Get Data associated with Runset.
         """
         runset_sample_ids = []
-        runset_map_df = pd.DataFrame(columns=['RawDataDatabaseId', 'RunSetXPCRModuleLaneId',
-                                              'RunSetCartridgeId', 'RunSetXPCRModuleId', 'RunSetNeuMoDxSystemId'])
+        runset_map_df = pd.DataFrame(columns=['RawDataDatabaseId',
+                                              'XPCRModuleLaneId', 'RunSetXPCRModuleLaneId',
+                                              'CartridgeId', 'RunSetCartridgeId',
+                                              'XPCRModuleId', 'RunSetXPCRModuleId',
+                                              'NeuMoDxSystemId', 'RunSetNeuMoDxSystemId'])
         idx = 0
         for runsetsample in runset_data['runSetSamples']:
             runset_sample_ids.append(
                 runsetsample['sample']['rawDataDatabaseId'])
 
             runset_map = [runsetsample['sample']['rawDataDatabaseId'],
+                          runsetsample['sample']['xpcrModuleLaneId'],
                           runsetsample['sample']['runSetXPCRModuleLaneSamples'][0]['runSetXPCRModuleLaneId'],
+                          runsetsample['sample']['cartridgeId'],
                           runsetsample['sample']['runSetCartridgeSamples'][0]['runSetCartridgeId'],
+                          runsetsample['sample']['xpcrModuleId'],
                           runsetsample['sample']['runSetXPCRModuleSamples'][0]['runSetXPCRModuleId'],
+                          runsetsample['sample']['neuMoDxSystemId'],
                           runsetsample['sample']['runSetNeuMoDxSystemSamples'][0]['runSetNeuMoDxSystemId']]
             idx += 1
             runset_map_df.loc[idx] = runset_map
@@ -540,9 +547,10 @@ def Add_Dash(app):
                    State('issue-post-response', 'is_open'),
                    State('runset-review-id', 'data'),
                    State('channel-selected', 'data'),
-                   State('severity-selected', 'data')], prevent_intial_call=True)
-    def post_issue(mod_issue, run_issue, lane_issue, sample_issue, is_open, runset_review_id, channel_id, severity_id):
-
+                   State('severity-selected', 'data'),
+                   State('module-issue-options', 'value')], prevent_intial_call=True)
+    def post_issue(mod_issue, run_issue, lane_issue, sample_issue, is_open, runset_review_id, channel_id, severity_id, module_issue_id):
+        print("attempting post.")
         if mod_issue:
             """
             Post information to Sample Issue Endpoint
@@ -571,7 +579,7 @@ def Add_Dash(app):
             issue['RunSetReviewResolverId'] = runset_review_id
             issue['SeverityRatingId'] = severity_id
             issue['AssayChannelId'] = channel_id
-            # issue['IssueTypeId'] =
+            issue['IssueTypeId'] = module_issue_id
             # issue['SubjectId'] =
             # issue['RunSetSubjectReferrerId'] =
             # requests.post(url=mod_issue_url, json=issue, verify=False)
