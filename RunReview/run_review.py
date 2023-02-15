@@ -97,8 +97,9 @@ runset_xpcrmodulelane_options = dcc.Store(
     id='runset-xpcrmodulelane-options', storage_type='session')
 xpcrmodulelane_selected = dcc.Store(
     id='xpcrmodulelane-selected', storage_type='session')
-
-
+xpcrmodule_options = dcc.Store(id='xpcrmodule-options', storage_type='session')
+xpcrmodule_selected = dcc.Store(
+    id='xpcrmodule-selected', storage_type='session')
 runset_subject_ids = dcc.Store(
     id='runset-subject-ids', storage_type='session')
 
@@ -107,7 +108,7 @@ layout = html.Div([review_loader, dcc.Loading(id='run-review-href-loader', fulls
     runset_selection, runset_sample_data, runset_review_id, runset_severity_options,
     runset_channel_options, channel_selected, runset_run_options, run_option_selected,
     spc_channel, runset_xpcrmodulelane_options, xpcrmodulelane_selected, severity_selected,
-    runset_subject_ids])
+    runset_subject_ids, xpcrmodule_options, xpcrmodule_selected])
 
 
 def Add_Dash(app):
@@ -141,7 +142,8 @@ def Add_Dash(app):
                    Output('runset-run-options', 'data'),
                    Output('spc-channel', 'data'),
                    Output('runset-xpcrmodulelane-options', 'data'),
-                   Output('runset-subject-ids', 'data')],
+                   Output('runset-subject-ids', 'data'),
+                   Output('xpcrmodule-options', 'data')],
                   [Input('get-runset-data', 'n_clicks'),
                    State('runset-selection-data', 'data')],
                   prevent_inital_call=True)
@@ -287,9 +289,13 @@ def Add_Dash(app):
         runset_subject_ids['Cartridge'] = runset_cartridge_subject_ids_dict
 
         runset_xpcrmodule_subject_ids_dict = {}
+        xpcrmodule_options = {}
+        xpcrmodule_options['NoFilter'] = 'All'
         for idx in dataframe.drop_duplicates(subset=['RunSetXPCRModuleId', 'XPCRModuleId']).index:
             runset_xpcrmodule_subject_ids_dict[dataframe.loc[idx, 'RunSetXPCRModuleId']
                                                ] = dataframe.loc[idx, 'XPCRModuleId']
+            xpcrmodule_options[dataframe.loc[idx, 'RunSetXPCRModuleId']
+                               ] = dataframe.loc[idx, 'XPCR Module Serial']
 
         runset_subject_ids['XPCRModule'] = runset_xpcrmodule_subject_ids_dict
 
@@ -300,7 +306,7 @@ def Add_Dash(app):
 
         runset_subject_ids['NeuMoDxSystem'] = runset_neumodx_subject_ids_dict
 
-        return dataframe.to_dict('records'), '/dashboard/run-review/view-results', resp['id'], severity_options, channel_options, run_options, spc_channel, lane_options, runset_subject_ids
+        return dataframe.to_dict('records'), '/dashboard/run-review/view-results', resp['id'], severity_options, channel_options, run_options, spc_channel, lane_options, runset_subject_ids, xpcrmodule_options
 
     @ app.callback([Output('sample-issue-options', 'options'), Output('lane-issue-options', 'options'), Output('module-issue-options', 'options'), Output('run-issue-options', 'options')],
                    Input('submit-sample-issue', 'children'))
@@ -646,6 +652,54 @@ def Add_Dash(app):
             return not is_open
 
         return is_open
+
+    @ app.callback([Output('module-issue-module-options', 'options'),
+                   Output('run-issue-module-options', 'options'),
+                   Output('lane-issue-module-options', 'options'),
+                   Output('sample-issue-module-options', 'options'),
+                   Output('run-review-xpcrmodule-selector', 'options')],
+                   Input('xpcrmodule-options', 'data'))
+    def update_run_options(data):
+        return data, data, data, data, data
+
+    @ app.callback(Output('xpcrmodule-selected', 'data'),
+                   [Input('module-issue-module-options', 'value'),
+                    Input('run-issue-module-options', 'value'),
+                    Input('lane-issue-module-options', 'value'),
+                    Input('sample-issue-module-options', 'value'),
+                    Input('run-review-xpcrmodule-selector', 'value')], prevent_initial_call=True
+                   )
+    def update_lane_option_selections(module_issue_mod_selection, run_issue_mod_selection, lane_issue_mod_selection, sample_issue_mod_selection, run_review_mod_selection):
+        trigger = ctx.triggered_id
+        if trigger == 'module-issue-module-options':
+            if module_issue_mod_selection == None:
+                return "NoFilter"
+            return module_issue_mod_selection
+        elif trigger == 'run-issue-module-options':
+            if run_issue_mod_selection == None:
+                return "NoFilter"
+            return run_issue_mod_selection
+        elif trigger == 'lane-issue-module-options':
+            if lane_issue_mod_selection == None:
+                return "NoFilter"
+            return lane_issue_mod_selection
+        elif trigger == 'sample-issue-module-options':
+            if sample_issue_mod_selection == None:
+                return "NoFilter"
+            return sample_issue_mod_selection
+        elif trigger == 'run-review-xpcrmodule-selector':
+            if run_review_mod_selection == None:
+                return "NoFilter"
+            return run_review_mod_selection
+
+    @ app.callback([Output('module-issue-module-options', 'value'),
+                    Output('run-issue-module-options', 'value'),
+                    Output('lane-issue-module-options', 'value'),
+                    Output('sample-issue-module-options', 'value'),
+                    Output('run-review-xpcrmodule-selector', 'value')],
+                   Input('xpcrmodule-selected', 'data'), prevent_initial_call=True)
+    def update_lane_option_selected(data):
+        return data, data, data, data, data
 
     return app.server
 
