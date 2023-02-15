@@ -103,12 +103,15 @@ xpcrmodule_selected = dcc.Store(
 runset_subject_ids = dcc.Store(
     id='runset-subject-ids', storage_type='session')
 
+
+pcrcurve_sample_info = dcc.Store(
+    id='pcrcurve-sample-info', storage_type='session')
 layout = html.Div([review_loader, dcc.Loading(id='run-review-href-loader', fullscreen=True, type='dot', children=[dcc.Location(
     id="run-review-url", refresh=True)]), sidebar, content,
     runset_selection, runset_sample_data, runset_review_id, runset_severity_options,
     runset_channel_options, channel_selected, runset_run_options, run_option_selected,
     spc_channel, runset_xpcrmodulelane_options, xpcrmodulelane_selected, severity_selected,
-    runset_subject_ids, xpcrmodule_options, xpcrmodule_selected])
+    runset_subject_ids, xpcrmodule_options, xpcrmodule_selected, pcrcurve_sample_info])
 
 
 def Add_Dash(app):
@@ -383,7 +386,10 @@ def Add_Dash(app):
     def update_channel_selection_value(channel):
         return channel, channel, channel, channel
 
-    @ app.callback([Output('run-review-description', 'children'), Output('run-review-curves', 'figure'), Output('runset-sample-results', 'data')],
+    @ app.callback([Output('run-review-description', 'children'),
+                    Output('run-review-curves', 'figure'),
+                    Output('runset-sample-results', 'data'),
+                    Output('pcrcurve-sample-info', 'data')],
                    [Input('channel-selected', 'data'),
                    Input('run-review-process-step-selector', 'value'),
                    Input('run-review-color-selector', 'value'),
@@ -419,6 +425,7 @@ def Add_Dash(app):
         df_Channel_Step = df_Channel.loc[process_step].reset_index()
         df_Channel_Step.sort_values(color_option_selected, inplace=True)
 
+        samples_selected = []
         for idx in df_Channel_Step.index:
             X = np.array(
                 [read for read in df_Channel_Step.loc[idx, 'Readings Array']][0])
@@ -430,8 +437,13 @@ def Add_Dash(app):
                                      mode='lines',
                                      name=_name,
                                      line=dict(color=colorDict[df_Channel_Step.loc[idx, color_option_selected]])))
+            sample_info = {}
+            sample_info['RunSetSampleId'] = df_Channel_Step.loc[idx,
+                                                                'RunSetSampleId']
+            sample_info['SampleId'] = df_Channel_Step.loc[idx, 'SampleId']
+            samples_selected.append(sample_info)
 
-        return [runset_data['name'] + " Attempt # " + str(runset_data['number'])], fig, df_Channel_Step[['XPCR Module Serial', 'XPCR Module Lane', 'Sample ID', 'Target Name', 'Localized Result', 'Overall Result', 'Ct', 'End Point Fluorescence', 'Max Peak Height', 'EPR']].round(1).to_dict('records')
+        return [runset_data['name'] + " Attempt # " + str(runset_data['number'])], fig, df_Channel_Step[['XPCR Module Serial', 'XPCR Module Lane', 'Sample ID', 'Target Name', 'Localized Result', 'Overall Result', 'Ct', 'End Point Fluorescence', 'Max Peak Height', 'EPR']].round(1).to_dict('records'), samples_selected
 
     @ app.callback([Output('sample-issue-channel-options', 'options'),
                    Output('lane-issue-channel-options', 'options'),
@@ -657,8 +669,10 @@ def Add_Dash(app):
                    State('run-issue-options', 'value'),
                    State('run-option-selected', 'data'),
                    State('lane-issue-options', 'value'),
-                   State('xpcrmodulelane-selected', 'data')], prevent_intial_call=True)
-    def post_issue(mod_issue, run_issue, lane_issue, sample_issue, is_open, runset_review_id, channel_id, severity_id, module_issue_id, runset_subject_ids, xpcrmodule_selected, run_issue_id, run_selected, lane_issue_id, lane_selected):
+                   State('xpcrmodulelane-selected', 'data'),
+                   State('sample-issue-options', 'value'),
+                   State('pcrcurve-sample-info', 'data')], prevent_intial_call=True)
+    def post_issue(mod_issue, run_issue, lane_issue, sample_issue, is_open, runset_review_id, channel_id, severity_id, module_issue_id, runset_subject_ids, xpcrmodule_selected, run_issue_id, run_selected, lane_issue_id, lane_selected, sample_issue_id, samples_selected):
         print("attempting post.")
 
         issue = {}
@@ -689,6 +703,7 @@ def Add_Dash(app):
             cartridge_issue_url = os.environ['RUN_REVIEW_API_BASE'] + \
                 "CartridgeIssues"
             requests.post(url=cartridge_issue_url, json=issue, verify=False)
+
         if lane_issue:
             """
             Post information to XPCR Module Issue Endpoint
@@ -700,11 +715,17 @@ def Add_Dash(app):
                 "XPCRModuleLaneIssues"
             print(issue)
             requests.post(url=lane_issue_url, json=issue, verify=False)
+
         if sample_issue:
             """
-            Post information to Sample Issue Endpoint
+            Post information to XPCR Module Issue Endpoint
             """
-            print('test')
+            issue['issueTypeId'] = sample_issue_id
+            issue['subjectId'] = samples_selected[0]['SampleId']
+            issue['runSetSubjectReferrerId'] = samples_selected[0]['RunSetSampleId']
+            sample_issue_url = os.environ['RUN_REVIEW_API_BASE'] + \
+                "SampleIssues"
+            requests.post(url=sample_issue_url, json=issue, verify=False)
 
         if mod_issue or run_issue or lane_issue or sample_issue:
             return not is_open
