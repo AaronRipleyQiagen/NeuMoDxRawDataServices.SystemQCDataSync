@@ -19,7 +19,17 @@ remediation_actions = [{'label': 'Increase Jack Pressure', 'value': 1},
                        {'label': 'Repeat Testing As Is', 'value': 4}]
 
 run_review_description = html.H1(id='run-review-description')
-run_review_channel_selector = dcc.Dropdown(id='run-review-channel-selector')
+
+run_review_channel_selector_label = html.P(
+    "Choose Channel", style=quarterstyle)
+run_review_channel_selector = dcc.Dropdown(
+    id='run-review-channel-selector', style=threequarterstyle)
+
+run_review_xpcrmodule_selector_label = html.P(
+    "Choose XPCR Module", style=quarterstyle)
+run_review_xpcrmodule_selector = dcc.Dropdown(
+    id='run-review-xpcrmodule-selector', style=threequarterstyle)
+
 
 run_review_run_selector_label = html.P(
     "Filter for specific runs", style=quarterstyle)
@@ -54,6 +64,8 @@ line_data_content = dbc.Card(
 module_issue_content = dbc.Card(
     dbc.CardBody(
         [
+            html.Div([html.P("What XPCR Module is Affected?", className="card-text", style={'width': '30%', 'display': 'inline-block', 'vertical-align': 'middle'}),
+                      dcc.Dropdown(id='module-issue-module-options', style={'width': '70%', 'display': 'inline-block', 'vertical-align': 'middle'})]),
             html.Div([html.P("What type of issue is this?", className="card-text", style={'width': '30%', 'display': 'inline-block', 'vertical-align': 'middle'}),
                       dcc.Dropdown(id='module-issue-options', style={'width': '70%', 'display': 'inline-block', 'vertical-align': 'middle'})]),
             html.Div([html.P("What optics channel is this issue observed on?", className="card-text", style={'width': '30%', 'display': 'inline-block', 'vertical-align': 'middle'}),
@@ -70,6 +82,8 @@ module_issue_content = dbc.Card(
 run_issue_content = dbc.Card(
     dbc.CardBody(
         [
+            html.Div([html.P("What XPCR Module is Affected?", className="card-text", style={'width': '30%', 'display': 'inline-block', 'vertical-align': 'middle'}),
+                      dcc.Dropdown(id='run-issue-module-options', style={'width': '70%', 'display': 'inline-block', 'vertical-align': 'middle'})]),
             html.Div([html.P("Which run was issue observed in?", className="card-text", style={'width': '30%', 'display': 'inline-block', 'vertical-align': 'middle'}),
                       dcc.Dropdown(id='run-issue-run-options', style={'width': '70%', 'display': 'inline-block', 'vertical-align': 'middle'})]),
             html.Div([html.P("What type of issue is this?", className="card-text", style={'width': '30%', 'display': 'inline-block', 'vertical-align': 'middle'}),
@@ -86,6 +100,8 @@ run_issue_content = dbc.Card(
 module_lane_issue_content = dbc.Card(
     dbc.CardBody(
         [
+            html.Div([html.P("What XPCR Module is Affected?", className="card-text", style={'width': '30%', 'display': 'inline-block', 'vertical-align': 'middle'}),
+                      dcc.Dropdown(id='lane-issue-module-options', style={'width': '70%', 'display': 'inline-block', 'vertical-align': 'middle'})]),
             html.Div([html.P("What lane is affected by issue?", className="card-text", style={'width': '30%', 'display': 'inline-block', 'vertical-align': 'middle'}),
                       dcc.Dropdown(id='lane-issue-lane-options', style={'width': '70%', 'display': 'inline-block', 'vertical-align': 'middle'})]),
             html.Div([html.P("What type of issue is this?", className="card-text", style={'width': '30%', 'display': 'inline-block', 'vertical-align': 'middle'}),
@@ -103,6 +119,8 @@ module_lane_issue_content = dbc.Card(
 sample_issue_content = dbc.Card(
     dbc.CardBody(
         [
+            html.Div([html.P("What XPCR Module is Affected?", className="card-text", style={'width': '30%', 'display': 'inline-block', 'vertical-align': 'middle'}),
+                      dcc.Dropdown(id='sample-issue-module-options', style={'width': '70%', 'display': 'inline-block', 'vertical-align': 'middle'})]),
             html.Div([html.P("Which run was issue observed in?", className="card-text", style={'width': '30%', 'display': 'inline-block', 'vertical-align': 'middle'}),
                       dcc.Dropdown(id='sample-issue-run-options', style={'width': '70%', 'display': 'inline-block', 'vertical-align': 'middle'})]),
             html.Div([html.P("What lane is affected by issue?", className="card-text", style={'width': '30%', 'display': 'inline-block', 'vertical-align': 'middle'}),
@@ -168,9 +186,9 @@ issue_post_response = dbc.Modal([
 
 layout = [
     run_review_description,
-    run_review_channel_selector,
     issue_post_response,
-
+    html.Div([html.Div([run_review_channel_selector_label, run_review_channel_selector], style=halfstyle),
+              html.Div([run_review_xpcrmodule_selector_label, run_review_xpcrmodule_selector], style=halfstyle)]),
     html.Div([html.Div([run_review_process_step_selector_label, run_review_process_step_selector], style=halfstyle),
               html.Div([run_review_color_selector_label, run_review_color_selector], style=halfstyle)]),
     html.Div([html.Div([run_review_run_selector_label, run_review_run_selector], style=halfstyle),
