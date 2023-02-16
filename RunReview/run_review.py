@@ -108,16 +108,20 @@ xpcrmodule_selected = dcc.Store(
     id='xpcrmodule-selected', storage_type='session', data='')
 runset_subject_ids = dcc.Store(
     id='runset-subject-ids', storage_type='session', data='')
-
+runset_subject_descriptions = dcc.Store(
+    id='runset-subject-descriptions', storage_type='session')
 
 pcrcurve_sample_info = dcc.Store(
     id='pcrcurve-sample-info', storage_type='session')
+
+issue_selected = dcc.Store(id='issue-selected', storage_type='session')
+
 layout = html.Div([review_loader, dcc.Loading(id='run-review-href-loader', fullscreen=True, type='dot', children=[dcc.Location(
     id="run-review-url", refresh=True)]), sidebar, content,
     runset_selection, runset_sample_data, runset_review_id, runset_severity_options,
     runset_channel_options, channel_selected, runset_run_options, run_option_selected,
     spc_channel, runset_xpcrmodulelane_options, xpcrmodulelane_selected, severity_selected,
-    runset_subject_ids, xpcrmodule_options, xpcrmodule_selected, pcrcurve_sample_info])
+    runset_subject_ids, xpcrmodule_options, xpcrmodule_selected, pcrcurve_sample_info, issue_selected, runset_subject_descriptions])
 
 
 def Add_Dash(app):
@@ -153,7 +157,8 @@ def Add_Dash(app):
                    Output('spc-channel', 'data'),
                    Output('runset-xpcrmodulelane-options', 'data'),
                    Output('runset-subject-ids', 'data'),
-                   Output('xpcrmodule-options', 'data')],
+                   Output('xpcrmodule-options', 'data'),
+                   Output('runset-subject-descriptions', 'data')],
                   [Input('get-runset-data', 'n_clicks'),
                    State('runset-selection-data', 'data')],
                   prevent_inital_call=True)
@@ -278,36 +283,56 @@ def Add_Dash(app):
         Create RunSetSubject / Subject Dictionary
         """
         runset_subject_ids = {}
+        runset_subject_descriptions = {}
         runset_sample_subject_ids_dict = {}
+        runset_sample_subject_ids_descriptions = {}
         for idx in dataframe.drop_duplicates(subset=['RunSetSampleId', 'SampleId']).index:
             runset_sample_subject_ids_dict[dataframe.loc[idx, 'RunSetSampleId']
                                            ] = dataframe.loc[idx, 'SampleId']
+            runset_sample_subject_ids_descriptions[dataframe.loc[idx, 'RunSetSampleId']
+                                                   ] = str(dataframe.loc[idx, 'Sample ID'])
 
         runset_subject_ids['Sample'] = runset_sample_subject_ids_dict
+        runset_subject_descriptions['Sample'] = runset_sample_subject_ids_descriptions
 
         runset_xpcrmodulelane_subject_ids_dict = {}
+        runset_xpcrmodulelane_subject_ids_descriptions = {}
+
         for idx in dataframe.drop_duplicates(subset=['RunSetXPCRModuleLaneId', 'XPCRModuleLaneId']).index:
             runset_xpcrmodulelane_subject_ids_dict[dataframe.loc[idx, 'RunSetXPCRModuleLaneId']
                                                    ] = dataframe.loc[idx, 'XPCRModuleLaneId']
+            runset_xpcrmodulelane_subject_ids_descriptions[dataframe.loc[idx, 'RunSetXPCRModuleLaneId']
+                                                           ] = dataframe.loc[idx, 'XPCR Module Serial'] + " " + str(dataframe.loc[idx, 'XPCR Module Lane'])
 
         runset_subject_ids['XPCRModuleLane'] = runset_xpcrmodulelane_subject_ids_dict
+        runset_subject_descriptions['XPCR Module Lane'] = runset_xpcrmodulelane_subject_ids_descriptions
+
         runset_cartridge_subject_ids_dict = {}
+        runset_cartridge_subject_id_descriptions = {}
         for idx in dataframe.drop_duplicates(subset=['RunSetCartridgeId', 'CartridgeId']).index:
             runset_cartridge_subject_ids_dict[dataframe.loc[idx, 'RunSetCartridgeId']
                                               ] = dataframe.loc[idx, 'CartridgeId']
+            runset_cartridge_subject_id_descriptions[dataframe.loc[idx, 'RunSetCartridgeId']
+                                                     ] = "Run "+str(dataframe.loc[idx, 'Run'])
 
         runset_subject_ids['Cartridge'] = runset_cartridge_subject_ids_dict
+        runset_subject_descriptions['Run'] = runset_cartridge_subject_id_descriptions
 
         runset_xpcrmodule_subject_ids_dict = {}
+        runset_xpcrmodule_descriptions = {}
         xpcrmodule_options = {}
         xpcrmodule_options['NoFilter'] = 'All'
+
         for idx in dataframe.drop_duplicates(subset=['RunSetXPCRModuleId', 'XPCRModuleId']).index:
             runset_xpcrmodule_subject_ids_dict[dataframe.loc[idx, 'RunSetXPCRModuleId']
                                                ] = dataframe.loc[idx, 'XPCRModuleId']
             xpcrmodule_options[dataframe.loc[idx, 'RunSetXPCRModuleId']
                                ] = dataframe.loc[idx, 'XPCR Module Serial']
+            runset_xpcrmodule_descriptions[dataframe.loc[idx, 'RunSetXPCRModuleId']
+                                           ] = dataframe.loc[idx, 'XPCR Module Serial']
 
         runset_subject_ids['XPCRModule'] = runset_xpcrmodule_subject_ids_dict
+        runset_subject_descriptions['XPCR Module'] = runset_xpcrmodule_descriptions
 
         runset_neumodx_subject_ids_dict = {}
         for idx in dataframe.drop_duplicates(subset=['RunSetNeuMoDxSystemId', 'NeuMoDxSystemId']).index:
@@ -316,7 +341,7 @@ def Add_Dash(app):
 
         runset_subject_ids['NeuMoDxSystem'] = runset_neumodx_subject_ids_dict
 
-        return dataframe.to_dict('records'), '/dashboard/run-review/view-results', resp['id'], severity_options, channel_options, run_options, spc_channel, lane_options, runset_subject_ids, xpcrmodule_options
+        return dataframe.to_dict('records'), '/dashboard/run-review/view-results', resp['id'], severity_options, channel_options, run_options, spc_channel, lane_options, runset_subject_ids, xpcrmodule_options, runset_subject_descriptions
 
     @ app.callback([Output('sample-issue-options', 'options'), Output('lane-issue-options', 'options'), Output('module-issue-options', 'options'), Output('run-issue-options', 'options')],
                    Input('submit-sample-issue', 'children'))
@@ -404,31 +429,55 @@ def Add_Dash(app):
                    State('runset-selection-data', 'data'),
                    State('runset-channel-options', 'data'),
                    Input('xpcrmodulelane-selected', 'data'),
-                   Input('run-option-selected', 'data')])
-    def update_pcr_curves(channel_selected, process_step, color_option_selected, data, runset_data, channel_options, lane_selection, run_selection):
-        if channel_selected == None:
-            channel = 'Yellow'
+                   Input('run-option-selected', 'data'),
+                   Input('issue-selected', 'data')])
+    def update_pcr_curves(channel_selected, process_step, color_option_selected, data, runset_data, channel_options, lane_selection, run_selection, issue_selected):
+        if ctx.triggered_id == 'issue-selected':
+            channel = issue_selected['Channel']
+            dataframe = pd.DataFrame.from_dict(data)
+            dataframe['Channel'] = dataframe['Channel'].replace(
+                'Far_Red', 'Far Red')
+            fig = go.Figure()
+            df = dataframe.reset_index().set_index(
+                ['Channel', 'Processing Step', 'XPCR Module Serial'])
+            df_Channel = df.loc[channel]
+            if issue_selected['Level'] == 'Sample':
+                df_Channel = df_Channel[df_Channel['RunSetSampleId']
+                                        == issue_selected['RunSetSubjectReferrerId']]
+            elif issue_selected['Level'] == 'XPCR Module Lane':
+                df_Channel = df_Channel[df_Channel['RunSetXPCRModuleLaneId']
+                                        == issue_selected['RunSetSubjectReferrerId']]
+            elif issue_selected['Level'] == 'Run':
+                df_Channel = df_Channel[df_Channel['RunSetCartridgeId']
+                                        == issue_selected['RunSetSubjectReferrerId']]
+            elif issue_selected['Level'] == 'XPCR Module':
+                df_Channel = df_Channel[df_Channel['RunSetXPCRModuleId']
+                                        == issue_selected['RunSetSubjectReferrerId']]
         else:
-            channel = channel_options[channel_selected]
+            if channel_selected == None:
+                channel = 'Yellow'
+            else:
+                channel = channel_options[channel_selected]
 
-        dataframe = pd.DataFrame.from_dict(data)
-        dataframe['Channel'] = dataframe['Channel'].replace(
-            'Far_Red', 'Far Red')
-        # Start making graph...
-        fig = go.Figure()
-        df = dataframe.reset_index().set_index(
-            ['Channel', 'Processing Step', 'XPCR Module Serial'])
-        df_Channel = df.loc[channel]
+            dataframe = pd.DataFrame.from_dict(data)
+            dataframe['Channel'] = dataframe['Channel'].replace(
+                'Far_Red', 'Far Red')
+            # Start making graph...
+            fig = go.Figure()
+            df = dataframe.reset_index().set_index(
+                ['Channel', 'Processing Step', 'XPCR Module Serial'])
+            df_Channel = df.loc[channel]
 
-        """Filter Dataframe with current Run & Module Lane Selections"""
+            """Filter Dataframe with current Run & Module Lane Selections"""
 
-        if lane_selection != 'NoFilter' and lane_selection != None:
-            df_Channel = df_Channel[df_Channel['RunSetXPCRModuleLaneId']
-                                    == lane_selection]
+            if lane_selection != 'NoFilter' and lane_selection != None:
+                df_Channel = df_Channel[df_Channel['RunSetXPCRModuleLaneId']
+                                        == lane_selection]
 
-        if run_selection != 'NoFilter' and run_selection != None:
-            df_Channel = df_Channel[df_Channel['RunSetCartridgeId']
-                                    == run_selection]
+            if run_selection != 'NoFilter' and run_selection != None:
+                df_Channel = df_Channel[df_Channel['RunSetCartridgeId']
+                                        == run_selection]
+
         df_Channel_Step = df_Channel.loc[process_step].reset_index()
         df_Channel_Step.sort_values(color_option_selected, inplace=True)
 
@@ -793,7 +842,7 @@ def Add_Dash(app):
 
                 issue_levels = {'Sample': 'sampleIssuesReferred',
                                 'XPCR Module Lane': 'xpcrModuleLaneIssuesReferred',
-                                'Cartridge': 'cartridgeIssuesReferred',
+                                'Run': 'cartridgeIssuesReferred',
                                 'XPCR Module': 'xpcrModuleIssuesReferred'}
 
                 for issue_level in issue_levels:
@@ -822,6 +871,12 @@ def Add_Dash(app):
             return issue_dataframe.to_dict('records'), column_definitions
         else:
             return no_update
+
+    @app.callback(Output('issue-selected', 'data'),
+                  Input('issues-table', 'selectionChanged'))
+    def get_issue_selected(selected_row):
+        print(selected_row)
+        return selected_row[0]
 
     @app.callback(Output('run-review-status-update-post-response', 'is_open'),
                   [Input('run-review-completed-button', 'n_clicks'),

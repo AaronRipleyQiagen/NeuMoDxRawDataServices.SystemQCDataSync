@@ -21,12 +21,12 @@ def populate_review_queue(user_id):
     df['XPCR Module'] = [x[0]['xpcrModule']
                           ['xpcrModuleSerial'] for x in df['runSetXPCRModules']]
 
-    columns = ['id', 'Status', 'XPCR Module', 'name', 'number', 'runSetStartDate',
+    columns = ['id', 'Status', 'XPCR Module', 'name', 'runSetStartDate',
                'sampleCount']
 
-    groupable_columns = ['Status', 'XPCR Module']
+    groupable_columns = ['Status']
 
-    column_names = {'name': 'Description', 'number': 'Number',
+    column_names = {'name': 'Description',
                     'runSetStartDate': 'Start Date', 'sampleCount': 'Sample Count'}
     df = df[columns].rename(column_names, axis=1)
 
