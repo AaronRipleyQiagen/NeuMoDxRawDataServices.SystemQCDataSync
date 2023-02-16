@@ -17,9 +17,8 @@ runset_type_selection = dcc.Store(
 
 layout = dbc.Container(
     [loader, cartridge_sample_ids, selected_cartridge_sample_ids, sample_info, runset_type_selection,
-        dash.page_container, dcc.Location(id="url", refresh=True)],
+        dash.page_container, dcc.Loading(id='page-changing', fullscreen=True, type='dot', children=[dcc.Location(id="url", refresh=True)])],
 )
-
 
 
 def Add_Dash(app):
@@ -28,4 +27,5 @@ def Add_Dash(app):
                use_pages=True, external_stylesheets=[dbc.themes.COSMO])
 
     apply_layout_with_auth(app, layout)
+
     return app.server

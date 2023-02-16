@@ -139,7 +139,7 @@ def Add_Dash(app):
         if selected == None:
             return no_update
         runsetsample_url = os.environ['RUN_REVIEW_API_BASE'] + \
-            "RunSets/Samples/{}".format(selected[0]['id'])
+            "RunSets/{}/Samples".format(selected[0]['id'])
         _runset_samples = requests.get(runsetsample_url, verify=False).json()
         return _runset_samples
 
@@ -403,7 +403,7 @@ def Add_Dash(app):
                    State('runset-selection-data', 'data'),
                    State('runset-channel-options', 'data'),
                    Input('xpcrmodulelane-selected', 'data'),
-                   Input('run-option-selected', 'data')], prevent_initial_call=True)
+                   Input('run-option-selected', 'data')])
     def update_pcr_curves(channel_selected, process_step, color_option_selected, data, runset_data, channel_options, lane_selection, run_selection):
         if channel_selected == None:
             channel = 'Yellow'
@@ -601,7 +601,7 @@ def Add_Dash(app):
                    )
     def control_run_selector_validity(tab_selected):
 
-        if tab_selected in ['run-review-module-issues', 'run-review-module-lane-issues']:
+        if tab_selected in ['run-review-module-issues', 'run-review-module-lane-issues', 'run-review-active-issues']:
             return True
         else:
             return False
@@ -611,7 +611,27 @@ def Add_Dash(app):
                    )
     def control_lane_selector_validity(tab_selected):
 
-        if tab_selected in ['run-review-module-issues', 'run-review-run-issues']:
+        if tab_selected in ['run-review-module-issues', 'run-review-run-issues', 'run-review-active-issues']:
+            return True
+        else:
+            return False
+
+    @ app.callback(Output('run-review-xpcrmodule-selector', 'disabled'),
+                   Input('review-tabs', 'active_tab')
+                   )
+    def control_module_selector_validity(tab_selected):
+
+        if tab_selected in ['run-review-active-issues']:
+            return True
+        else:
+            return False
+
+    @ app.callback(Output('run-review-channel-selector', 'disabled'),
+                   Input('review-tabs', 'active_tab')
+                   )
+    def control_channel_selector_validity(tab_selected):
+
+        if tab_selected in ['run-review-active-issues']:
             return True
         else:
             return False
@@ -745,6 +765,83 @@ def Add_Dash(app):
             return not is_open, None, None, None, None
 
         return is_open, None, None, None, None
+
+    @app.callback([Output('issues-table', 'rowData'),
+                   Output('issues-table', 'columnDefs')],
+                  [Input('review-tabs', 'active_tab'),
+                   State('runset-selection-data', 'data')])
+    def get_active_runset_issues(tab_selected, runset_selection_data):
+
+        if tab_selected in ['run-review-active-issues']:
+            """
+            1. Call API Endpoint to get active issue data.
+            """
+
+            runset_issues_url = os.environ['RUN_REVIEW_API_BASE'] + \
+                "RunSets/{}/issues".format(runset_selection_data['id'])
+
+            runset_data = requests.get(
+                url=runset_issues_url, verify=False).json()
+
+            issue_dataframe = pd.DataFrame(columns=[
+                                           'Level', 'Severity', 'Channel', 'Reviewer Name', 'Type', 'ChannelId', 'IssueTypeId', 'RunSetSubjectReferrerId'])
+            idx = 0
+            for runset_review in runset_data['runSetReviews']:
+                reviewer_name = runset_review['reviewerName']
+                reviewerEmail = runset_review['reviewerEmail']
+
+                issue_levels = {'Sample': 'sampleIssuesReferred',
+                                'XPCR Module Lane': 'xpcrModuleLaneIssuesReferred',
+                                'Cartridge': 'cartridgeIssuesReferred',
+                                'XPCR Module': 'xpcrModuleIssuesReferred'}
+
+                for issue_level in issue_levels:
+                    for issue in runset_review[issue_levels[issue_level]]:
+                        severity = issue['severityRating']['name']
+                        channel = issue['assayChannel']['channel']
+                        channel_id = issue['assayChannel']['id']
+                        issue_type = issue['issueType']['name']
+                        issue_type_id = issue['issueType']['id']
+                        subject_referrer_id = issue['runSetSubjectReferrerId']
+
+                        issue_entry = [issue_level, severity, channel, reviewer_name,
+                                       issue_type, channel_id, issue_type_id, subject_referrer_id]
+                        issue_dataframe.loc[idx] = issue_entry
+                        idx += 1
+
+            column_definitions = []
+            for column in issue_dataframe.columns:
+                if 'Id' not in column:
+                    column_definitions.append(
+                        {"headerName": column, "field": column, "filter": True})
+                else:
+                    column_definitions.append(
+                        {"headerName": column, "field": column, "filter": True, "hide": True})
+
+            return issue_dataframe.to_dict('records'), column_definitions
+        else:
+            return no_update
+
+    @app.callback(Output('run-review-status-update-post-response', 'is_open'),
+                  [Input('run-review-completed-button', 'n_clicks'),
+                  State('run-review-status-update-post-response', 'is_open'),
+                  State('runset-review-id', 'data'),
+                  State('run-review-acceptance', 'value')])
+    def update_run_review_status(n, is_open, runset_review_id, run_review_acceptance):
+
+        update_url = os.environ['RUN_REVIEW_API_BASE'] + \
+            "RunSetReviews/{}".format(runset_review_id)
+
+        query_params = {'acceptable': run_review_acceptance,
+                        'newStatusName': 'Completed'}
+        print(query_params)
+        resp = requests.put(url=update_url, params=query_params, verify=False)
+        print(resp.url)
+        print(resp.status_code)
+        if n:
+            return not is_open
+
+        return is_open
 
     return app.server
 

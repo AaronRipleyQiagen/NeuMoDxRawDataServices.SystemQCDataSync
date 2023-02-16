@@ -3,12 +3,15 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
+import dash_ag_grid as dag
 
 register_page(__name__, path="/run-review/view-results/")
 
 fig = go.Figure()
 halfstyle = {'width': '50%', 'display': 'inline-block',
              'vertical-align': 'middle', 'horizontal-align': 'left'}
+onethirdstyle = {'width': '33%', 'display': 'inline-block',
+                 'vertical-align': 'middle', 'horizontal-align': 'center'}
 quarterstyle = {'width': '35%', 'display': 'inline-block',
                 'vertical-align': 'middle', 'horizontal-align': 'left'}
 threequarterstyle = {'width': '65%', 'display': 'inline-block',
@@ -60,7 +63,6 @@ line_data_content = dbc.Card(
     ),
     className="mt-3",
 )
-
 module_issue_content = dbc.Card(
     dbc.CardBody(
         [
@@ -139,7 +141,19 @@ sample_issue_content = dbc.Card(
 active_issues_content = dbc.Card(
     dbc.CardBody(
         [
-            html.P("Coming Soon", className="card-text"),
+            dag.AgGrid(
+                enableEnterpriseModules=True,
+                # licenseKey=os.environ['AGGRID_ENTERPRISE'],
+                # columnDefs=initial_columnDefs,
+                # rowData=intial_data,
+                columnSize="sizeToFit",
+                defaultColDef=dict(
+                    resizable=True,
+                ),
+                rowSelection='single',
+                # setRowId="id",
+                id='issues-table'
+            )
         ]
     ),
     className="mt-3",
@@ -184,15 +198,34 @@ issue_post_response = dbc.Modal([
     id="issue-post-response",
     is_open=False)
 
+run_review_update_response = dbc.Modal([
+    dbc.ModalHeader(dbc.ModalTitle("Run Review Status Updated Successfully")),
+    dbc.ModalBody("Run Review Status Changed to Completed.")
+],
+    id="run-review-status-update-post-response",
+    is_open=False)
+
+run_review_status_update_button = dbc.Button("Mark Review Completed",
+                                             id='run-review-completed-button')
+run_review_acceptance_label = html.P(
+    "Is Data Acceptable?", style=quarterstyle)
+run_review_acceptance = dcc.Dropdown(
+    options={True: "Yes", False: "No"}, id='run-review-acceptance', style=threequarterstyle)
 layout = [
     run_review_description,
     issue_post_response,
+    run_review_update_response,
+
     html.Div([html.Div([run_review_channel_selector_label, run_review_channel_selector], style=halfstyle),
               html.Div([run_review_xpcrmodule_selector_label, run_review_xpcrmodule_selector], style=halfstyle)]),
     html.Div([html.Div([run_review_process_step_selector_label, run_review_process_step_selector], style=halfstyle),
               html.Div([run_review_color_selector_label, run_review_color_selector], style=halfstyle)]),
     html.Div([html.Div([run_review_run_selector_label, run_review_run_selector], style=halfstyle),
               html.Div([run_review_lane_selector_label, run_review_lane_selector], style=halfstyle)]),
+
+    html.Div([html.Div([run_review_acceptance_label, run_review_acceptance], style=halfstyle),
+              html.Div([run_review_status_update_button], style=halfstyle)]),
+
 
     dcc.Loading(id='run-review-loading', type='graph',
                 children=[run_review_curves]),

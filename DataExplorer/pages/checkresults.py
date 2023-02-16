@@ -1697,9 +1697,11 @@ layout = html.Div(children=[
            Output('process-step-selector', 'value'),
            Output('sample-info', 'data'),
            Output('runset-type-options', 'options')],
-          [Input('selected-cartridge-sample-ids', 'data')])
-def get_sample_ids_from_dcc_store(selected_cartridge_sample_ids):
+          [Input('url', 'href'), State('selected-cartridge-sample-ids', 'data')])
+def get_sample_ids_from_dcc_store(href, selected_cartridge_sample_ids):
 
+    print(href)
+    print('Getting Data from DCC Store')
     selected_sample_ids = []
     sample_id_container = []
     for cartridge_id in selected_cartridge_sample_ids:
@@ -1732,6 +1734,7 @@ def get_sample_ids_from_dcc_store(selected_cartridge_sample_ids):
 
     runsettypeoptions = {}
     for resultcode in dataframe['Result Code'].unique():
+        print(resultcode)
         request_url = os.environ['RUN_REVIEW_API_BASE'] + \
             "QualificationAssays/{}".format(resultcode)
         resp = requests.get(request_url, verify=False).json()
@@ -1850,11 +1853,11 @@ def create_run_review(submit_clicks, data, runset_type_selection_id, runset_type
     return is_open
 
 
-@ callback(Output("runset-selector-modal", "is_open"),
-           [Input("create-run-review-button", "n_clicks"), Input("submit-button",
-                                                                 "n_clicks"), Input("cancel-button", "n_clicks")],
-           [State("runset-selector-modal", "is_open")],
-           prevent_initial_call=True)
+@callback(Output("runset-selector-modal", "is_open"),
+          [Input("create-run-review-button", "n_clicks"), Input("submit-button",
+                                                                "n_clicks"), Input("cancel-button", "n_clicks")],
+          [State("runset-selector-modal", "is_open")],
+          prevent_initial_call=True)
 def switch_runset_selector(create_clicks, submit_clicks, cancel_clicks, is_open):
     if create_clicks or cancel_clicks or submit_clicks:
         return not is_open

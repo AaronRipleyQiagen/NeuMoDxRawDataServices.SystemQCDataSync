@@ -56,7 +56,7 @@ def getXPCRModuleCartridges(module_id):
             cartridgeToDataFrame(cartridge)
             cartridge_samples[cartridge['id']] = sample_ids
 
-    #print(cartridge_samples)
+    # print(cartridge_samples)
 
     module_data.sort_values('Run Start Time', inplace=True, ascending=False)
     module_data.dropna(subset=['Run Start Time'], inplace=True)
@@ -90,8 +90,7 @@ layout = html.Div([
                                                                                                                     ]))
     ]),
     html.Div([
-        dbc.Button('Get Data', id='view-run-data',
-                   n_clicks=0, href="/dashboard/data-explorer/results"),
+        dbc.Button('Get Data', id='view-run-data'),
     ])
 
 
@@ -111,7 +110,8 @@ def get_run_options(module):
         return getXPCRModuleCartridges(module)
 
 
-@callback(Output("selected-cartridge-sample-ids", "data"),
+@callback([Output("selected-cartridge-sample-ids", "data"),
+           Output('url', 'href')],
           [Input('view-run-data', 'n_clicks'),
            State('runs', 'selected_row_ids'),
            State('cartridge-sample-ids', 'data')],
@@ -127,4 +127,4 @@ def get_selected_samples(n, selected_cartridge_ids, cartridge_sample_ids):
             selected_cartridge_sample_ids.pop(cartridge_id)
 
     print("got selected samples")
-    return selected_cartridge_sample_ids
+    return selected_cartridge_sample_ids, "/dashboard/data-explorer/results"
