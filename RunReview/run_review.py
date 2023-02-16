@@ -130,7 +130,8 @@ def Add_Dash(app):
     @app.callback([Output('review-queue-table', 'rowData'), Output('review-queue-table', 'columnDefs')],
                   [Input('refresh-review-queue', 'n_clicks')])
     def refresh_review_queue(n):
-        intial_data, initial_columnDefs = populate_review_queue()
+        intial_data, initial_columnDefs = populate_review_queue(
+            session['user'].id)
         return intial_data, initial_columnDefs
 
     @app.callback(Output('runset-selection-data', 'data'),

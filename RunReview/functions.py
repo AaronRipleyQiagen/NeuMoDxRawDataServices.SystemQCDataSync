@@ -6,14 +6,17 @@ import aiohttp
 import numpy as np
 
 
-def populate_review_queue():
-    runsets_url = os.environ['RUN_REVIEW_API_BASE'] + "RunSets"
+def populate_review_queue(user_id):
+    runsets_url = os.environ['RUN_REVIEW_API_BASE'] + \
+        "RunSets/{}/reviewerstatus".format(user_id)
+    print(runsets_url)
 
-    runsets = requests.get(url=runsets_url, verify=False).json()
-
+    resp = requests.get(url=runsets_url, verify=False)
+    print(resp.status_code)
+    runsets = resp.json()
     df = pd.DataFrame.from_dict(runsets)
-    df['Status'] = [x[0]['runSetStatus']['name']
-                    for x in df['runSetRunSetStatuses']]
+    df['Status'] = [x[0]['runSetReviewStatus']['name']
+                    for x in df['runSetReviews']]
 
     df['XPCR Module'] = [x[0]['xpcrModule']
                           ['xpcrModuleSerial'] for x in df['runSetXPCRModules']]
