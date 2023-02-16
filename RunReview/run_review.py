@@ -302,7 +302,7 @@ def Add_Dash(app):
             runset_xpcrmodulelane_subject_ids_dict[dataframe.loc[idx, 'RunSetXPCRModuleLaneId']
                                                    ] = dataframe.loc[idx, 'XPCRModuleLaneId']
             runset_xpcrmodulelane_subject_ids_descriptions[dataframe.loc[idx, 'RunSetXPCRModuleLaneId']
-                                                           ] = dataframe.loc[idx, 'XPCR Module Serial'] + " " + str(dataframe.loc[idx, 'XPCR Module Lane'])
+                                                           ] = dataframe.loc[idx, 'XPCR Module Serial'] + " Lane " + str(dataframe.loc[idx, 'XPCR Module Lane'])
 
         runset_subject_ids['XPCRModuleLane'] = runset_xpcrmodulelane_subject_ids_dict
         runset_subject_descriptions['XPCR Module Lane'] = runset_xpcrmodulelane_subject_ids_descriptions
@@ -819,8 +819,9 @@ def Add_Dash(app):
     @app.callback([Output('issues-table', 'rowData'),
                    Output('issues-table', 'columnDefs')],
                   [Input('review-tabs', 'active_tab'),
-                   State('runset-selection-data', 'data')])
-    def get_active_runset_issues(tab_selected, runset_selection_data):
+                   State('runset-selection-data', 'data'),
+                   State('runset-subject-descriptions', 'data')])
+    def get_active_runset_issues(tab_selected, runset_selection_data, runset_subject_descriptions):
 
         if tab_selected in ['run-review-active-issues']:
             """
@@ -834,7 +835,7 @@ def Add_Dash(app):
                 url=runset_issues_url, verify=False).json()
 
             issue_dataframe = pd.DataFrame(columns=[
-                                           'Level', 'Severity', 'Channel', 'Reviewer Name', 'Type', 'ChannelId', 'IssueTypeId', 'RunSetSubjectReferrerId'])
+                                           'Level', 'Subject', 'Severity', 'Channel', 'Reviewer Name', 'Type', 'ChannelId', 'IssueTypeId', 'RunSetSubjectReferrerId'])
             idx = 0
             for runset_review in runset_data['runSetReviews']:
                 reviewer_name = runset_review['reviewerName']
@@ -847,6 +848,7 @@ def Add_Dash(app):
 
                 for issue_level in issue_levels:
                     for issue in runset_review[issue_levels[issue_level]]:
+                        description = runset_subject_descriptions[issue_level][issue['runSetSubjectReferrerId']]
                         severity = issue['severityRating']['name']
                         channel = issue['assayChannel']['channel']
                         channel_id = issue['assayChannel']['id']
@@ -854,7 +856,7 @@ def Add_Dash(app):
                         issue_type_id = issue['issueType']['id']
                         subject_referrer_id = issue['runSetSubjectReferrerId']
 
-                        issue_entry = [issue_level, severity, channel, reviewer_name,
+                        issue_entry = [issue_level, description,  severity, channel, reviewer_name,
                                        issue_type, channel_id, issue_type_id, subject_referrer_id]
                         issue_dataframe.loc[idx] = issue_entry
                         idx += 1
