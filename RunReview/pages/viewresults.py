@@ -4,6 +4,9 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 import dash_ag_grid as dag
+import os
+from azure.storage.blob import BlobServiceClient
+import base64
 
 register_page(__name__, path="/run-review/view-results/")
 
@@ -171,6 +174,47 @@ remediation_action_content = dbc.Card(
     className="mt-3",
 )
 
+
+account_url = 'https://prdqianeumodxrdseusst.blob.core.windows.net'
+container_name = 'neumodx-systemqc-cartridgepictures'
+blob_name = 'test.JPG'
+
+# Create a BlobServiceClient object
+blob_service_client = BlobServiceClient(
+    account_url=account_url, credential=os.environ['NEUMODXSYSTEMQC_RAWDATAFILES_KEY'])
+container_name = 'neumodx-systemqc-cartridgepictures'
+# Get a reference to the container and blob
+container_client = blob_service_client.get_container_client(container_name)
+blob_client = container_client.get_blob_client(blob_name)
+image_bytes = blob_client.download_blob().readall()
+
+cartridge_pictures_content = dbc.Card(
+    html.Img(
+        src='data:image/png;base64,{}'.format(base64.b64encode(image_bytes).decode()))
+
+    # dbc.Carousel(
+    #     items=[
+    #         {"key": "1", "src": "/static/images/slide1.svg"},
+    #         {"key": "2", "src": "/static/images/slide2.svg"},
+    #         {"key": "3", "src": "/static/images/slide3.svg"},
+    #     ],
+    #     className="cartridge-pictures",
+    # )
+)
+
+tadms_pictures_content = dbc.Card(
+    html.P("Coming Soon")
+)
+
+comments_content = dbc.Card(
+    dbc.CardBody(
+        [
+            html.P("Coming Soon :)", className="card-text")
+        ]
+    ),
+    className="mt-3",
+)
+
 tabs = dbc.Tabs(
     children=[
         dbc.Tab(line_data_content, label="View Line Data",
@@ -186,7 +230,9 @@ tabs = dbc.Tabs(
         dbc.Tab(active_issues_content, label='View Active Issues',
                 tab_id='run-review-active-issues'),
         dbc.Tab(remediation_action_content, label='Assign Remediation Action',
-                tab_id='run-review-remediation-actions')
+                tab_id='run-review-remediation-actions'),
+        dbc.Tab(cartridge_pictures_content,
+                label='View Cartridge Pictures', tab_id='cartidge-pictures')
     ], id='review-tabs'
 )
 
