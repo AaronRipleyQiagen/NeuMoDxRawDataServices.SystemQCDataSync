@@ -1723,7 +1723,7 @@ def get_sample_ids_from_dcc_store(href, selected_cartridge_sample_ids):
 
     # dataframe = dataframe.reset_index().set_index(['Channel', 'Processing Step', 'XPCR Module Serial'])
 
-    if dataframe['Result Code'][0] == 'QUAL':
+    if dataframe['Result Code'][0] in ['QUAL', 'HCV', 'CTNG']:
         SPC2_channel = 'Yellow'
     else:
         SPC2_channel = 'Red'
