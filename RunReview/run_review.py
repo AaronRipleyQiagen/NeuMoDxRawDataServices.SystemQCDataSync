@@ -430,7 +430,7 @@ def Add_Dash(app):
                    State('runset-channel-options', 'data'),
                    Input('xpcrmodulelane-selected', 'data'),
                    Input('run-option-selected', 'data'),
-                   Input('issue-selected', 'data')])
+                   Input('issue-selected', 'data')], prevent_intial_call=True)
     def update_pcr_curves(channel_selected, process_step, color_option_selected, data, runset_data, channel_options, lane_selection, run_selection, issue_selected):
         if ctx.triggered_id == 'issue-selected':
             channel = issue_selected['Channel']
@@ -875,7 +875,7 @@ def Add_Dash(app):
             return no_update
 
     @app.callback(Output('issue-selected', 'data'),
-                  Input('issues-table', 'selectionChanged'))
+                  Input('issues-table', 'selectionChanged'), prevent_initial_call=True)
     def get_issue_selected(selected_row):
         print(selected_row)
         return selected_row[0]
@@ -884,19 +884,19 @@ def Add_Dash(app):
                   [Input('run-review-completed-button', 'n_clicks'),
                   State('run-review-status-update-post-response', 'is_open'),
                   State('runset-review-id', 'data'),
-                  State('run-review-acceptance', 'value')])
+                  State('run-review-acceptance', 'value')], prevent_intital_call=True)
     def update_run_review_status(n, is_open, runset_review_id, run_review_acceptance):
-
-        update_url = os.environ['RUN_REVIEW_API_BASE'] + \
-            "RunSetReviews/{}".format(runset_review_id)
-
-        query_params = {'acceptable': run_review_acceptance,
-                        'newStatusName': 'Completed'}
-        print(query_params)
-        resp = requests.put(url=update_url, params=query_params, verify=False)
-        print(resp.url)
-        print(resp.status_code)
+        print("I ran :)"*30)
         if n:
+            update_url = os.environ['RUN_REVIEW_API_BASE'] + \
+                "RunSetReviews/{}".format(runset_review_id)
+            query_params = {'acceptable': run_review_acceptance,
+                            'newStatusName': 'Completed'}
+            print(query_params)
+            resp = requests.put(
+                url=update_url, params=query_params, verify=False)
+            print(resp.url)
+            print(resp.status_code)
             return not is_open
 
         return is_open

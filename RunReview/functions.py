@@ -15,8 +15,18 @@ def populate_review_queue(user_id):
     print(resp.status_code)
     runsets = resp.json()
     df = pd.DataFrame.from_dict(runsets)
-    df['Status'] = [x[0]['runSetReviewStatus']['name']
-                    for x in df['runSetReviews']]
+
+    # df['Status'] = [x[0]['runSetReviewStatus']['name']
+    #                 for x in df['runSetReviews']]
+
+    df['Status'] = np.nan
+
+    for idx in df.index:
+        try:
+            df.loc[idx, 'Status'] = df.loc[idx,
+                                           'runSetReviews'][0]['runSetReviewStatus']['name']
+        except:
+            df.loc[idx, 'Status'] = 'Not Yet Reviewed'
 
     df['XPCR Module'] = [x[0]['xpcrModule']
                           ['xpcrModuleSerial'] for x in df['runSetXPCRModules']]
