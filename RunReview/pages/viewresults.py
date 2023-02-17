@@ -16,7 +16,7 @@ halfstyle = {'width': '50%', 'display': 'inline-block',
 onethirdstyle = {'width': '33%', 'display': 'inline-block',
                  'vertical-align': 'middle', 'horizontal-align': 'center'}
 quarterstyle = {'width': '35%', 'display': 'inline-block',
-                'vertical-align': 'middle', 'horizontal-align': 'left'}
+                'vertical-align': 'middle', 'horizontal-align': 'right'}
 threequarterstyle = {'width': '65%', 'display': 'inline-block',
                      'vertical-align': 'middle', 'horizontal-align': 'right'}
 remediation_actions = [{'label': 'Increase Jack Pressure', 'value': 1},
@@ -36,6 +36,8 @@ run_review_xpcrmodule_selector_label = html.P(
 run_review_xpcrmodule_selector = dcc.Dropdown(
     id='run-review-xpcrmodule-selector', style=threequarterstyle)
 
+run_review_download_data = dbc.Button(
+    "Download Data", style={'margin': 'auto'}, id='run-review-download-data')
 
 run_review_run_selector_label = html.P(
     "Filter for specific runs", style=quarterstyle)
@@ -166,9 +168,21 @@ remediation_action_content = dbc.Card(
     dbc.CardBody(
         [
             html.P("Please Choose a Remediation Action", className="card-text"),
-            dcc.Dropdown(id='remediation-action-options',
-                         options=remediation_actions),
-            dbc.Button("Submit Action", id='remediation-action-submit')
+            dcc.Dropdown(id='remediation-action-options'),
+            dbc.Button("Submit Action", id='remediation-action-submit'),
+            dag.AgGrid(
+                enableEnterpriseModules=True,
+                # licenseKey=os.environ['AGGRID_ENTERPRISE'],
+                # columnDefs=initial_columnDefs,
+                # rowData=intial_data,
+                columnSize="sizeToFit",
+                defaultColDef=dict(
+                    resizable=True,
+                ),
+                rowSelection='single',
+                # setRowId="id",
+                id='remediation-action-table'
+            )
         ]
     ),
     className="mt-3",
@@ -244,6 +258,14 @@ issue_post_response = dbc.Modal([
     id="issue-post-response",
     is_open=False)
 
+
+remediation_action_post_response = dbc.Modal([
+    dbc.ModalHeader(dbc.ModalTitle("Remediation Action Creation Result")),
+    dbc.ModalBody("Remediation Action was added successfully")
+],
+    id="remediation-action-post-response",
+    is_open=False)
+
 run_review_update_response = dbc.Modal([
     dbc.ModalHeader(dbc.ModalTitle("Run Review Status Updated Successfully")),
     dbc.ModalBody("Run Review Status Changed to Completed.")
@@ -251,8 +273,8 @@ run_review_update_response = dbc.Modal([
     id="run-review-status-update-post-response",
     is_open=False)
 
-run_review_status_update_button = dbc.Button("Mark Review Completed",
-                                             id='run-review-completed-button')
+run_review_status_update_button = dbc.Button("Submit Review",
+                                             id='run-review-completed-button', style=quarterstyle)
 run_review_acceptance_label = html.P(
     "Is Data Acceptable?", style=quarterstyle)
 run_review_acceptance = dcc.Dropdown(
@@ -261,6 +283,7 @@ layout = [
     run_review_description,
     issue_post_response,
     run_review_update_response,
+    remediation_action_post_response,
 
     html.Div([html.Div([run_review_channel_selector_label, run_review_channel_selector], style=halfstyle),
               html.Div([run_review_xpcrmodule_selector_label, run_review_xpcrmodule_selector], style=halfstyle)]),
@@ -271,6 +294,8 @@ layout = [
 
     html.Div([html.Div([run_review_acceptance_label, run_review_acceptance], style=halfstyle),
               html.Div([run_review_status_update_button], style=halfstyle)]),
+
+    html.Div([html.Div([run_review_download_data])]),
 
 
     dcc.Loading(id='run-review-loading', type='graph',

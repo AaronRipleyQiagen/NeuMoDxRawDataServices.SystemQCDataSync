@@ -115,13 +115,16 @@ pcrcurve_sample_info = dcc.Store(
     id='pcrcurve-sample-info', storage_type='session')
 
 issue_selected = dcc.Store(id='issue-selected', storage_type='session')
+flat_data_download = dcc.Download(id="flat-data-download")
+
+remediation_action_selection = dcc.Store(id='remediation-action-selection')
 
 layout = html.Div([review_loader, dcc.Loading(id='run-review-href-loader', fullscreen=True, type='dot', children=[dcc.Location(
     id="run-review-url", refresh=True)]), sidebar, content,
     runset_selection, runset_sample_data, runset_review_id, runset_severity_options,
     runset_channel_options, channel_selected, runset_run_options, run_option_selected,
     spc_channel, runset_xpcrmodulelane_options, xpcrmodulelane_selected, severity_selected,
-    runset_subject_ids, xpcrmodule_options, xpcrmodule_selected, pcrcurve_sample_info, issue_selected, runset_subject_descriptions])
+    runset_subject_ids, xpcrmodule_options, xpcrmodule_selected, pcrcurve_sample_info, issue_selected, runset_subject_descriptions, flat_data_download, remediation_action_selection])
 
 
 def Add_Dash(app):
@@ -877,7 +880,8 @@ def Add_Dash(app):
     @app.callback(Output('issue-selected', 'data'),
                   Input('issues-table', 'selectionChanged'), prevent_initial_call=True)
     def get_issue_selected(selected_row):
-        print(selected_row)
+        if selected_row == None:
+            return no_update
         return selected_row[0]
 
     @app.callback(Output('run-review-status-update-post-response', 'is_open'),
@@ -901,6 +905,113 @@ def Add_Dash(app):
 
         return is_open
 
+    @app.callback([Output("flat-data-download", "data"),
+                   Output("run-review-download-data", "n_clicks")],
+                  [Input('run-review-download-data', 'n_clicks'),
+                   State('runset-sample-data', 'data'),
+                   State("runset-selection-data", "data")], prevent_initial_call=True)
+    def download_function(n, data, runset_selection):
+        if n:
+            print("Downloading")
+            data_output = pd.DataFrame.from_dict(data)
+            print(data_output)
+            data_output.set_index(
+                ['Sample ID', 'Test Guid', 'Replicate Number', 'Processing Step', 'Channel'], inplace=True)
+            data_output.drop(
+                [x for x in data_output.columns if x[-2:] == 'Id' or "Array" in x], axis=1, inplace=True)
+
+            return dcc.send_data_frame(data_output.reset_index().to_csv, runset_selection['id']+".csv", index=False), None
+        return no_update, None
+
+    @app.callback(Output('remediation-action-options', 'options'),
+                  Input('remediation-action-selection', 'data'))
+    def load_remediation_action_options(data):
+        remediation_action_types_url = os.environ["RUN_REVIEW_API_BASE"] + \
+            "RemediationActionTypes"
+        remediation_actions = requests.get(
+            url=remediation_action_types_url, verify=False).json()
+        remediation_action_options = {}
+        for remediation_action in remediation_actions:
+            remediation_action_options[remediation_action['id']
+                                       ] = remediation_action['name']
+
+        return remediation_action_options
+
+    @app.callback([Output("remediation-action-post-response", "is_open"),
+                   Output("remediation-action-submit", "n_clicks")],
+                  [Input("remediation-action-submit", "n_clicks"),
+                   State("remediation-action-post-response", "is_open"),
+                   State("runset-selection-data", "data"),
+                   State("runset-review-id", "data"),
+                   State("xpcrmodule-selected", "data"),
+                   State("remediation-action-options", "value"),
+                   State("runset-subject-ids", 'data')], prevent_inital_call=True)
+    def post_remediation_action(n, is_open, runset_selection, runset_review_id, xpcr_module_runset_id, remediation_action_id, runset_subject_ids):
+
+        if n:
+            print("Run it Run it")
+            remediation_action_payload = {"userId": session['user'].id,
+                                          "neuMoDxSystemId": "00000000-0000-0000-0000-000000000000",
+                                          "xpcrModuleId": runset_subject_ids['XPCRModule'][xpcr_module_runset_id],
+                                          "runSetReferrerId": runset_selection['id'],
+                                          "runSetResolverId": "00000000-0000-0000-0000-000000000000",
+                                          "runSetReviewReferrerId": runset_review_id,
+                                          "runSetReviewResolverId": "00000000-0000-0000-0000-000000000000",
+                                          "remediationActionTypeId": remediation_action_id}
+            print(remediation_action_payload)
+            remediation_action_url = os.environ["RUN_REVIEW_API_BASE"] + \
+                "RemediationActions"
+
+            requests.post(url=remediation_action_url,
+                          json=remediation_action_payload,
+                          verify=False).json()
+            return not is_open, None
+
+        return is_open, None
+
+    @app.callback([Output('remediation-action-table', 'rowData'),
+                   Output('remediation-action-table', 'columnDefs')],
+                  [Input('review-tabs', 'active_tab'),
+                   State('xpcrmodule-selected', 'data'),
+                   State('runset-subject-ids', 'data')])
+    def get_active_runset_issues(tab_selected, runset_xpcr_module_selection_id, runset_subject_ids):
+
+        if tab_selected in ['run-review-remediation-actions'] and runset_xpcr_module_selection_id != 'NoFilter':
+            """
+            1. Call API Endpoint to get active issue data.
+            """
+
+            xpcrmodule_remediation_issues_url = os.environ['RUN_REVIEW_API_BASE'] + \
+                "XPCRModules/{}/remediationactions".format(
+                    runset_subject_ids['XPCRModule'][runset_xpcr_module_selection_id])
+            print(xpcrmodule_remediation_issues_url)
+            xpcrmodule = requests.get(
+                url=xpcrmodule_remediation_issues_url, verify=False).json()
+
+            actions_dataframe = pd.DataFrame(
+                columns=['Status', 'Action', 'Assigned By', 'Origin'])
+
+            idx = 0
+            for remediation_action in xpcrmodule['remediationActions']:
+                status = remediation_action['remediationActionStatus']['name']
+                action = remediation_action['remediationActionType']['name']
+                assignee = remediation_action['runSetReviewReferrer']['reviewerName']
+                origin = remediation_action['runSetReferrer']['name'] + \
+                    " #" + str(remediation_action['runSetReferrer']['number'])
+                actions_dataframe.loc[idx] = [status, action, assignee, origin]
+                idx += 1
+            column_definitions = []
+            for column in actions_dataframe.columns:
+                if 'Id' not in column:
+                    column_definitions.append(
+                        {"headerName": column, "field": column, "filter": True})
+                else:
+                    column_definitions.append(
+                        {"headerName": column, "field": column, "filter": True, "hide": True})
+
+            return actions_dataframe.to_dict('records'), column_definitions
+        else:
+            return no_update
     return app.server
 
 
