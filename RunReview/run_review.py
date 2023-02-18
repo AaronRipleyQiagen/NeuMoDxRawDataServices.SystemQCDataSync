@@ -1042,7 +1042,7 @@ def Add_Dash(app):
                 item = add_item_to_carousel(
                     title="Some ID",
                     description="Some Photo",
-                    container_name="neumodx-systemqc-cartridgepictures",
+                    container_name="neumodxsystemqc-cartridgepictures",
                     blob_name=cartridge_picture['fileid'],
                 )
                 items.append(item)
@@ -1057,7 +1057,7 @@ def Add_Dash(app):
         [State('upload-cartridge-pictures', 'filename'),
          State("runset-selection-data", "data"),
          State("runset-review-id", "data")])
-    def upload_image_to_blob_storage(list_of_contents, list_of_filenames, runset_selection, runset_review_id):
+    def upload_cartridge_image_to_blob_storage(list_of_contents, list_of_filenames, runset_selection, runset_review_id):
 
         if list_of_contents:
             files = {list_of_filenames[i]: list_of_contents[i]
@@ -1072,7 +1072,7 @@ def Add_Dash(app):
                 file_content = base64.b64decode(content_string)
                 file_id = str(uuid.uuid4())+".jpg"
                 file_url = save_uploaded_file_to_blob_storage(
-                    file_content, file_id, 'neumodx-systemqc-cartridgepictures')
+                    file_content, file_id, 'neumodxsystemqc-cartridgepictures')
                 """
                 Create Database Entry
                 """
@@ -1097,6 +1097,86 @@ def Add_Dash(app):
 
         else:
             return no_update
+
+    @app.callback(Output('tadm-images', 'items'),
+                  [Input('review-tabs', 'active_tab'),
+                  State("runset-selection-data", "data")])
+    def get_tadm_pictures(active_tab, runset_selection):
+        if active_tab == 'tadm-pictures':
+            items = []
+
+            """
+            Call API to determine Cartridge Picture Details (name, url etc)
+            """
+
+            runset_tadm_pictures_url = os.environ['RUN_REVIEW_API_BASE'] + \
+                "RunSets/{}/tadmpictures".format(runset_selection['id'])
+
+            print(runset_tadm_pictures_url)
+
+            runset_tadm_picture_response = requests.get(
+                url=runset_tadm_pictures_url, verify=False).json()
+
+            for tadm_picture in runset_tadm_picture_response['tadmPictures']:
+                item = add_item_to_carousel(
+                    title="Some ID",
+                    description="Some Photo",
+                    container_name="neumodxsystemqc-tadmpictures",
+                    blob_name=tadm_picture['fileid'],
+                )
+                items.append(item)
+            return items
+
+        else:
+            return no_update
+
+    @ app.callback(
+        Output('upload-tadm-message', 'children'),
+        [Input('upload-tadm-pictures', 'contents')],
+        [State('upload-tadm-pictures', 'filename'),
+         State("runset-selection-data", "data"),
+         State("runset-review-id", "data")])
+    def upload_tadm_image_to_blob_storage(list_of_contents, list_of_filenames, runset_selection, runset_review_id):
+
+        if list_of_contents:
+            files = {list_of_filenames[i]: list_of_contents[i]
+                     for i in range(len(list_of_filenames))}
+            upload_status = []
+            for file in files:
+
+                """
+                Upload file to blob storage
+                """
+                content_type, content_string = files[file].split(',')
+                file_content = base64.b64decode(content_string)
+                file_id = str(uuid.uuid4())+".jpg"
+                file_url = save_uploaded_file_to_blob_storage(
+                    file_content, file_id, 'neumodxsystemqc-tadmpictures')
+                """
+                Create Database Entry
+                """
+                file_payload = {
+                    "userId": session['user'].id,
+                    "runSetId": runset_selection['id'],
+                    "runSetReviewId": runset_review_id,
+                    "uri": file_url,
+                    "name": file,
+                    "fileid": file_id
+                }
+                tadm_picture_url = os.environ['RUN_REVIEW_API_BASE'] + \
+                    "TADMPictures"
+                print(file_payload)
+                resp = requests.post(
+                    url=tadm_picture_url, json=file_payload, verify=False)
+                print(resp.status_code)
+                upload_status.append(html.Br(file+" Uploaded successfully"))
+
+            # Return a message with the URL of the uploaded file
+            return upload_status
+
+        else:
+            return no_update
+
     return app.server
 
 

@@ -224,8 +224,37 @@ cartridge_pictures_content = dbc.Card(
 
 )
 
-tadms_pictures_content = dbc.Card(
-    html.P("Coming Soon")
+tadm_pictures_content = dbc.Card(
+
+    dbc.CardBody(
+        [
+            dcc.Upload(
+                id='upload-tadm-pictures',
+                children=html.Div([
+                    'Drag and Drop or ',
+                    html.A('Select Files')
+                ]),
+                style={
+                    'width': '50%',
+                    'borderWidth': '1px',
+                    'borderStyle': 'dashed',
+                    'borderRadius': '5px',
+                    'textAlign': 'center',
+                    'margin-left': '25%',
+                },
+                # Allow multiple files to be uploaded
+                multiple=True,
+            ),
+
+            html.Div(id='upload-tadm-message'),
+
+            dcc.Loading(id='tadm-pictures-loading', type='dot', children=[dbc.Carousel(
+                items=[],
+                id="tadm-images",
+                className="carousel-fade",
+            )])
+        ]
+    )
 )
 
 comments_content = dbc.Card(
@@ -254,7 +283,9 @@ tabs = dbc.Tabs(
         dbc.Tab(remediation_action_content, label='Assign Remediation Action',
                 tab_id='run-review-remediation-actions'),
         dbc.Tab(cartridge_pictures_content,
-                label='View Cartridge Pictures', tab_id='cartidge-pictures')
+                label='Cartridge Pictures', tab_id='cartidge-pictures'),
+        dbc.Tab(tadm_pictures_content,
+                label='TADM Pictures', tab_id='tadm-pictures')
     ], id='review-tabs'
 )
 
