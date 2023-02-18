@@ -435,74 +435,77 @@ def Add_Dash(app):
                    Input('run-option-selected', 'data'),
                    Input('issue-selected', 'data')], prevent_intial_call=True)
     def update_pcr_curves(channel_selected, process_step, color_option_selected, data, runset_data, channel_options, lane_selection, run_selection, issue_selected):
-        if ctx.triggered_id == 'issue-selected':
-            channel = issue_selected['Channel']
-            dataframe = pd.DataFrame.from_dict(data)
-            dataframe['Channel'] = dataframe['Channel'].replace(
-                'Far_Red', 'Far Red')
-            fig = go.Figure()
-            df = dataframe.reset_index().set_index(
-                ['Channel', 'Processing Step', 'XPCR Module Serial'])
-            df_Channel = df.loc[channel]
-            if issue_selected['Level'] == 'Sample':
-                df_Channel = df_Channel[df_Channel['RunSetSampleId']
-                                        == issue_selected['RunSetSubjectReferrerId']]
-            elif issue_selected['Level'] == 'XPCR Module Lane':
-                df_Channel = df_Channel[df_Channel['RunSetXPCRModuleLaneId']
-                                        == issue_selected['RunSetSubjectReferrerId']]
-            elif issue_selected['Level'] == 'Run':
-                df_Channel = df_Channel[df_Channel['RunSetCartridgeId']
-                                        == issue_selected['RunSetSubjectReferrerId']]
-            elif issue_selected['Level'] == 'XPCR Module':
-                df_Channel = df_Channel[df_Channel['RunSetXPCRModuleId']
-                                        == issue_selected['RunSetSubjectReferrerId']]
-        else:
-            if channel_selected == None:
-                channel = 'Yellow'
+        try:
+            if ctx.triggered_id == 'issue-selected':
+                channel = issue_selected['Channel']
+                dataframe = pd.DataFrame.from_dict(data)
+                dataframe['Channel'] = dataframe['Channel'].replace(
+                    'Far_Red', 'Far Red')
+                fig = go.Figure()
+                df = dataframe.reset_index().set_index(
+                    ['Channel', 'Processing Step', 'XPCR Module Serial'])
+                df_Channel = df.loc[channel]
+                if issue_selected['Level'] == 'Sample':
+                    df_Channel = df_Channel[df_Channel['RunSetSampleId']
+                                            == issue_selected['RunSetSubjectReferrerId']]
+                elif issue_selected['Level'] == 'XPCR Module Lane':
+                    df_Channel = df_Channel[df_Channel['RunSetXPCRModuleLaneId']
+                                            == issue_selected['RunSetSubjectReferrerId']]
+                elif issue_selected['Level'] == 'Run':
+                    df_Channel = df_Channel[df_Channel['RunSetCartridgeId']
+                                            == issue_selected['RunSetSubjectReferrerId']]
+                elif issue_selected['Level'] == 'XPCR Module':
+                    df_Channel = df_Channel[df_Channel['RunSetXPCRModuleId']
+                                            == issue_selected['RunSetSubjectReferrerId']]
             else:
-                channel = channel_options[channel_selected]
+                if channel_selected == None:
+                    channel = 'Yellow'
+                else:
+                    channel = channel_options[channel_selected]
 
-            dataframe = pd.DataFrame.from_dict(data)
-            dataframe['Channel'] = dataframe['Channel'].replace(
-                'Far_Red', 'Far Red')
-            # Start making graph...
-            fig = go.Figure()
-            df = dataframe.reset_index().set_index(
-                ['Channel', 'Processing Step', 'XPCR Module Serial'])
-            df_Channel = df.loc[channel]
+                dataframe = pd.DataFrame.from_dict(data)
+                dataframe['Channel'] = dataframe['Channel'].replace(
+                    'Far_Red', 'Far Red')
+                # Start making graph...
+                fig = go.Figure()
+                df = dataframe.reset_index().set_index(
+                    ['Channel', 'Processing Step', 'XPCR Module Serial'])
+                df_Channel = df.loc[channel]
 
-            """Filter Dataframe with current Run & Module Lane Selections"""
+                """Filter Dataframe with current Run & Module Lane Selections"""
 
-            if lane_selection != 'NoFilter' and lane_selection != None:
-                df_Channel = df_Channel[df_Channel['RunSetXPCRModuleLaneId']
-                                        == lane_selection]
+                if lane_selection != 'NoFilter' and lane_selection != None:
+                    df_Channel = df_Channel[df_Channel['RunSetXPCRModuleLaneId']
+                                            == lane_selection]
 
-            if run_selection != 'NoFilter' and run_selection != None:
-                df_Channel = df_Channel[df_Channel['RunSetCartridgeId']
-                                        == run_selection]
+                if run_selection != 'NoFilter' and run_selection != None:
+                    df_Channel = df_Channel[df_Channel['RunSetCartridgeId']
+                                            == run_selection]
 
-        df_Channel_Step = df_Channel.loc[process_step].reset_index()
-        df_Channel_Step.sort_values(color_option_selected, inplace=True)
+            df_Channel_Step = df_Channel.loc[process_step].reset_index()
+            df_Channel_Step.sort_values(color_option_selected, inplace=True)
 
-        samples_selected = []
-        for idx in df_Channel_Step.index:
-            X = np.array(
-                [read for read in df_Channel_Step.loc[idx, 'Readings Array']][0])
-            Y = np.array(
-                [read for read in df_Channel_Step.loc[idx, 'Readings Array']][1])
-            _name = str(df_Channel_Step.loc[idx, color_option_selected])
-            fig.add_trace(go.Scatter(x=X,
-                                     y=Y,
-                                     mode='lines',
-                                     name=_name,
-                                     line=dict(color=colorDict[df_Channel_Step.loc[idx, color_option_selected]])))
-            sample_info = {}
-            sample_info['RunSetSampleId'] = df_Channel_Step.loc[idx,
-                                                                'RunSetSampleId']
-            sample_info['SampleId'] = df_Channel_Step.loc[idx, 'SampleId']
-            samples_selected.append(sample_info)
+            samples_selected = []
+            for idx in df_Channel_Step.index:
+                X = np.array(
+                    [read for read in df_Channel_Step.loc[idx, 'Readings Array']][0])
+                Y = np.array(
+                    [read for read in df_Channel_Step.loc[idx, 'Readings Array']][1])
+                _name = str(df_Channel_Step.loc[idx, color_option_selected])
+                fig.add_trace(go.Scatter(x=X,
+                                         y=Y,
+                                         mode='lines',
+                                         name=_name,
+                                         line=dict(color=colorDict[df_Channel_Step.loc[idx, color_option_selected]])))
+                sample_info = {}
+                sample_info['RunSetSampleId'] = df_Channel_Step.loc[idx,
+                                                                    'RunSetSampleId']
+                sample_info['SampleId'] = df_Channel_Step.loc[idx, 'SampleId']
+                samples_selected.append(sample_info)
 
-        return [runset_data['name'] + " Attempt # " + str(runset_data['number'])], fig, df_Channel_Step[['XPCR Module Serial', 'XPCR Module Lane', 'Sample ID', 'Target Name', 'Localized Result', 'Overall Result', 'Ct', 'End Point Fluorescence', 'Max Peak Height', 'EPR']].round(1).to_dict('records'), samples_selected
+            return [runset_data['name'] + " Attempt # " + str(runset_data['number'])], fig, df_Channel_Step[['XPCR Module Serial', 'XPCR Module Lane', 'Sample ID', 'Target Name', 'Localized Result', 'Overall Result', 'Ct', 'End Point Fluorescence', 'Max Peak Height', 'EPR']].round(1).to_dict('records'), samples_selected
+        except:
+            return no_update
 
     @ app.callback([Output('sample-issue-channel-options', 'options'),
                    Output('lane-issue-channel-options', 'options'),
