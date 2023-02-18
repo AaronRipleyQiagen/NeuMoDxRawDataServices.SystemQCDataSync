@@ -4,6 +4,11 @@ import pandas as pd
 import asyncio
 import aiohttp
 import numpy as np
+from azure.storage.blob import BlobServiceClient
+import io
+import dash_bootstrap_components as dbc
+from dash import Input, Output, dcc, html, no_update, ctx
+import base64
 
 
 def populate_review_queue(user_id):
@@ -84,6 +89,49 @@ def getSampleDataAsync(sample_ids):
 
     samples = asyncio.run(main())
     return samples
+
+
+def save_uploaded_file_to_blob_storage(file_content, filename, container_name):
+
+    account_url = 'https://prdqianeumodxrdseusst.blob.core.windows.net'
+
+    # Create a BlobServiceClient object
+    blob_service_client = BlobServiceClient(
+        account_url=account_url, credential=os.environ['NEUMODXSYSTEMQC_RAWDATAFILES_KEY'])
+
+    # Decode the base64-encoded file content into bytes
+
+    # Get a reference to the Blob Storage container
+    container_client = blob_service_client.get_container_client(container_name)
+
+    blob_client = container_client.get_blob_client(filename)
+    blob_client.upload_blob(file_content, overwrite=True)
+    # Return the URL for the uploaded file
+    return container_client.url + '/' + filename
+
+# this is the getter...
+# container_client = blob_service_client.get_container_client(container_name)
+# blob_client = container_client.get_blob_client(blob_name)
+# image_bytes = blob_client.download_blob().readall()
+
+
+# Define a function to fetch the image from Azure Blob Storage and add a new item to the carousel
+def add_item_to_carousel(title, description, container_name, blob_name):
+    items = []
+    account_url = 'https://prdqianeumodxrdseusst.blob.core.windows.net'
+
+    # Create a BlobServiceClient object
+    blob_service_client = BlobServiceClient(
+        account_url=account_url, credential=os.environ['NEUMODXSYSTEMQC_RAWDATAFILES_KEY'])
+
+    blob_client = blob_service_client.get_blob_client(
+        container=container_name, blob=blob_name)
+    image_bytes = blob_client.download_blob().readall()
+
+    item = {
+        'src': 'data:image/png;base64,{}'.format(base64.b64encode(image_bytes).decode())}
+
+    return item
 
 
 class SampleJSONReader:

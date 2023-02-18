@@ -4,7 +4,7 @@ import dash_bootstrap_components as dbc
 from dash import Dash
 from .appbuildhelpers import apply_layout_with_auth
 from dash import html, callback, Output, Input, State, register_page, dcc, dash_table, page_container
-from .functions import populate_review_queue, getSampleDataAsync, SampleJSONReader
+from .functions import populate_review_queue, getSampleDataAsync, SampleJSONReader, save_uploaded_file_to_blob_storage, add_item_to_carousel
 import os
 import requests
 import json
@@ -14,6 +14,9 @@ import warnings
 import plotly.graph_objects as go
 import aiohttp
 import asyncio
+import base64
+import uuid
+
 
 warnings.filterwarnings('ignore')
 
@@ -1013,6 +1016,85 @@ def Add_Dash(app):
                         {"headerName": column, "field": column, "filter": True, "hide": True})
 
             return actions_dataframe.to_dict('records'), column_definitions
+        else:
+            return no_update
+
+    @app.callback(Output('cartridge-images', 'items'),
+                  [Input('review-tabs', 'active_tab'),
+                  State("runset-selection-data", "data")])
+    def get_cartridge_pictures(active_tab, runset_selection):
+        if active_tab == 'cartidge-pictures':
+            items = []
+
+            """
+            Call API to determine Cartridge Picture Details (name, url etc)
+            """
+
+            runset_cartridge_pictures_url = os.environ['RUN_REVIEW_API_BASE'] + \
+                "RunSets/{}/cartridgepictures".format(runset_selection['id'])
+
+            print(runset_cartridge_pictures_url)
+
+            runset_cartridge_picture_response = requests.get(
+                url=runset_cartridge_pictures_url, verify=False).json()
+
+            for cartridge_picture in runset_cartridge_picture_response['cartridgePictures']:
+                item = add_item_to_carousel(
+                    title="Some ID",
+                    description="Some Photo",
+                    container_name="neumodx-systemqc-cartridgepictures",
+                    blob_name=cartridge_picture['fileid'],
+                )
+                items.append(item)
+            return items
+
+        else:
+            return no_update
+
+    @ app.callback(
+        Output('upload-cartridge-message', 'children'),
+        [Input('upload-cartridge-pictures', 'contents')],
+        [State('upload-cartridge-pictures', 'filename'),
+         State("runset-selection-data", "data"),
+         State("runset-review-id", "data")])
+    def upload_image_to_blob_storage(list_of_contents, list_of_filenames, runset_selection, runset_review_id):
+
+        if list_of_contents:
+            files = {list_of_filenames[i]: list_of_contents[i]
+                     for i in range(len(list_of_filenames))}
+            upload_status = []
+            for file in files:
+
+                """
+                Upload file to blob storage
+                """
+                content_type, content_string = files[file].split(',')
+                file_content = base64.b64decode(content_string)
+                file_id = str(uuid.uuid4())+".jpg"
+                file_url = save_uploaded_file_to_blob_storage(
+                    file_content, file_id, 'neumodx-systemqc-cartridgepictures')
+                """
+                Create Database Entry
+                """
+                file_payload = {
+                    "userId": session['user'].id,
+                    "runSetId": runset_selection['id'],
+                    "runSetReviewId": runset_review_id,
+                    "uri": file_url,
+                    "name": file,
+                    "fileid": file_id
+                }
+                cartridge_picture_url = os.environ['RUN_REVIEW_API_BASE'] + \
+                    "CartridgePictures"
+                print(file_payload)
+                resp = requests.post(
+                    url=cartridge_picture_url, json=file_payload, verify=False)
+                print(resp.status_code)
+                upload_status.append(html.H4(file+" Uploaded successfully"))
+
+            # Return a message with the URL of the uploaded file
+            return upload_status
+
         else:
             return no_update
     return app.server

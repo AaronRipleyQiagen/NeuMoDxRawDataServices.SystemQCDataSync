@@ -189,31 +189,39 @@ remediation_action_content = dbc.Card(
 )
 
 
-account_url = 'https://prdqianeumodxrdseusst.blob.core.windows.net'
-container_name = 'neumodx-systemqc-cartridgepictures'
-blob_name = 'test.JPG'
-
-# Create a BlobServiceClient object
-blob_service_client = BlobServiceClient(
-    account_url=account_url, credential=os.environ['NEUMODXSYSTEMQC_RAWDATAFILES_KEY'])
-container_name = 'neumodx-systemqc-cartridgepictures'
-# Get a reference to the container and blob
-container_client = blob_service_client.get_container_client(container_name)
-blob_client = container_client.get_blob_client(blob_name)
-image_bytes = blob_client.download_blob().readall()
-
 cartridge_pictures_content = dbc.Card(
-    html.Img(
-        src='data:image/png;base64,{}'.format(base64.b64encode(image_bytes).decode()))
 
-    # dbc.Carousel(
-    #     items=[
-    #         {"key": "1", "src": "/static/images/slide1.svg"},
-    #         {"key": "2", "src": "/static/images/slide2.svg"},
-    #         {"key": "3", "src": "/static/images/slide3.svg"},
-    #     ],
-    #     className="cartridge-pictures",
-    # )
+    dbc.CardBody(
+        [
+            dcc.Upload(
+                id='upload-cartridge-pictures',
+                children=html.Div([
+                    'Drag and Drop or ',
+                    html.A('Select Files')
+                ]),
+                style={
+                    'width': '50%',
+                    'borderWidth': '1px',
+                    'borderStyle': 'dashed',
+                    'borderRadius': '5px',
+                    'textAlign': 'center',
+                    'margin-left': '25%',
+                },
+                # Allow multiple files to be uploaded
+                multiple=True,
+            ),
+
+            html.Div(id='upload-cartridge-message'),
+
+            dbc.Carousel(
+                items=[],
+                id="cartridge-images",
+                className="carousel-fade",
+            ),
+        ]
+    )
+
+
 )
 
 tadms_pictures_content = dbc.Card(
