@@ -213,11 +213,11 @@ cartridge_pictures_content = dbc.Card(
 
             html.Div(id='upload-cartridge-message'),
 
-            dbc.Carousel(
+            dcc.Loading(id='cartridge-pictures-loading', type='dot', children=[dbc.Carousel(
                 items=[],
                 id="cartridge-images",
                 className="carousel-fade",
-            ),
+            )])
         ]
     )
 
