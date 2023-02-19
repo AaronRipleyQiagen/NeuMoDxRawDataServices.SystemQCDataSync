@@ -451,18 +451,34 @@ def Add_Dash(app):
                 df = dataframe.reset_index().set_index(
                     ['Channel', 'Processing Step', 'XPCR Module Serial'])
                 df_Channel = df.loc[channel]
-                if issue_selected['Level'] == 'Sample':
-                    df_Channel = df_Channel[df_Channel['RunSetSampleId']
-                                            == issue_selected['RunSetSubjectReferrerId']]
-                elif issue_selected['Level'] == 'XPCR Module Lane':
-                    df_Channel = df_Channel[df_Channel['RunSetXPCRModuleLaneId']
-                                            == issue_selected['RunSetSubjectReferrerId']]
-                elif issue_selected['Level'] == 'Run':
-                    df_Channel = df_Channel[df_Channel['RunSetCartridgeId']
-                                            == issue_selected['RunSetSubjectReferrerId']]
-                elif issue_selected['Level'] == 'XPCR Module':
-                    df_Channel = df_Channel[df_Channel['RunSetXPCRModuleId']
-                                            == issue_selected['RunSetSubjectReferrerId']]
+                if issue_selected['RunSetId'] == runset_data['id']:
+                    if issue_selected['Level'] == 'Sample':
+                        df_Channel = df_Channel[df_Channel['RunSetSampleId']
+                                                == issue_selected['RunSetSubjectReferrerId']]
+                    elif issue_selected['Level'] == 'XPCR Module Lane':
+                        df_Channel = df_Channel[df_Channel['XPCRModuleLaneId']
+                                                == issue_selected['SubjectId']]
+                    elif issue_selected['Level'] == 'Run':
+                        df_Channel = df_Channel[df_Channel['CartridgeId']
+                                                == issue_selected['SubjectId']]
+                    elif issue_selected['Level'] == 'XPCR Module':
+                        df_Channel = df_Channel[df_Channel['XPCRModuleId']
+                                                == issue_selected['SubjectId']]
+                else:
+                    if issue_selected['Level'] == 'Sample':
+                        df_Channel = df_Channel[df_Channel['XPCRModuleLaneId']
+                                                == issue_selected['SubjectId']]
+                    elif issue_selected['Level'] == 'XPCR Module Lane':
+                        df_Channel = df_Channel[df_Channel['XPCRModuleLaneId']
+                                                == issue_selected['SubjectId']]
+                    elif issue_selected['Level'] == 'Run':
+                        df_Channel = df_Channel[df_Channel['XPCRModuleId']
+                                                == issue_selected['SubjectId']]
+                        print(df_Channel)
+                    elif issue_selected['Level'] == 'XPCR Module':
+                        df_Channel = df_Channel[df_Channel['XPCRModuleId']
+                                                == issue_selected['SubjectId']]
+
             else:
                 if channel_selected == None:
                     channel = 'Yellow'
@@ -832,46 +848,75 @@ def Add_Dash(app):
                    Output('issues-table', 'columnDefs')],
                   [Input('review-tabs', 'active_tab'),
                    State('runset-selection-data', 'data'),
-                   State('runset-subject-descriptions', 'data')])
-    def get_active_runset_issues(tab_selected, runset_selection_data, runset_subject_descriptions):
+                   State('runset-subject-descriptions', 'data'),
+                   State('related-runsets', 'data')])
+    def get_active_runset_issues(tab_selected, runset_selection_data, runset_subject_descriptions, related_runsets):
 
         if tab_selected in ['run-review-active-issues']:
             """
             1. Call API Endpoint to get active issue data.
             """
-
-            runset_issues_url = os.environ['RUN_REVIEW_API_BASE'] + \
-                "RunSets/{}/issues".format(runset_selection_data['id'])
-
-            runset_data = requests.get(
-                url=runset_issues_url, verify=False).json()
-
             issue_dataframe = pd.DataFrame(columns=[
-                                           'Level', 'Subject', 'Severity', 'Channel', 'Reviewer Name', 'Type', 'ChannelId', 'IssueTypeId', 'RunSetSubjectReferrerId'])
+                                           'Attempt', 'Level', 'Status', 'Severity', 'Channel', 'Reviewer Name', 'Type', 'ChannelId', 'IssueTypeId', 'RunSetSubjectReferrerId', 'SubjectId', 'RunSetId'])
+
             idx = 0
-            for runset_review in runset_data['runSetReviews']:
-                reviewer_name = runset_review['reviewerName']
-                reviewerEmail = runset_review['reviewerEmail']
+            for runset_id in related_runsets:
+                runset_issues_url = os.environ['RUN_REVIEW_API_BASE'] + \
+                    "RunSets/{}/issues".format(runset_id)
 
-                issue_levels = {'Sample': 'sampleIssuesReferred',
-                                'XPCR Module Lane': 'xpcrModuleLaneIssuesReferred',
-                                'Run': 'cartridgeIssuesReferred',
-                                'XPCR Module': 'xpcrModuleIssuesReferred'}
+                runset_data = requests.get(
+                    url=runset_issues_url, verify=False).json()
 
-                for issue_level in issue_levels:
-                    for issue in runset_review[issue_levels[issue_level]]:
-                        description = runset_subject_descriptions[issue_level][issue['runSetSubjectReferrerId']]
-                        severity = issue['severityRating']['name']
-                        channel = issue['assayChannel']['channel']
-                        channel_id = issue['assayChannel']['id']
-                        issue_type = issue['issueType']['name']
-                        issue_type_id = issue['issueType']['id']
-                        subject_referrer_id = issue['runSetSubjectReferrerId']
+                for runset_review in runset_data['runSetReviews']:
+                    reviewer_name = runset_review['reviewerName']
+                    reviewerEmail = runset_review['reviewerEmail']
 
-                        issue_entry = [issue_level, description,  severity, channel, reviewer_name,
-                                       issue_type, channel_id, issue_type_id, subject_referrer_id]
-                        issue_dataframe.loc[idx] = issue_entry
-                        idx += 1
+                    issue_levels = {'Sample': 'sampleIssuesReferred',
+                                    'XPCR Module Lane': 'xpcrModuleLaneIssuesReferred',
+                                    'Run': 'cartridgeIssuesReferred',
+                                    'XPCR Module': 'xpcrModuleIssuesReferred'}
+
+                    for issue_level in issue_levels:
+                        for issue in runset_review[issue_levels[issue_level]]:
+                            attempt = related_runsets[runset_id]
+                            # description = runset_subject_descriptions[
+                            #     issue_level][issue['runSetSubjectReferrerId']]
+                            severity = issue['severityRating']['name']
+                            channel = issue['assayChannel']['channel']
+                            status = issue['issueStatus']['name']
+                            channel_id = issue['assayChannel']['id']
+                            issue_type = issue['issueType']['name']
+                            issue_type_id = issue['issueType']['id']
+                            subject_referrer_id = issue['runSetSubjectReferrerId']
+
+                            if runset_id == runset_selection_data['id']:
+                                """
+                                If the runset is the one being displayed, we can just use the subject id.
+                                """
+                                subject_id = issue['subjectId']
+
+                            else:
+                                """
+                                If the runset is not the one being displayed,
+                                we need to sometimes use something more generic because the 
+                                subject id might not be present in the dataset being displayed.
+                                """
+                                if issue_level == 'Sample':
+                                    subject_id = issue['subject']['xpcrModuleLaneId']
+
+                                elif issue_level == 'XPCR Module Lane':
+                                    subject_id = issue['subjectId']
+
+                                elif issue_level == 'Run':
+                                    subject_id = issue['subject']['xpcrModuleId']
+
+                                elif issue_level == 'XPCR Module':
+                                    subject_id = issue['subjectId']
+
+                            issue_entry = [attempt, issue_level, status, severity, channel, reviewer_name,
+                                           issue_type, channel_id, issue_type_id, subject_referrer_id, subject_id, runset_id]
+                            issue_dataframe.loc[idx] = issue_entry
+                            idx += 1
 
             column_definitions = []
             for column in issue_dataframe.columns:
@@ -983,7 +1028,7 @@ def Add_Dash(app):
                   [Input('review-tabs', 'active_tab'),
                    State('xpcrmodule-selected', 'data'),
                    State('runset-subject-ids', 'data')])
-    def get_active_runset_issues(tab_selected, runset_xpcr_module_selection_id, runset_subject_ids):
+    def get_remediation_actions(tab_selected, runset_xpcr_module_selection_id, runset_subject_ids):
 
         if tab_selected in ['run-review-remediation-actions'] and runset_xpcr_module_selection_id != 'NoFilter':
             """
@@ -993,7 +1038,6 @@ def Add_Dash(app):
             xpcrmodule_remediation_issues_url = os.environ['RUN_REVIEW_API_BASE'] + \
                 "XPCRModules/{}/remediationactions".format(
                     runset_subject_ids['XPCRModule'][runset_xpcr_module_selection_id])
-            print(xpcrmodule_remediation_issues_url)
             xpcrmodule = requests.get(
                 url=xpcrmodule_remediation_issues_url, verify=False).json()
 
