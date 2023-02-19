@@ -120,14 +120,17 @@ pcrcurve_sample_info = dcc.Store(
 issue_selected = dcc.Store(id='issue-selected', storage_type='session')
 flat_data_download = dcc.Download(id="flat-data-download")
 
-remediation_action_selection = dcc.Store(id='remediation-action-selection')
+remediation_action_selection = dcc.Store(
+    id='remediation-action-selection', storage_type='session')
+
+related_runsets = dcc.Store(id='related-runsets', storage_type='session')
 
 layout = html.Div([review_loader, dcc.Loading(id='run-review-href-loader', fullscreen=True, type='dot', children=[dcc.Location(
     id="run-review-url", refresh=True)]), sidebar, content,
     runset_selection, runset_sample_data, runset_review_id, runset_severity_options,
     runset_channel_options, channel_selected, runset_run_options, run_option_selected,
     spc_channel, runset_xpcrmodulelane_options, xpcrmodulelane_selected, severity_selected,
-    runset_subject_ids, xpcrmodule_options, xpcrmodule_selected, pcrcurve_sample_info, issue_selected, runset_subject_descriptions, flat_data_download, remediation_action_selection])
+    runset_subject_ids, xpcrmodule_options, xpcrmodule_selected, pcrcurve_sample_info, issue_selected, runset_subject_descriptions, flat_data_download, remediation_action_selection, related_runsets])
 
 
 def Add_Dash(app):
@@ -146,7 +149,7 @@ def Add_Dash(app):
 
     @app.callback(Output('runset-selection-data', 'data'),
                   [Input('review-queue-table', 'selectionChanged')])
-    def get_runset_selection(selected):
+    def get_runset_selection_data(selected):
         if selected == None:
             return no_update
         runsetsample_url = os.environ['RUN_REVIEW_API_BASE'] + \
@@ -271,7 +274,7 @@ def Add_Dash(app):
             lane_options[dataframe.loc[idx, 'RunSetXPCRModuleLaneId']
                          ] = "Lane "+str(dataframe.loc[idx, 'XPCR Module Lane'])
 
-        dataframe.to_csv('test.csv')
+        # dataframe.to_csv('test.csv')
 
         """
         Get SPC Channel
@@ -424,19 +427,19 @@ def Add_Dash(app):
     def update_channel_selection_value(channel):
         return channel, channel, channel, channel
 
-    @ app.callback([Output('run-review-description', 'children'),
-                    Output('run-review-curves', 'figure'),
-                    Output('runset-sample-results', 'data'),
-                    Output('pcrcurve-sample-info', 'data')],
-                   [Input('channel-selected', 'data'),
-                   Input('run-review-process-step-selector', 'value'),
-                   Input('run-review-color-selector', 'value'),
-                   State('runset-sample-data', 'data'),
-                   State('runset-selection-data', 'data'),
-                   State('runset-channel-options', 'data'),
-                   Input('xpcrmodulelane-selected', 'data'),
-                   Input('run-option-selected', 'data'),
-                   Input('issue-selected', 'data')], prevent_intial_call=True)
+    @ app.callback([
+        Output('run-review-curves', 'figure'),
+        Output('runset-sample-results', 'data'),
+        Output('pcrcurve-sample-info', 'data')],
+        [Input('channel-selected', 'data'),
+         Input('run-review-process-step-selector', 'value'),
+         Input('run-review-color-selector', 'value'),
+         State('runset-sample-data', 'data'),
+         State('runset-selection-data', 'data'),
+         State('runset-channel-options', 'data'),
+         Input('xpcrmodulelane-selected', 'data'),
+         Input('run-option-selected', 'data'),
+         Input('issue-selected', 'data')], prevent_intial_call=True)
     def update_pcr_curves(channel_selected, process_step, color_option_selected, data, runset_data, channel_options, lane_selection, run_selection, issue_selected):
         try:
             if ctx.triggered_id == 'issue-selected':
@@ -506,7 +509,7 @@ def Add_Dash(app):
                 sample_info['SampleId'] = df_Channel_Step.loc[idx, 'SampleId']
                 samples_selected.append(sample_info)
 
-            return [runset_data['name'] + " Attempt # " + str(runset_data['number'])], fig, df_Channel_Step[['XPCR Module Serial', 'XPCR Module Lane', 'Sample ID', 'Target Name', 'Localized Result', 'Overall Result', 'Ct', 'End Point Fluorescence', 'Max Peak Height', 'EPR']].round(1).to_dict('records'), samples_selected
+            return fig, df_Channel_Step[['XPCR Module Serial', 'XPCR Module Lane', 'Sample ID', 'Target Name', 'Localized Result', 'Overall Result', 'Ct', 'End Point Fluorescence', 'Max Peak Height', 'EPR']].round(1).to_dict('records'), samples_selected
         except:
             return no_update
 
@@ -1173,6 +1176,67 @@ def Add_Dash(app):
 
             # Return a message with the URL of the uploaded file
             return upload_status
+
+        else:
+            return no_update
+
+    @ app.callback([Output('runset-description', 'children'), Output('related-runsets', 'data')],
+                   Input("runset-selection-data", "data"))
+    def update_runset_description(runset_selection):
+        """
+        Get The RunSetXPCRModules associated with the XPCR Module of Interest.
+        """
+        runset_xpcrmodules_url = os.environ["RUN_REVIEW_API_BASE"] + \
+            "RunSets/{}/runsetxpcrmodules".format(runset_selection['id'])
+        runset_xpcrmodules = requests.get(
+            url=runset_xpcrmodules_url, verify=False).json()['runSetXPCRModules']
+
+        if len(runset_xpcrmodules) == 1:
+
+            """
+            Get Runsets associated with XPCR Module
+            """
+
+            xpcrmodule_runsets_url = os.environ['RUN_REVIEW_API_BASE'] + \
+                "XPCRModules/{}/runsets".format(
+                    runset_xpcrmodules[0]['xpcrModule']['id'])
+            xpcrmodule = requests.get(
+                url=xpcrmodule_runsets_url, verify=False).json()
+
+            """
+            Get Related runset basic info (by xpcr module & runset type match)
+            """
+            xpcrmodule_runsets_df = pd.DataFrame(
+                columns=[x for x in xpcrmodule['runSetXPCRModules'][0]['runSet']])
+
+            idx = 0
+            for xpcrmodule_runset in xpcrmodule['runSetXPCRModules']:
+                if xpcrmodule_runset['runSet']['runSetTypeId'] == runset_selection['runSetTypeId']:
+                    xpcrmodule_runsets_df.loc[idx] = xpcrmodule_runset['runSet']
+                    idx += 1
+
+            """
+            Determine the attempt for this runset type for this particular module. 
+            """
+
+            xpcrmodule_runsets_df = xpcrmodule_runsets_df.sort_values(
+                'runSetStartDate').reset_index(drop=True)
+
+            xpcrmodule_runset_number = xpcrmodule_runsets_df[
+                xpcrmodule_runsets_df['id'] == runset_selection['id']].index.values[0] + 1
+
+            """
+            Save Related RunSetIds in a dictionary for later reference
+            """
+
+            related_xpcrmodule_runsets = {}
+
+            i = 1
+            for idx in xpcrmodule_runsets_df.index:
+                related_xpcrmodule_runsets[xpcrmodule_runsets_df.loc[idx, 'id']] = i
+                i += 1
+
+            return runset_selection['name'] + " Attempt # " + str(xpcrmodule_runset_number), related_xpcrmodule_runsets
 
         else:
             return no_update
