@@ -146,6 +146,7 @@ sample_issue_content = dbc.Card(
 active_issues_content = dbc.Card(
     dbc.CardBody(
         [
+
             dag.AgGrid(
                 enableEnterpriseModules=True,
                 # licenseKey=os.environ['AGGRID_ENTERPRISE'],
@@ -158,7 +159,9 @@ active_issues_content = dbc.Card(
                 rowSelection='single',
                 # setRowId="id",
                 id='issues-table'
-            )
+            ),
+            dbc.Button("Grade Issue Resolution",
+                       id='issue-remediation-grade', disabled=True, style={'width': '50%', 'margin-left': '25%'}),
         ]
     ),
     className="mt-3",
@@ -168,8 +171,8 @@ remediation_action_content = dbc.Card(
     dbc.CardBody(
         [
             html.P("Please Choose a Remediation Action", className="card-text"),
-            dcc.Dropdown(id='remediation-action-options'),
-            dbc.Button("Submit Action", id='remediation-action-submit'),
+            html.Div([dcc.Dropdown(id='remediation-action-options', style=halfstyle),
+                      dbc.Button("Submit Action", id='remediation-action-submit', style=halfstyle)]),
             dag.AgGrid(
                 enableEnterpriseModules=True,
                 # licenseKey=os.environ['AGGRID_ENTERPRISE'],
