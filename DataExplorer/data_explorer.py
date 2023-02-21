@@ -10,7 +10,9 @@ from .neumodx_objects import *
 import os
 import requests
 
-mod_qual_subscribers = {'Aaron': 'aripley2008@gmail.com'}
+mod_qual_review_subscribers = {'Aaron': 'aaron.ripley@qiagen.com',
+                               'Vik': 'viktoriah.slusher@qiagen.com',
+                               'Catherine': 'catherine.couture@qiagen.com'}
 
 url_base = '/dashboard/data-explorer/'
 loader = html.Div(id='loader')
@@ -117,21 +119,22 @@ def Add_Dash(app):
             resp = requests.post(url=os.environ['RUN_REVIEW_API_BASE'] +
                                  "RunSets", json=runset, verify=False)
 
-            if 'XPCR Module Qualification' in runset_type_selection_options[runset_type_selection_id]:
-                msg = Message(runset['name']+" Ready for review", sender='neumodxsystemqcdatasync@gmail.com',
-                              recipients=['aripley2008@gmail.com'])
+            if os.environ['SEND_EMAILS'] == "Yes":
+                if 'XPCR Module Qualification' in runset_type_selection_options[runset_type_selection_id]:
+                    msg = Message(runset['name']+" Ready for review", sender='neumodxsystemqcdatasync@gmail.com',
+                                  recipients=['aripley2008@gmail.com'])
 
-                with mail.connect() as conn:
-                    for user in mod_qual_subscribers:
-                        message = 'Hello, '+user+" this message is sent to inform you that " + \
-                            runset['name']+" is now ready for your review."
-                        subject = runset['name']+" Ready for review"
-                        msg = Message(recipients=[mod_qual_subscribers[user]],
-                                      body=message,
-                                      subject=subject,
-                                      sender='neumodxsystemqcdatasync@gmail.com')
+                    with mail.connect() as conn:
+                        for user in mod_qual_review_subscribers:
+                            message = 'Hello '+user+", this message is sent to inform you that " + \
+                                runset['name']+" is now ready for your review."
+                            subject = runset['name']+" Ready for review"
+                            msg = Message(recipients=[mod_qual_review_subscribers[user]],
+                                          body=message,
+                                          subject=subject,
+                                          sender='neumodxsystemqcdatasync@gmail.com')
 
-                    conn.send(msg)
+                        conn.send(msg)
         if submit_clicks:
             return not is_open
         return is_open
