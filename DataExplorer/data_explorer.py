@@ -134,7 +134,7 @@ def Add_Dash(app):
                                           subject=subject,
                                           sender='neumodxsystemqcdatasync@gmail.com')
 
-                        conn.send(msg)
+                            conn.send(msg)
         if submit_clicks:
             return not is_open
         return is_open
