@@ -109,11 +109,6 @@ def save_uploaded_file_to_blob_storage(file_content, filename, container_name):
     # Return the URL for the uploaded file
     return container_client.url + '/' + filename
 
-# this is the getter...
-# container_client = blob_service_client.get_container_client(container_name)
-# blob_client = container_client.get_blob_client(blob_name)
-# image_bytes = blob_client.download_blob().readall()
-
 
 # Define a function to fetch the image from Azure Blob Storage and add a new item to the carousel
 def add_item_to_carousel(title, description, container_name, blob_name):

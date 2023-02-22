@@ -30,15 +30,12 @@ run_review_channel_selector_label = html.P(
     "Choose Channel", style=quarterstyle)
 run_review_channel_selector = dcc.Dropdown(
     id='run-review-channel-selector', style=threequarterstyle)
-
 run_review_xpcrmodule_selector_label = html.P(
     "Choose XPCR Module", style=quarterstyle)
 run_review_xpcrmodule_selector = dcc.Dropdown(
     id='run-review-xpcrmodule-selector', style=threequarterstyle)
-
 run_review_download_data = dbc.Button(
     "Download Data", style={'margin': 'auto'}, id='run-review-download-data')
-
 run_review_run_selector_label = html.P(
     "Filter for specific runs", style=quarterstyle)
 run_review_run_selector = dcc.Dropdown(
@@ -161,7 +158,7 @@ active_issues_content = dbc.Card(
                 id='issues-table'
             ),
             dbc.Button("Grade Issue Resolution",
-                       id='issue-remediation-grade', disabled=True, style={'width': '50%', 'margin-left': '25%'}),
+                       id='issue-remediation-grade-button', disabled=True, style={'width': '50%', 'margin-left': '25%'}),
         ]
     ),
     className="mt-3",
@@ -185,7 +182,10 @@ remediation_action_content = dbc.Card(
                 rowSelection='single',
                 # setRowId="id",
                 id='remediation-action-table'
-            )
+            ),
+
+            dbc.Button("Resolve Remediation Action",
+                       id='remediation-action-resolution', style={'width': '50%', 'margin-left': '25%'}),
         ]
     ),
     className="mt-3",
@@ -308,6 +308,35 @@ remediation_action_post_response = dbc.Modal([
     id="remediation-action-post-response",
     is_open=False)
 
+
+remediation_action_post_response = dbc.Modal([
+    dbc.ModalHeader(dbc.ModalTitle("Remediation Action Update Result")),
+    dbc.ModalBody("Remediation Action was updated successfully")
+],
+    id="remediation-action-update-response",
+    is_open=False)
+
+issue_resolution_remediation_action_selection = dbc.Modal([
+    dbc.ModalHeader(dbc.ModalTitle("Remediation Action Selection")),
+    dbc.ModalBody([
+        html.P("Please select the remediation action intended to address this issue."),
+        dcc.Dropdown(id='issue-resolution-remediation-action-options'),
+        html.P("Did it work?"),
+        dcc.Dropdown(id='issue-resolution-remediation-success',
+                     options={1: 'Yes', 0: 'No'}),
+        dbc.Button("Submit", id='issue-resolution-submit')]
+    )],
+    id="issue-resolution-remediation-action-selection-prompt",
+    is_open=False)
+
+issue_resolution_remediation_action_response = dbc.Modal([
+    dbc.ModalHeader(dbc.ModalTitle("Issue Resolution Status")),
+    dbc.ModalBody("Remediation Attempt was recorded successfully")
+],
+    id="issue-remediation-attempt-submission-response",
+    is_open=False)
+
+
 run_review_update_response = dbc.Modal([
     dbc.ModalHeader(dbc.ModalTitle("Run Review Status Updated Successfully")),
     dbc.ModalBody("Run Review Status Changed to Completed.")
@@ -326,6 +355,8 @@ layout = [
     issue_post_response,
     run_review_update_response,
     remediation_action_post_response,
+    issue_resolution_remediation_action_selection,
+    issue_resolution_remediation_action_response,
 
     html.Div([html.Div([run_review_channel_selector_label, run_review_channel_selector], style=halfstyle),
               html.Div([run_review_xpcrmodule_selector_label, run_review_xpcrmodule_selector], style=halfstyle)]),
