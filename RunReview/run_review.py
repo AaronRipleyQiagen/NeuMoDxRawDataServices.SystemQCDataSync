@@ -122,7 +122,9 @@ flat_data_download = dcc.Download(id="flat-data-download")
 
 remediation_action_selection = dcc.Store(
     id='remediation-action-selection', storage_type='session')
-
+remediation_action_loader = dcc.Interval(id='remediation-action-loader',
+                                         interval=60*1000,  # in milliseconds
+                                         n_intervals=0)
 related_runsets = dcc.Store(id='related-runsets', storage_type='session')
 
 issue_remediation_url = dcc.Store(
@@ -136,7 +138,7 @@ layout = html.Div([review_loader, dcc.Loading(id='run-review-href-loader', fulls
     runset_selection, runset_sample_data, runset_review_id, runset_severity_options,
     runset_channel_options, channel_selected, runset_run_options, run_option_selected,
     spc_channel, runset_xpcrmodulelane_options, xpcrmodulelane_selected, severity_selected,
-    runset_subject_ids, xpcrmodule_options, xpcrmodule_selected, pcrcurve_sample_info, issue_selected, runset_subject_descriptions, flat_data_download, remediation_action_selection, related_runsets, issue_remediation_url, issue_resolution_remediation_action_selection, issue_remediation_type])
+    runset_subject_ids, xpcrmodule_options, xpcrmodule_selected, pcrcurve_sample_info, issue_selected, runset_subject_descriptions, flat_data_download, remediation_action_selection, related_runsets, issue_remediation_url, issue_resolution_remediation_action_selection, issue_remediation_type, remediation_action_loader])
 
 
 def Add_Dash(app):
@@ -984,9 +986,11 @@ def Add_Dash(app):
             return dcc.send_data_frame(data_output.reset_index().to_csv, runset_selection['id']+".csv", index=False), None
         return no_update, None
 
+    # DEBUG Starting here...
+
     @app.callback(Output('remediation-action-options', 'options'),
-                  Input('remediation-action-selection', 'data'))
-    def load_remediation_action_options(data):
+                  Input('remediation-action-loader', 'n_intervals'))
+    def load_remediation_action_options(intervals):
         remediation_action_types_url = os.environ["RUN_REVIEW_API_BASE"] + \
             "RemediationActionTypes"
         remediation_actions = requests.get(
@@ -998,8 +1002,7 @@ def Add_Dash(app):
 
         return remediation_action_options
 
-    @app.callback([Output("remediation-action-post-response", "is_open"),
-                   Output("remediation-action-submit", "n_clicks")],
+    @app.callback(Output("remediation-action-post-response", "is_open"),
                   [Input("remediation-action-submit", "n_clicks"),
                    State("remediation-action-post-response", "is_open"),
                    State("runset-selection-data", "data"),
@@ -1008,27 +1011,27 @@ def Add_Dash(app):
                    State("remediation-action-options", "value"),
                    State("runset-subject-ids", 'data')], prevent_inital_call=True)
     def post_remediation_action(n, is_open, runset_selection, runset_review_id, xpcr_module_runset_id, remediation_action_id, runset_subject_ids):
-
         if n:
-            print("Run it Run it")
-            remediation_action_payload = {"userId": session['user'].id,
-                                          "neuMoDxSystemId": "00000000-0000-0000-0000-000000000000",
-                                          "xpcrModuleId": runset_subject_ids['XPCRModule'][xpcr_module_runset_id],
-                                          "runSetReferrerId": runset_selection['id'],
-                                          "runSetResolverId": "00000000-0000-0000-0000-000000000000",
-                                          "runSetReviewReferrerId": runset_review_id,
-                                          "runSetReviewResolverId": "00000000-0000-0000-0000-000000000000",
-                                          "remediationActionTypeId": remediation_action_id}
-            print(remediation_action_payload)
-            remediation_action_url = os.environ["RUN_REVIEW_API_BASE"] + \
-                "RemediationActions"
+            if ctx.triggered_id == 'remediation-action-submit':
+                print("Run it Run it")
+                remediation_action_payload = {"userId": session['user'].id,
+                                              "neuMoDxSystemId": "00000000-0000-0000-0000-000000000000",
+                                              "xpcrModuleId": runset_subject_ids['XPCRModule'][xpcr_module_runset_id],
+                                              "runSetReferrerId": runset_selection['id'],
+                                              "runSetResolverId": "00000000-0000-0000-0000-000000000000",
+                                              "runSetReviewReferrerId": runset_review_id,
+                                              "runSetReviewResolverId": "00000000-0000-0000-0000-000000000000",
+                                              "remediationActionTypeId": remediation_action_id}
+                print(remediation_action_payload)
+                remediation_action_url = os.environ["RUN_REVIEW_API_BASE"] + \
+                    "RemediationActions"
 
-            requests.post(url=remediation_action_url,
-                          json=remediation_action_payload,
-                          verify=False).json()
-            return not is_open, None
+                requests.post(url=remediation_action_url,
+                              json=remediation_action_payload,
+                              verify=False).json()
+                return not is_open
 
-        return is_open, None
+        return is_open
 
     @app.callback([Output('remediation-action-table', 'rowData'),
                    Output('remediation-action-table', 'columnDefs')],

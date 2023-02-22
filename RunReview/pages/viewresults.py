@@ -174,7 +174,7 @@ remediation_action_content = dbc.Card(
                 enableEnterpriseModules=True,
                 # licenseKey=os.environ['AGGRID_ENTERPRISE'],
                 # columnDefs=initial_columnDefs,
-                # rowData=intial_data,
+                # rowData={},
                 columnSize="sizeToFit",
                 defaultColDef=dict(
                     resizable=True,
@@ -184,7 +184,7 @@ remediation_action_content = dbc.Card(
                 id='remediation-action-table'
             ),
 
-            dbc.Button("Resolve Remediation Action",
+            dbc.Button("Complete Remediation Action",
                        id='remediation-action-resolution', style={'width': '50%', 'margin-left': '25%'}),
         ]
     ),
@@ -309,7 +309,7 @@ remediation_action_post_response = dbc.Modal([
     is_open=False)
 
 
-remediation_action_post_response = dbc.Modal([
+remediation_action_update_response = dbc.Modal([
     dbc.ModalHeader(dbc.ModalTitle("Remediation Action Update Result")),
     dbc.ModalBody("Remediation Action was updated successfully")
 ],
@@ -355,6 +355,7 @@ layout = [
     issue_post_response,
     run_review_update_response,
     remediation_action_post_response,
+    remediation_action_update_response,
     issue_resolution_remediation_action_selection,
     issue_resolution_remediation_action_response,
 
