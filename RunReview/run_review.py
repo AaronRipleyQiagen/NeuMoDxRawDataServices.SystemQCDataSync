@@ -1310,13 +1310,14 @@ def Add_Dash(app):
     def update_remediation_action(resolution_submit, is_open, runset_review_id, runset_selection_data, selected_row):
 
         if resolution_submit:
-            remediation_action_update_url = os.environ['Run_REVIEW_API_BASE'] + \
+            remediation_action_update_url = os.environ['RUN_REVIEW_API_BASE'] + \
                 "RemediationActions/{}/status".format(
                     selected_row[0]['RemediationActionId'])
 
             query_params = {'runSetReviewId': runset_review_id,
                             'runSetId': runset_selection_data['id'],
                             'newStatusName': 'Completed'}
+
             print(query_params)
             resp = requests.put(
                 url=remediation_action_update_url, params=query_params, verify=False)
