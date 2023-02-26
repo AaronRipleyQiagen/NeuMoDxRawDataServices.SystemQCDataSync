@@ -283,7 +283,7 @@ tabs = dbc.Tabs(
                 tab_id='run-review-sample-issues'),
         dbc.Tab(active_issues_content, label='View Active Issues',
                 tab_id='run-review-active-issues'),
-        dbc.Tab(remediation_action_content, label='Assign Remediation Action',
+        dbc.Tab(remediation_action_content, label='Manage Remediation Actions',
                 tab_id='run-review-remediation-actions'),
         dbc.Tab(cartridge_pictures_content,
                 label='Cartridge Pictures', tab_id='cartidge-pictures'),
