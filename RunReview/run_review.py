@@ -16,6 +16,7 @@ import aiohttp
 import asyncio
 import base64
 import uuid
+import logging
 
 
 warnings.filterwarnings('ignore')
@@ -80,7 +81,7 @@ content = html.Div(id="run-reviewer-page-content", style=CONTENT_STYLE,
 runset_selection = dcc.Store(
     id='runset-selection-data', storage_type='session', data='')
 runset_sample_data = dcc.Store(
-    id='runset-sample-data', storage_type='session', data='')
+    id='runset-sample-data', storage_type='session')
 runset_review_id = dcc.Store(
     id='runset-review-id', storage_type='session', data='')
 
@@ -180,12 +181,15 @@ def Add_Dash(app):
                    State('runset-selection-data', 'data')],
                   prevent_inital_call=True)
     def initialize_runset_data(n, runset_data):
-
+        logging.info("initializing runset_data")
         if n == 0:
+            logging.info("Button not pressed.")
             return no_update
         """
         Get Data associated with Runset.
         """
+        print("collecting runset sample ids")
+        logging.info("collecting runset sample ids")
         runset_sample_ids = []
         runset_map_df = pd.DataFrame(columns=['RawDataDatabaseId',
                                               'RunSetSampleId', 'SampleId',
@@ -211,13 +215,14 @@ def Add_Dash(app):
                           runsetsample['sample']['runSetNeuMoDxSystemSamples'][0]['runSetNeuMoDxSystemId']]
             idx += 1
             runset_map_df.loc[idx] = runset_map
+        print("collected runset sample ids, {} samples in dataset".format(
+            str(len(runset_sample_ids))))
         runset_map_df.set_index('RawDataDatabaseId', inplace=True)
         sample_data = getSampleDataAsync(runset_sample_ids)
 
         jsonReader = SampleJSONReader(json.dumps(sample_data))
         jsonReader.standardDecode()
         dataframe = jsonReader.DataFrame
-        # dataframe.to_csv('test3.csv')
         dataframe['RawDataDatabaseId'] = dataframe.reset_index()['id'].values
         dataframe['Channel'] = dataframe['Channel'].replace(
             'Far_Red', 'Far Red')
@@ -281,8 +286,6 @@ def Add_Dash(app):
         for idx in dataframe.drop_duplicates(subset=['XPCR Module Lane', 'RunSetXPCRModuleLaneId']).index:
             lane_options[dataframe.loc[idx, 'RunSetXPCRModuleLaneId']
                          ] = "Lane "+str(dataframe.loc[idx, 'XPCR Module Lane'])
-
-        # dataframe.to_csv('test.csv')
 
         """
         Get SPC Channel
@@ -357,7 +360,8 @@ def Add_Dash(app):
                                             ] = dataframe.loc[idx, 'NeuMoDxSystemId']
 
         runset_subject_ids['NeuMoDxSystem'] = runset_neumodx_subject_ids_dict
-
+        # with open('output.json', 'w') as f:
+        #     json.dump(dataframe.to_dict('records'), f)
         return dataframe.to_dict('records'), '/dashboard/run-review/view-results', resp['id'], severity_options, channel_options, run_options, spc_channel, lane_options, runset_subject_ids, xpcrmodule_options, runset_subject_descriptions
 
     @ app.callback([Output('sample-issue-options', 'options'), Output('lane-issue-options', 'options'), Output('module-issue-options', 'options'), Output('run-issue-options', 'options')],
@@ -514,6 +518,16 @@ def Add_Dash(app):
 
             df_Channel_Step = df_Channel.loc[process_step].reset_index()
             df_Channel_Step.sort_values(color_option_selected, inplace=True)
+
+            """
+            Make the Readings Array
+            """
+
+            readings_columns = df_Channel_Step[[
+                x for x in df_Channel_Step.columns if "Reading " in x and "Blank" not in x and 'Dark' not in x and 'Id' not in x]]
+            cycles = np.arange(1, len(readings_columns.columns)+1)
+            df_Channel_Step['Readings Array'] = [np.column_stack(
+                zip(cycles, x)) for x in readings_columns.values]
 
             samples_selected = []
             for idx in df_Channel_Step.index:
@@ -1427,24 +1441,24 @@ def Add_Dash(app):
 
         return is_open
 
-    @app.callback(Output('issue-remediation-attempt-submission-response', 'is_open'),
-                  [Input('issue-resolution-submit', 'n_clicks'),
-                   State('issue-remediation-attempt-submission-response', 'is_open')])
-    def issue_resolution_submission_response(submit_button, is_open):
-        if submit_button:
+    # @app.callback(Output('issue-remediation-attempt-submission-response', 'is_open'),
+    #               [Input('issue-resolution-submit', 'n_clicks'),
+    #                State('issue-remediation-attempt-submission-response', 'is_open')])
+    # def issue_resolution_submission_response(submit_button, is_open):
+    #     if submit_button:
 
-            # query_params = {'runSetReviewId': runset_review_id,
-            #                 'runSetId': runset_selection_data['id'],
-            #                 'newStatusName': 'Completed'}
-            # print(query_params)
-            # resp = requests.put(
-            #     url=remediation_action_update_url, params=query_params, verify=False)
+    #         # query_params = {'runSetReviewId': runset_review_id,
+    #         #                 'runSetId': runset_selection_data['id'],
+    #         #                 'newStatusName': 'Completed'}
+    #         # print(query_params)
+    #         # resp = requests.put(
+    #         #     url=remediation_action_update_url, params=query_params, verify=False)
 
-            # print(resp.status_code)
+    #         # print(resp.status_code)
 
-            return not is_open
+    #         return not is_open
 
-        return is_open
+    #     return is_open
 
     return app.server
 

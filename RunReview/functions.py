@@ -619,8 +619,8 @@ class SampleJSONReader:
                                    str(reading['cycle'])] = reading['value']
                 cycles.append(reading['cycle'])
                 values.append(reading['value'])
-            unpackedreadingset['Readings Array'] = np.column_stack(
-                zip(cycles, values))
+            # unpackedreadingset['Readings Array'] = np.column_stack(
+            #     zip(cycles, values))
             unpackedreadingsets.append(unpackedreadingset)
         unpackedassaychannelstepsDataFrame.loc[:, [x for x in unpackedreadingsets[0].keys()]] = pd.DataFrame(
             index=unpackedassaychannelstepsDataFrame.index, data=unpackedreadingsets)
