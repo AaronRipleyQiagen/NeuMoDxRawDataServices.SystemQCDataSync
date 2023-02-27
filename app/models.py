@@ -30,6 +30,7 @@ class User:
     def get_groups(self):
         roles = {'73b01a3f-0cd6-4809-9661-52633b67fd63': 'System QC Reviewer',
                  '7fdd3800-5468-4550-af37-f803e667a22c': 'System QC Tech',
+                 '5e7f84e5-c5d7-4c36-9d34-72d4586e410c': 'PSG Crew',
                  'ca35252d-ec09-4353-9e77-ffc68b9412ae': 'Admin'}
 
         authority = "https://login.microsoftonline.com/"+app_config.TENANT_ID
