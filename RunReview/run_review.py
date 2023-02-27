@@ -135,7 +135,7 @@ issue_resolution_remediation_action_selection = dcc.Store(
 issue_remediation_type = dcc.Store(
     id='issue-remediation-type', storage_type='session')
 layout = html.Div([review_loader, dcc.Loading(id='run-review-href-loader', fullscreen=True, type='dot', children=[dcc.Location(
-    id="run-review-url", refresh=True)]), sidebar, content,
+    id="run-review-url")]), sidebar, content,
     runset_selection, runset_sample_data, runset_review_id, runset_severity_options,
     runset_channel_options, channel_selected, runset_run_options, run_option_selected,
     spc_channel, runset_xpcrmodulelane_options, xpcrmodulelane_selected, severity_selected,
@@ -360,8 +360,40 @@ def Add_Dash(app):
                                             ] = dataframe.loc[idx, 'NeuMoDxSystemId']
 
         runset_subject_ids['NeuMoDxSystem'] = runset_neumodx_subject_ids_dict
-        # with open('output.json', 'w') as f:
-        #     json.dump(dataframe.to_dict('records'), f)
+
+        dataframe.drop(['Cartridge Id',
+                        'Buffer Trough Id',
+                        'Extraction Plate Id',
+                        'Test Strip Id',
+                        'LDT Test Strip MM Id',
+                        'LDT Test Strip PPM Id',
+                        'Release Reagent Id',
+                        'Wash Reagent Id',
+                        'NeuMoDx System Id',
+                        'XPCR Module Configuration Id',
+                        'xpcrModuleLaneId',
+                        'Heater Module Configuration Id',
+                        'Assay Id',
+                        'XPCR Module Id',
+                        'Heater Module Id',
+                        'Sample Definition Id',
+                        'LhpA Trace Id',
+                        'Lysis Binding Trace Id',
+                        'LhpB Trace Id',
+                        'Extraction Trace Id',
+                        'Pcr Trace Id',
+                        'Operator Id',
+                        'Buffer Large Tip Rack Id',
+                        'Sample Large Tip Rack Id',
+                        'Buffer Large Tip Rack Carrier Group Id',
+                        'Sample Large Tip Rack Carrier Group Id',
+                        'LhpB Large Tip Rack Carrier Group Id',
+                        'Small Tip Rack Carrier Group Id',
+                        'Test Strip id',
+                        'Test Strip PPM id',
+                        'Reading Set Id'], axis=1, inplace=True)
+        with open('output.json', 'w') as f:
+            json.dump(dataframe.to_dict('records'), f)
         return dataframe.to_dict('records'), '/dashboard/run-review/view-results', resp['id'], severity_options, channel_options, run_options, spc_channel, lane_options, runset_subject_ids, xpcrmodule_options, runset_subject_descriptions
 
     @ app.callback([Output('sample-issue-options', 'options'), Output('lane-issue-options', 'options'), Output('module-issue-options', 'options'), Output('run-issue-options', 'options')],
@@ -970,7 +1002,7 @@ def Add_Dash(app):
     def update_run_review_status(n, is_open, runset_review_id, run_review_acceptance):
         if n:
             update_url = os.environ['RUN_REVIEW_API_BASE'] + \
-                "RunSetReviews/{}".format(runset_review_id)
+                "RunSetReviews/{}/status".format(runset_review_id)
             query_params = {'acceptable': run_review_acceptance,
                             'newStatusName': 'Completed'}
             print(query_params)
