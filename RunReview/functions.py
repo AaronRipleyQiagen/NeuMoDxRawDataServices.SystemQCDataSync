@@ -11,7 +11,7 @@ from dash import Input, Output, dcc, html, no_update, ctx
 import base64
 
 
-def populate_review_queue(user_id):
+def populate_review_queue(user_id, user_group):
     runsets_url = os.environ['RUN_REVIEW_API_BASE'] + \
         "RunSets/{}/reviewerstatus".format(user_id)
     print(runsets_url)
@@ -44,6 +44,11 @@ def populate_review_queue(user_id):
     column_names = {'name': 'Description',
                     'runSetStartDate': 'Start Date', 'sampleCount': 'Sample Count'}
     df = df[columns].rename(column_names, axis=1)
+
+    if user_group == 'PSG Crew':
+        df = df[df['Description'].str.contains('PSG')]
+    else:
+        df = df[~df['Description'].str.contains('PSG')]
 
     df_columnDefs = []
     for column in df.columns:

@@ -74,7 +74,6 @@ sidebar = html.Div(
     ],
     style=SIDEBAR_STYLE,
 )
-
 review_loader = html.Div(id='run-reviewer-loader')
 content = html.Div(id="run-reviewer-page-content", style=CONTENT_STYLE,
                    children=page_container)
@@ -84,24 +83,19 @@ runset_sample_data = dcc.Store(
     id='runset-sample-data', storage_type='session')
 runset_review_id = dcc.Store(
     id='runset-review-id', storage_type='session', data='')
-
 runset_channel_options = dcc.Store(
     id='runset-channel-options', storage_type='session', data='')
 channel_selected = dcc.Store(
     id='channel-selected', storage_type='session', data='')
 spc_channel = dcc.Store(id='spc-channel', storage_type='session', data='')
-
 runset_severity_options = dcc.Store(
     id='runset-severity-options', storage_type='session', data='')
-
 severity_selected = dcc.Store(
     id='severity-selected', storage_type='session', data='')
-
 runset_run_options = dcc.Store(
     id='runset-run-options', storage_type='session', data='')
 run_option_selected = dcc.Store(
     id='run-option-selected', storage_type='session', data='')
-
 runset_xpcrmodulelane_options = dcc.Store(
     id='runset-xpcrmodulelane-options', storage_type='session', data='')
 xpcrmodulelane_selected = dcc.Store(
@@ -114,20 +108,16 @@ runset_subject_ids = dcc.Store(
     id='runset-subject-ids', storage_type='session', data='')
 runset_subject_descriptions = dcc.Store(
     id='runset-subject-descriptions', storage_type='session')
-
 pcrcurve_sample_info = dcc.Store(
     id='pcrcurve-sample-info', storage_type='session')
-
 issue_selected = dcc.Store(id='issue-selected', storage_type='session')
 flat_data_download = dcc.Download(id="flat-data-download")
-
 remediation_action_selection = dcc.Store(
     id='remediation-action-selection', storage_type='session')
 remediation_action_loader = dcc.Interval(id='remediation-action-loader',
                                          interval=60*1000,  # in milliseconds
                                          n_intervals=0)
 related_runsets = dcc.Store(id='related-runsets', storage_type='session')
-
 issue_remediation_url = dcc.Store(
     id='issue-remediation-url', storage_type='session')
 issue_resolution_remediation_action_selection = dcc.Store(
@@ -153,7 +143,7 @@ def Add_Dash(app):
                   [Input('refresh-review-queue', 'n_clicks')])
     def refresh_review_queue(n):
         intial_data, initial_columnDefs = populate_review_queue(
-            session['user'].id)
+            session['user'].id, session['user'].group_display)
         return intial_data, initial_columnDefs
 
     @app.callback(Output('runset-selection-data', 'data'),
@@ -1031,8 +1021,6 @@ def Add_Dash(app):
 
             return dcc.send_data_frame(data_output.reset_index().to_csv, runset_selection['id']+".csv", index=False), None
         return no_update, None
-
-    # DEBUG Starting here...
 
     @app.callback(Output('remediation-action-options', 'options'),
                   Input('remediation-action-loader', 'n_intervals'))
