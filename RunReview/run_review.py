@@ -1047,7 +1047,6 @@ def Add_Dash(app):
     def post_remediation_action(n, is_open, runset_selection, runset_review_id, xpcr_module_runset_id, remediation_action_id, runset_subject_ids):
         if n:
             if ctx.triggered_id == 'remediation-action-submit':
-                print("Run it Run it")
                 remediation_action_payload = {"userId": session['user'].id,
                                               "neuMoDxSystemId": "00000000-0000-0000-0000-000000000000",
                                               "xpcrModuleId": runset_subject_ids['XPCRModule'][xpcr_module_runset_id],
@@ -1056,13 +1055,14 @@ def Add_Dash(app):
                                               "runSetReviewReferrerId": runset_review_id,
                                               "runSetReviewResolverId": "00000000-0000-0000-0000-000000000000",
                                               "remediationActionTypeId": remediation_action_id}
-                print(remediation_action_payload)
+                # print(remediation_action_payload)
                 remediation_action_url = os.environ["RUN_REVIEW_API_BASE"] + \
                     "RemediationActions"
 
-                requests.post(url=remediation_action_url,
-                              json=remediation_action_payload,
-                              verify=False).json()
+                response = requests.post(url=remediation_action_url,
+                                         json=remediation_action_payload,
+                                         verify=False).json()
+                print(response)
                 return not is_open
 
         return is_open
@@ -1070,12 +1070,14 @@ def Add_Dash(app):
     @app.callback([Output('remediation-action-table', 'rowData'),
                    Output('remediation-action-table', 'columnDefs')],
                   [Input('review-tabs', 'active_tab'),
+                   Input('remediation-action-delete-response', 'is_open'),
+                   Input('remediation-action-post-response', 'is_open'),
                    State('xpcrmodule-selected', 'data'),
                    State('runset-subject-ids', 'data'),
                    State('related-runsets', 'data')])
-    def get_remediation_actions(tab_selected, runset_xpcr_module_selection_id, runset_subject_ids, related_runsets):
-
-        if tab_selected in ['run-review-remediation-actions'] and runset_xpcr_module_selection_id != 'NoFilter':
+    def get_remediation_actions(tab_selected, delete_response, post_response, runset_xpcr_module_selection_id, runset_subject_ids, related_runsets):
+        trigger_id = ctx.triggered_id
+        if (tab_selected in ['run-review-remediation-actions'] and runset_xpcr_module_selection_id != 'NoFilter') or (trigger_id == 'remediation-action-delete-response' and delete_response == False) or (trigger_id == 'remediation-action-post-response' and post_response == False):
             """
             1. Call API Endpoint to get active issue data.
             """
@@ -1461,24 +1463,35 @@ def Add_Dash(app):
 
         return is_open
 
-    # @app.callback(Output('issue-remediation-attempt-submission-response', 'is_open'),
-    #               [Input('issue-resolution-submit', 'n_clicks'),
-    #                State('issue-remediation-attempt-submission-response', 'is_open')])
-    # def issue_resolution_submission_response(submit_button, is_open):
-    #     if submit_button:
+    @app.callback(Output('remediation-action-delete-confirmation', 'is_open'),
+                  State('remediation-action-delete-confirmation', 'is_open'),
+                  Input('remediation-action-delete-button', 'n_clicks'),
+                  Input('remediation-action-delete-confirmed-button', 'n_clicks'),
+                  Input('remediation-action-delete-canceled-button', 'n_clicks'))
+    def confirm_delete_remediation_action(is_open, remediation_action_button, remediation_action_delete_confirmed_button, remediation_action_delete_canceled_button):
+        trigger = ctx.triggered_id
+        if trigger == 'remediation-action-delete-button' or trigger == 'remediation-action-delete-confirmed-button' or trigger == 'remediation-action-delete-canceled-button':
 
-    #         # query_params = {'runSetReviewId': runset_review_id,
-    #         #                 'runSetId': runset_selection_data['id'],
-    #         #                 'newStatusName': 'Completed'}
-    #         # print(query_params)
-    #         # resp = requests.put(
-    #         #     url=remediation_action_update_url, params=query_params, verify=False)
+            return not is_open
+        return is_open
 
-    #         # print(resp.status_code)
+    @app.callback(Output('remediation-action-delete-response', 'is_open'),
+                  State('remediation-action-table', 'selectionChanged'),
+                  State('remediation-action-delete-response', 'is_open'),
+                  Input('remediation-action-delete-confirmed-button', 'n_clicks'))
+    def delete_remediation_action(selected_row, is_open, remediation_action_delete_confirmed_button):
 
-    #         return not is_open
+        trigger = ctx.triggered_id
+        if trigger == 'remediation-action-delete-confirmed-button':
+            print(selected_row[0]['RemediationActionId'])
+            delete_url = os.environ['RUN_REVIEW_API_BASE'] + \
+                "RemediationActions/{}".format(
+                    selected_row[0]['RemediationActionId'])
+            print(delete_url)
+            requests.delete(delete_url, verify=False)
 
-    #     return is_open
+            return not is_open
+        return is_open
 
     return app.server
 

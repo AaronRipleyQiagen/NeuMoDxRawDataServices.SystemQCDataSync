@@ -82,7 +82,6 @@ module_issue_content = dbc.Card(
     className="mt-3",
 )
 
-
 run_issue_content = dbc.Card(
     dbc.CardBody(
         [
@@ -185,12 +184,15 @@ remediation_action_content = dbc.Card(
             ),
 
             dbc.Button("Complete Remediation Action",
-                       id='remediation-action-resolution', style={'width': '50%', 'margin-left': '25%'}),
+                       id='remediation-action-resolution', style={'width': '35%', 'margin-left': '10%'}),
+            dbc.Button("Delete Remediation Action", id='remediation-action-delete-button',
+                       style={'width': '35%', 'margin-left': '10%'})
+
+
         ]
     ),
     className="mt-3",
 )
-
 
 cartridge_pictures_content = dbc.Card(
 
@@ -292,14 +294,12 @@ tabs = dbc.Tabs(
     ], id='review-tabs'
 )
 
-
 issue_post_response = dbc.Modal([
     dbc.ModalHeader(dbc.ModalTitle("Issue Creation Result")),
     dbc.ModalBody("Issue was added successfully")
 ],
     id="issue-post-response",
     is_open=False)
-
 
 remediation_action_post_response = dbc.Modal([
     dbc.ModalHeader(dbc.ModalTitle("Remediation Action Creation Result")),
@@ -308,14 +308,34 @@ remediation_action_post_response = dbc.Modal([
     id="remediation-action-post-response",
     is_open=False)
 
-
 remediation_action_update_response = dbc.Modal([
-    dbc.ModalHeader(dbc.ModalTitle("Remediation Action Update Result")),
+    dbc.ModalHeader(dbc.ModalTitle(
+                    "Remediation Action Update Result")),
     dbc.ModalBody("Remediation Action was updated successfully")
 ],
     id="remediation-action-update-response",
     is_open=False)
 
+
+remediation_action_delete_confirmation = dbc.Modal([
+    dbc.ModalHeader(dbc.ModalTitle(
+                    "Remediation Action Deletion Confirmation")),
+    dbc.ModalBody("Are you sure you want to delete this remediation action?"),
+    html.Div([dbc.Button("Yes", id='remediation-action-delete-confirmed-button',
+                         style={'width': '35%', 'margin-left': '10%', 'display': 'inline-block'}),
+              dbc.Button("No", id='remediation-action-delete-canceled-button',
+                         style={'width': '35%', 'margin-left': '10%', 'display': 'inline-block'})])
+],
+    id="remediation-action-delete-confirmation",
+    is_open=False)
+
+remediation_action_delete_response = dbc.Modal([
+    dbc.ModalHeader(dbc.ModalTitle(
+                    "Remediation Action Deletion Result")),
+    dbc.ModalBody("Remediation Action was deleted successfully")
+],
+    id="remediation-action-delete-response",
+    is_open=False)
 issue_resolution_remediation_action_selection = dbc.Modal([
     dbc.ModalHeader(dbc.ModalTitle("Remediation Action Selection")),
     dbc.ModalBody([
@@ -350,12 +370,16 @@ run_review_acceptance_label = html.P(
     "Is Data Acceptable?", style=quarterstyle)
 run_review_acceptance = dcc.Dropdown(
     options={True: "Yes", False: "No"}, id='run-review-acceptance', style=threequarterstyle)
+
+
 layout = [
     run_review_description,
     issue_post_response,
     run_review_update_response,
     remediation_action_post_response,
     remediation_action_update_response,
+    remediation_action_delete_confirmation,
+    remediation_action_delete_response,
     issue_resolution_remediation_action_selection,
     issue_resolution_remediation_action_response,
 
