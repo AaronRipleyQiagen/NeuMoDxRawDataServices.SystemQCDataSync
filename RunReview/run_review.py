@@ -1089,11 +1089,12 @@ def Add_Dash(app):
                 url=xpcrmodule_remediation_issues_url, verify=False).json()
 
             actions_dataframe = pd.DataFrame(
-                columns=['RemediationActionId', 'Status', 'Action', 'Assigned By', 'Origin Attempt', 'Completed Attempt'])
+                columns=['RemediationActionId', 'Status', 'Action', 'Assigned By', 'Origin Attempt', 'Completed Attempt', 'Assigned By Id'])
 
             idx = 0
             for remediation_action in xpcrmodule['remediationActions']:
                 remediation_action_id = remediation_action['id']
+                remediation_action_owner = remediation_action['validFromUser']
                 status = remediation_action['remediationActionStatus']['name']
                 action = remediation_action['remediationActionType']['name']
                 assignee = remediation_action['runSetReviewReferrer']['reviewerName']
@@ -1103,7 +1104,7 @@ def Add_Dash(app):
                 except:
                     completed = "N/A"
                 actions_dataframe.loc[idx] = [
-                    remediation_action_id, status, action, assignee, origin, completed]
+                    remediation_action_id, status, action, assignee, origin, completed, remediation_action_owner]
                 idx += 1
             column_definitions = []
             for column in actions_dataframe.columns:
@@ -1493,6 +1494,15 @@ def Add_Dash(app):
             return not is_open
         return is_open
 
+    @app.callback(Output('remediation-action-delete-button', 'disabled'),
+                  Input('remediation-action-table', 'selectionChanged'))
+    def check_delete_action_validity(selected_row):
+        trigger_id = ctx.triggered_id
+        if trigger_id == 'remediation-action-table':
+            if selected_row[0]['Assigned By Id'] == session['user'].id:
+                return False
+            else:
+                return True
     return app.server
 
 
