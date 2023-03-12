@@ -11,14 +11,19 @@ import base64
 register_page(__name__, path="/run-review/view-results/")
 
 fig = go.Figure()
+
 halfstyle = {'width': '50%', 'display': 'inline-block',
              'vertical-align': 'middle', 'horizontal-align': 'left'}
+
 onethirdstyle = {'width': '33%', 'display': 'inline-block',
                  'vertical-align': 'middle', 'horizontal-align': 'center'}
+
 quarterstyle = {'width': '35%', 'display': 'inline-block',
                 'vertical-align': 'middle', 'horizontal-align': 'right'}
+
 threequarterstyle = {'width': '65%', 'display': 'inline-block',
                      'vertical-align': 'middle', 'horizontal-align': 'right'}
+
 remediation_actions = [{'label': 'Increase Jack Pressure', 'value': 1},
                        {'label': 'Reflange Fluid Line', 'value': 2},
                        {'label': 'Perform Optics Calibration', 'value': 3},
@@ -28,34 +33,47 @@ run_review_description = html.H1(id='runset-description')
 
 run_review_channel_selector_label = html.P(
     "Choose Channel", style=quarterstyle)
+
 run_review_channel_selector = dcc.Dropdown(
     id='run-review-channel-selector', style=threequarterstyle)
+
 run_review_xpcrmodule_selector_label = html.P(
     "Choose XPCR Module", style=quarterstyle)
+
 run_review_xpcrmodule_selector = dcc.Dropdown(
     id='run-review-xpcrmodule-selector', style=threequarterstyle)
+
 run_review_download_data = dbc.Button(
     "Download Data", style={'margin': 'auto'}, id='run-review-download-data')
+
 run_review_run_selector_label = html.P(
     "Filter for specific runs", style=quarterstyle)
+
 run_review_run_selector = dcc.Dropdown(
     id='run-review-run-selector', style=threequarterstyle)
+
 run_review_lane_selector_label = html.P(
     "Filter for specific lanes", style=quarterstyle)
+
 run_review_lane_selector = dcc.Dropdown(
     id='run-review-lane-selector', style=threequarterstyle)
+
 run_review_color_selector_label = html.P(
     "Choose Color Attribute", style=quarterstyle)
+
 run_review_color_selector = dcc.Dropdown(options=['XPCR Module Lane', 'Run'], value='XPCR Module Lane',
                                          id='run-review-color-selector', style=threequarterstyle)
+
 run_review_process_step_selector_label = html.P(
     "Choose Process Step", style=quarterstyle)
+
 run_review_process_step_selector = dcc.Dropdown(
     ['Normalized', 'Raw', '2nd'], value='Normalized', id='run-review-process-step-selector', style=threequarterstyle)
+
 run_review_curves = dcc.Graph(id="run-review-curves", figure=fig)
+
 run_review_line_data = dash_table.DataTable(
     id='runset-sample-results', row_selectable='Multi', sort_action='native')
-
 
 line_data_content = dbc.Card(
     dbc.CardBody(
@@ -65,6 +83,7 @@ line_data_content = dbc.Card(
     ),
     className="mt-3",
 )
+
 module_issue_content = dbc.Card(
     dbc.CardBody(
         [
@@ -142,7 +161,6 @@ sample_issue_content = dbc.Card(
 active_issues_content = dbc.Card(
     dbc.CardBody(
         [
-
             dag.AgGrid(
                 enableEnterpriseModules=True,
                 # licenseKey=os.environ['AGGRID_ENTERPRISE'],
@@ -156,8 +174,11 @@ active_issues_content = dbc.Card(
                 # setRowId="id",
                 id='issues-table'
             ),
-            dbc.Button("Grade Issue Resolution",
-                       id='issue-remediation-grade-button', disabled=True, style={'width': '50%', 'margin-left': '25%'}),
+            html.Div([
+                dbc.Button("Grade Issue Resolution",
+                           id='issue-remediation-grade-button', disabled=True, style={'width': '35%', 'margin-left': '10%'}),
+                dbc.Button("Delete Issue",
+                           id='issue-remediation-grade-button', disabled=True, style={'width': '35%', 'margin-left': '10%'})])
         ]
     ),
     className="mt-3",
@@ -301,6 +322,27 @@ issue_post_response = dbc.Modal([
     id="issue-post-response",
     is_open=False)
 
+issue_delete_confirmation = dbc.Modal([
+    dbc.ModalHeader(dbc.ModalTitle("Issue Deletion Confirmation")),
+    dbc.ModalBody("Are you sure you want to delete this issue?"),
+    html.Div([dbc.Button("Yes", id='issue-delete-confirmed-button',
+                         style={'width': '35%', 'margin-left': '10%', 'display': 'inline-block'}),
+              dbc.Button("No", id='issue-delete-canceled-button',
+                         style={'width': '35%', 'margin-left': '10%', 'display': 'inline-block'})]
+             )
+
+],
+    id="issue-delete-confirmation",
+    is_open=False)
+
+issue_delete_response = dbc.Modal([
+    dbc.ModalHeader(dbc.ModalTitle(
+                    "Issue Deletion Result")),
+    dbc.ModalBody("Issue was deleted successfully")
+],
+    id="issue-delete-response",
+    is_open=False)
+
 remediation_action_post_response = dbc.Modal([
     dbc.ModalHeader(dbc.ModalTitle("Remediation Action Creation Result")),
     dbc.ModalBody("Remediation Action was added successfully")
@@ -315,7 +357,6 @@ remediation_action_update_response = dbc.Modal([
 ],
     id="remediation-action-update-response",
     is_open=False)
-
 
 remediation_action_delete_confirmation = dbc.Modal([
     dbc.ModalHeader(dbc.ModalTitle(
@@ -336,6 +377,7 @@ remediation_action_delete_response = dbc.Modal([
 ],
     id="remediation-action-delete-response",
     is_open=False)
+
 issue_resolution_remediation_action_selection = dbc.Modal([
     dbc.ModalHeader(dbc.ModalTitle("Remediation Action Selection")),
     dbc.ModalBody([
@@ -356,7 +398,6 @@ issue_resolution_remediation_action_response = dbc.Modal([
     id="issue-remediation-attempt-submission-response",
     is_open=False)
 
-
 run_review_update_response = dbc.Modal([
     dbc.ModalHeader(dbc.ModalTitle("Run Review Status Updated Successfully")),
     dbc.ModalBody("Run Review Status Changed to Completed.")
@@ -366,11 +407,12 @@ run_review_update_response = dbc.Modal([
 
 run_review_status_update_button = dbc.Button("Submit Review",
                                              id='run-review-completed-button', style=quarterstyle)
+
 run_review_acceptance_label = html.P(
     "Is Data Acceptable?", style=quarterstyle)
+
 run_review_acceptance = dcc.Dropdown(
     options={True: "Yes", False: "No"}, id='run-review-acceptance', style=threequarterstyle)
-
 
 layout = [
     run_review_description,
@@ -380,6 +422,8 @@ layout = [
     remediation_action_update_response,
     remediation_action_delete_confirmation,
     remediation_action_delete_response,
+    issue_delete_confirmation,
+    issue_delete_response,
     issue_resolution_remediation_action_selection,
     issue_resolution_remediation_action_response,
 
@@ -394,7 +438,6 @@ layout = [
               html.Div([run_review_status_update_button], style=halfstyle)]),
 
     html.Div([html.Div([run_review_download_data])]),
-
 
     dcc.Loading(id='run-review-loading', type='graph',
                 children=[run_review_curves]),
