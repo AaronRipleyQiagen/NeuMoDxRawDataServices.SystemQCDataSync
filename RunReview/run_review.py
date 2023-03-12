@@ -74,62 +74,92 @@ sidebar = html.Div(
     ],
     style=SIDEBAR_STYLE,
 )
+
 review_loader = html.Div(id='run-reviewer-loader')
+
 content = html.Div(id="run-reviewer-page-content", style=CONTENT_STYLE,
                    children=page_container)
+
 runset_selection = dcc.Store(
     id='runset-selection-data', storage_type='session', data='')
+
 runset_sample_data = dcc.Store(
     id='runset-sample-data', storage_type='session')
+
 runset_review_id = dcc.Store(
     id='runset-review-id', storage_type='session', data='')
+
 runset_channel_options = dcc.Store(
     id='runset-channel-options', storage_type='session', data='')
+
 channel_selected = dcc.Store(
     id='channel-selected', storage_type='session', data='')
+
 spc_channel = dcc.Store(id='spc-channel', storage_type='session', data='')
+
 runset_severity_options = dcc.Store(
     id='runset-severity-options', storage_type='session', data='')
+
 severity_selected = dcc.Store(
     id='severity-selected', storage_type='session', data='')
+
 runset_run_options = dcc.Store(
     id='runset-run-options', storage_type='session', data='')
+
 run_option_selected = dcc.Store(
     id='run-option-selected', storage_type='session', data='')
+
 runset_xpcrmodulelane_options = dcc.Store(
     id='runset-xpcrmodulelane-options', storage_type='session', data='')
+
 xpcrmodulelane_selected = dcc.Store(
     id='xpcrmodulelane-selected', storage_type='session', data='')
+
 xpcrmodule_options = dcc.Store(
     id='xpcrmodule-options', storage_type='session', data='')
+
 xpcrmodule_selected = dcc.Store(
     id='xpcrmodule-selected', storage_type='session', data='')
+
 runset_subject_ids = dcc.Store(
     id='runset-subject-ids', storage_type='session', data='')
+
 runset_subject_descriptions = dcc.Store(
     id='runset-subject-descriptions', storage_type='session')
+
 pcrcurve_sample_info = dcc.Store(
     id='pcrcurve-sample-info', storage_type='session')
+
 issue_selected = dcc.Store(id='issue-selected', storage_type='session')
+
 flat_data_download = dcc.Download(id="flat-data-download")
+
 remediation_action_selection = dcc.Store(
     id='remediation-action-selection', storage_type='session')
+
 remediation_action_loader = dcc.Interval(id='remediation-action-loader',
                                          interval=60*1000,  # in milliseconds
                                          n_intervals=0)
+
 related_runsets = dcc.Store(id='related-runsets', storage_type='session')
+
 issue_remediation_url = dcc.Store(
     id='issue-remediation-url', storage_type='session')
+
+issue_delete_url = dcc.Store(id='issue-delete-url', storage_type='session')
+
 issue_resolution_remediation_action_selection = dcc.Store(
     id='issue-resolution-remediation-action-selection', storage_type='session')
+
 issue_remediation_type = dcc.Store(
     id='issue-remediation-type', storage_type='session')
+
 layout = html.Div([review_loader, dcc.Loading(id='run-review-href-loader', fullscreen=True, type='dot', children=[dcc.Location(
     id="run-review-url")]), sidebar, content,
     runset_selection, runset_sample_data, runset_review_id, runset_severity_options,
     runset_channel_options, channel_selected, runset_run_options, run_option_selected,
     spc_channel, runset_xpcrmodulelane_options, xpcrmodulelane_selected, severity_selected,
-    runset_subject_ids, xpcrmodule_options, xpcrmodule_selected, pcrcurve_sample_info, issue_selected, runset_subject_descriptions, flat_data_download, remediation_action_selection, related_runsets, issue_remediation_url, issue_resolution_remediation_action_selection, issue_remediation_type, remediation_action_loader])
+    runset_subject_ids, xpcrmodule_options, xpcrmodule_selected, pcrcurve_sample_info, issue_selected, runset_subject_descriptions, flat_data_download, remediation_action_selection, related_runsets, issue_remediation_url, issue_resolution_remediation_action_selection, issue_remediation_type, remediation_action_loader, issue_delete_url])
 
 
 def Add_Dash(app):
@@ -891,12 +921,13 @@ def Add_Dash(app):
     @app.callback([Output('issues-table', 'rowData'),
                    Output('issues-table', 'columnDefs')],
                   [Input('review-tabs', 'active_tab'),
+                   Input('issue-delete-response', 'is_open'),
                    State('runset-selection-data', 'data'),
                    State('runset-subject-descriptions', 'data'),
                    State('related-runsets', 'data')])
-    def get_active_runset_issues(tab_selected, runset_selection_data, runset_subject_descriptions, related_runsets):
-
-        if tab_selected in ['run-review-active-issues']:
+    def get_active_XPCRModule_issues(tab_selected, issue_delete_response, runset_selection_data, runset_subject_descriptions, related_runsets):
+        trigger_id = ctx.triggered_id
+        if tab_selected in ['run-review-active-issues'] or (trigger_id == 'issue-delete-response' and issue_delete_response == False):
             """
             1. Call API Endpoint to get active issue data.
             """
@@ -1230,12 +1261,11 @@ def Add_Dash(app):
         else:
             return no_update
 
-    @ app.callback(
-        Output('upload-tadm-message', 'children'),
-        [Input('upload-tadm-pictures', 'contents')],
-        [State('upload-tadm-pictures', 'filename'),
-         State("runset-selection-data", "data"),
-         State("runset-review-id", "data")])
+    @ app.callback(Output('upload-tadm-message', 'children'),
+                   [Input('upload-tadm-pictures', 'contents')],
+                   [State('upload-tadm-pictures', 'filename'),
+                    State("runset-selection-data", "data"),
+                    State("runset-review-id", "data")])
     def upload_tadm_image_to_blob_storage(list_of_contents, list_of_filenames, runset_selection, runset_review_id):
 
         if list_of_contents:
@@ -1338,33 +1368,6 @@ def Add_Dash(app):
         else:
             return no_update
 
-    @app.callback(Output('remediation-action-update-response', 'is_open'),
-                  [Input('remediation-action-resolution', 'n_clicks'),
-                   State('remediation-action-update-response', 'is_open'),
-                   State('runset-review-id', 'data'),
-                   State('runset-selection-data', 'data'),
-                   State('remediation-action-table', 'selectionChanged')], prevent_intial_call=True)
-    def update_remediation_action(resolution_submit, is_open, runset_review_id, runset_selection_data, selected_row):
-
-        if resolution_submit:
-            remediation_action_update_url = os.environ['RUN_REVIEW_API_BASE'] + \
-                "RemediationActions/{}/status".format(
-                    selected_row[0]['RemediationActionId'])
-
-            query_params = {'runSetReviewId': runset_review_id,
-                            'runSetId': runset_selection_data['id'],
-                            'newStatusName': 'Completed'}
-
-            print(query_params)
-            resp = requests.put(
-                url=remediation_action_update_url, params=query_params, verify=False)
-
-            print(resp.status_code)
-
-            return not is_open
-
-        return is_open
-
     @ app.callback([Output('issue-remediation-grade-button', 'disabled'),
                     Output('issue-remediation-url', 'data'),
                     Output('issue-resolution-remediation-action-options', 'options'),
@@ -1405,6 +1408,80 @@ def Add_Dash(app):
             return False, issue_remediation_url, remediation_action_options, issue_selected["Level"]
         else:
             return True, issue_remediation_url, remediation_action_options, issue_selected["Level"]
+
+    @app.callback(Output('remediation-action-update-response', 'is_open'),
+                  [Input('remediation-action-resolution', 'n_clicks'),
+                   State('remediation-action-update-response', 'is_open'),
+                   State('runset-review-id', 'data'),
+                   State('runset-selection-data', 'data'),
+                   State('remediation-action-table', 'selectionChanged')], prevent_intial_call=True)
+    def update_remediation_action(resolution_submit, is_open, runset_review_id, runset_selection_data, selected_row):
+
+        if resolution_submit:
+            remediation_action_update_url = os.environ['RUN_REVIEW_API_BASE'] + \
+                "RemediationActions/{}/status".format(
+                    selected_row[0]['RemediationActionId'])
+
+            query_params = {'runSetReviewId': runset_review_id,
+                            'runSetId': runset_selection_data['id'],
+                            'newStatusName': 'Completed'}
+
+            print(query_params)
+            resp = requests.put(
+                url=remediation_action_update_url, params=query_params, verify=False)
+
+            print(resp.status_code)
+
+            return not is_open
+
+        return is_open
+
+    @ app.callback([Output('issue-delete-button', 'disabled'),
+                    Output('issue-delete-url', 'data'),
+                    ],
+                   [Input('issue-selected', 'data'),
+                    State('related-runsets', 'data'),
+                    State('runset-selection-data', 'data')], prevent_intial_call=True)
+    def activate_issue_delete_button(issue_selected, related_runsets, runset_selection_data):
+        issue_urls = {'Sample': 'SampleIssues',
+                      'XPCR Module Lane': 'XPCRModuleLaneIssues',
+                      'Run': 'CartridgeIssues',
+                      'XPCR Module': 'XPCRModuleIssues'}
+
+        issue_remediation_url = os.environ['RUN_REVIEW_API_BASE'] + \
+            issue_urls[issue_selected["Level"]] + \
+            "/{}".format(issue_selected['IssueId'])
+
+        if session['user'].id == issue_selected['UserId'] and related_runsets[runset_selection_data['id']] == issue_selected['Attempt']:
+            return False, issue_remediation_url
+        else:
+            return True, issue_remediation_url
+
+    @app.callback(Output('issue-delete-confirmation', 'is_open'),
+                  State('issue-delete-confirmation', 'is_open'),
+                  Input('issue-delete-button', 'n_clicks'),
+                  Input('issue-delete-confirmed-button', 'n_clicks'),
+                  Input('issue-delete-canceled-button', 'n_clicks'))
+    def confirm_delete_issue(is_open, remediation_action_button, remediation_action_delete_confirmed_button, remediation_action_delete_canceled_button):
+        trigger = ctx.triggered_id
+        if trigger == 'issue-delete-button' or trigger == 'issue-delete-confirmed-button' or trigger == 'issue-delete-canceled-button':
+
+            return not is_open
+        return is_open
+
+    @app.callback(Output('issue-delete-response', 'is_open'),
+                  State('issue-delete-response', 'is_open'),
+                  State('issue-delete-url', 'data'),
+                  Input('issue-delete-confirmed-button', 'n_clicks'))
+    def delete_remediation_action(is_open, delete_url, remediation_action_delete_confirmed_button):
+
+        trigger = ctx.triggered_id
+        if trigger == 'issue-delete-confirmed-button':
+
+            requests.delete(delete_url, verify=False)
+
+            return not is_open
+        return is_open
 
     @app.callback(Output('issue-resolution-remediation-action-selection-prompt', 'is_open'),
                   [Input('issue-remediation-grade-button', 'n_clicks'),
@@ -1503,6 +1580,7 @@ def Add_Dash(app):
                 return False
             else:
                 return True
+
     return app.server
 
 

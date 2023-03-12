@@ -178,7 +178,7 @@ active_issues_content = dbc.Card(
                 dbc.Button("Grade Issue Resolution",
                            id='issue-remediation-grade-button', disabled=True, style={'width': '35%', 'margin-left': '10%'}),
                 dbc.Button("Delete Issue",
-                           id='issue-remediation-grade-button', disabled=True, style={'width': '35%', 'margin-left': '10%'})])
+                           id='issue-delete-button', disabled=True, style={'width': '35%', 'margin-left': '10%'})])
         ]
     ),
     className="mt-3",
