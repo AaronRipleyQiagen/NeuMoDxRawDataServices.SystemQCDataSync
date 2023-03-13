@@ -12,7 +12,8 @@ import requests
 
 mod_qual_review_subscribers = {'Aaron': 'aaron.ripley@qiagen.com',
                                'Vik': 'viktoriah.slusher@qiagen.com',
-                               'Catherine': 'catherine.couture@qiagen.com'}
+                               'Catherine': 'catherine.couture@qiagen.com',
+                               'David': 'david.edwin@qiagen.com'}
 
 url_base = '/dashboard/data-explorer/'
 loader = html.Div(id='loader')
