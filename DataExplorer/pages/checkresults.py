@@ -10,6 +10,7 @@ import os
 import requests
 from flask import session
 from flask_mail import Message
+import dash_ag_grid as dag
 
 fig = go.Figure()
 
@@ -576,6 +577,21 @@ def getSampleDataAsync(sample_ids):
     return samples
 
 
+sample_results_table = dag.AgGrid(
+    enableEnterpriseModules=True,
+    # licenseKey=os.environ['AGGRID_ENTERPRISE'],
+    # columnDefs=initial_columnDefs,
+    # rowData=intial_data,
+    columnSize="sizeToFit",
+    defaultColDef=dict(
+        resizable=True,
+    ),
+    rowSelection='single',
+    # setRowId="id",
+    id='sample-results-table'
+)
+
+
 layout = html.Div(children=[
     html.H1(id='h1_1', children='Results Viewer'),
     dcc.Loading(id='samples-loading',
@@ -585,8 +601,7 @@ layout = html.Div(children=[
                           dcc.Dropdown(['Normalized', 'Raw', '2nd'],
                                        value='Raw', id='process-step-selector'),
                           dcc.Graph(id="curves", figure=fig),
-                          dash_table.DataTable(
-                              id='sample-results', row_selectable='Multi', sort_action='native'),
+                          sample_results_table,
                           dbc.Button("Create Run Review from Dataset",
                                      id='create-run-review-button'),
                           html.H1(id='run-review-confirmation')]),
@@ -638,7 +653,6 @@ def get_sample_ids_from_dcc_store(href, selected_cartridge_sample_ids):
     for cartridge_id in selected_cartridge_sample_ids:
         for sample_id in selected_cartridge_sample_ids[cartridge_id]:
             selected_sample_ids.append(sample_id)
-
     sample_data = getSampleDataAsync(selected_sample_ids)
 
     # the json file where the output must be stored
@@ -665,17 +679,21 @@ def get_sample_ids_from_dcc_store(href, selected_cartridge_sample_ids):
 
     runsettypeoptions = {}
     for resultcode in dataframe['Result Code'].unique():
-        print(resultcode)
+
         request_url = os.environ['RUN_REVIEW_API_BASE'] + \
             "QualificationAssays/{}".format(resultcode)
+        print(request_url)
         resp = requests.get(request_url, verify=False).json()
+
         for runsettype in resp['runSetTypes']:
             runsettypeoptions[runsettype['id']] = runsettype['description']
 
     return SPC2_channel, 'Normalized', dataframe.to_dict(orient='records'), runsettypeoptions
 
 
-@callback([Output('curves', 'figure'), Output('sample-results', 'data')],
+@callback([Output('curves', 'figure'),
+           Output('sample-results-table', 'rowData'),
+           Output('sample-results-table', 'columnDefs')],
           [Input('channel-selector', 'value'),
           Input('process-step-selector', 'value'),
           Input('sample-info', 'data')], prevent_initial_call=True)
@@ -702,8 +720,28 @@ def update_pcr_curves(channel, process_step, data):
                                  mode='lines',
                                  name=_name,
                                  line=dict(color=colorDict[df_Channel_Step.loc[idx, 'XPCR Module Lane']])))
+    output_frame = df_Channel_Step  # .to_dict('records'
 
-    return fig, df_Channel_Step[['XPCR Module Serial', 'XPCR Module Lane', 'Sample ID', 'Target Name', 'Localized Result', 'Overall Result', 'Ct', 'End Point Fluorescence', 'Max Peak Height', 'EPR']].round(1).to_dict('records')
+    inital_selection = ['XPCR Module Serial', 'XPCR Module Lane', 'Sample ID', 'Target Name', 'Localized Result',
+                        'Overall Result', 'Ct', 'End Point Fluorescence', 'Max Peak Height', 'EPR']
+    column_definitions = []
+    aggregates = ['Ct', 'EPR', 'End Point Fluorescence',
+                  'Max Peak Height'] + [x for x in output_frame.columns if 'Baseline' in x or 'Reading' in x]
+    groupables = ['XPCR Module Serial'] + \
+        [x for x in output_frame.columns if 'Lot' in x or 'Serial' in x or 'Barcode' in x]
+
+    for column in output_frame.columns:
+        column_definition = {"headerName": column,
+                             "field": column, "filter": True}
+        if column not in inital_selection:
+            column_definition['hide'] = True
+        if column in aggregates:
+            column_definition['enableValue'] = True
+        if column in groupables:
+            column_definition['enableRowGroup'] = True
+
+        column_definitions.append(column_definition)
+    return fig, output_frame.to_dict('records'), column_definitions
 
 
 @callback(Output("runset-selector-modal", "is_open"),

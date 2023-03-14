@@ -5,6 +5,7 @@ import dash
 import requests
 import pandas as pd
 import os
+import dash_ag_grid as dag
 
 register_page(__name__, path="/")
 
@@ -64,12 +65,26 @@ def getXPCRModuleCartridges(module_id):
         'datetime64').dt.strftime("%d %B %Y %H:%M:%S")
     module_data['Run End Time'] = module_data['Run End Time'].astype(
         'datetime64').dt.strftime("%d %B %Y %H:%M:%S")
-    return module_data.reset_index().to_dict('records'), cartridge_samples
+    return module_data.reset_index(), cartridge_samples
 
 
 module_data = pd.DataFrame(
     columns=['id', 'Run Start Time', 'Run End Time', '# of Samples', 'Assays'])
 module_data.loc[0] = ['Test', 'Test', 'Test', 'Test', 'Test']
+
+module_runs = dag.AgGrid(
+    enableEnterpriseModules=True,
+    # licenseKey=os.environ['AGGRID_ENTERPRISE'],
+    # columnDefs=,
+    rowData=[],
+    columnSize="sizeToFit",
+    defaultColDef=dict(
+        resizable=True,
+    ),
+    rowSelection='multiple',
+    # setRowId="id",
+    id='module-runs-table'
+)
 
 layout = html.Div([
     html.Div(id='load-interval'),
@@ -84,10 +99,9 @@ layout = html.Div([
         dcc.Loading(id='samples-loading',
                     type='default',
                     fullscreen=True,
-                    children=dash_table.DataTable(id='runs', sort_action='native', row_selectable='multi', columns=[{'name': i, 'id': i, 'deletable': True} for i in module_data.columns
-                                                                                                                    # omit the id column
-                                                                                                                    if i != 'id'
-                                                                                                                    ]))
+                    children=[
+                        module_runs
+                    ]),
     ]),
     html.Div([
         dbc.Button('Get Data', id='view-run-data'),
@@ -102,29 +116,55 @@ def update_module_options(n):
     return update_modules()
 
 
-@callback([Output("runs", "data"), Output("cartridge-sample-ids", "data")], [Input("xpcr-module-options", "value")], prevent_inital_call=True)
+# @callback([Output("runs", "data"),
+#            Output("cartridge-sample-ids", "data")], [Input("xpcr-module-options", "value")], prevent_inital_call=True)
+# def get_run_options(module):
+#     if pd.isnull(module):
+#         return module_data.to_dict("records"), {}
+#     else:
+#         return getXPCRModuleCartridges(module)
+
+
+@callback([Output("module-runs-table", "rowData"),
+           Output("module-runs-table", 'columnDefs'),
+           Output("cartridge-sample-ids", "data")], [Input("xpcr-module-options", "value")], prevent_inital_call=True)
 def get_run_options(module):
     if pd.isnull(module):
-        return module_data.to_dict("records"), {}
+        return dash.no_update
     else:
-        return getXPCRModuleCartridges(module)
+        runs_dataframe, cartridge_samples = getXPCRModuleCartridges(
+            module)
+
+        column_definitions = []
+        for column in runs_dataframe.columns:
+            if 'id' not in column:
+                column_definitions.append(
+                    {"headerName": column, "field": column, "filter": True})
+            else:
+                column_definitions.append(
+                    {"headerName": column, "field": column, "filter": True, "hide": True})
+        # print(runs_dataframe)
+        # print(column_definitions)
+        # print(cartridge_samples)
+        return runs_dataframe.to_dict('records'), column_definitions, cartridge_samples
 
 
 @callback([Output("selected-cartridge-sample-ids", "data"),
            Output('url', 'href')],
           [Input('view-run-data', 'n_clicks'),
-           State('runs', 'selected_row_ids'),
+           State('module-runs-table', 'selectionChanged'),
            State('cartridge-sample-ids', 'data')],
           prevent_inital_call=True)
-def get_selected_samples(n, selected_cartridge_ids, cartridge_sample_ids):
+def get_selected_samples(n, selected_runs, cartridge_sample_ids):
 
-    if selected_cartridge_ids == None:
+    if selected_runs == None:
         return dash.no_update
     selected_cartridge_sample_ids = cartridge_sample_ids.copy()
 
+    selected_run_ids = [x['id'] for x in selected_runs]
     for cartridge_id in cartridge_sample_ids:
-        if cartridge_id not in selected_cartridge_ids:
+        if cartridge_id not in selected_run_ids:
             selected_cartridge_sample_ids.pop(cartridge_id)
 
-    print("got selected samples")
+    print(selected_cartridge_sample_ids)
     return selected_cartridge_sample_ids, "/dashboard/data-explorer/results"
