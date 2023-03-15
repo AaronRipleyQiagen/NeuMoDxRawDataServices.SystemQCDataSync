@@ -48,7 +48,10 @@ def Add_Dash(app):
 
     @app.callback(Output('post-response', 'is_open'),
                   [Input('submit-button', 'n_clicks')],
-                  [State('sample-info', 'data'), State('runset-type-options', 'value'), State('runset-type-options', 'options'), State('post-response', 'is_open')], prevent_initial_call=True)
+                  [State('sample-info', 'data'),
+                   State('runset-type-options', 'value'),
+                   State('runset-type-options', 'options'),
+                   State('post-response', 'is_open')], prevent_initial_call=True)
     def create_run_review(submit_clicks, data, runset_type_selection_id, runset_type_selection_options, is_open):
 
         if submit_clicks:
