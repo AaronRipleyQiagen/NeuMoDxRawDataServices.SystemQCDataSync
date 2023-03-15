@@ -68,10 +68,6 @@ def getXPCRModuleCartridges(module_id):
     return module_data.reset_index(), cartridge_samples
 
 
-module_data = pd.DataFrame(
-    columns=['id', 'Run Start Time', 'Run End Time', '# of Samples', 'Assays'])
-module_data.loc[0] = ['Test', 'Test', 'Test', 'Test', 'Test']
-
 module_runs = dag.AgGrid(
     enableEnterpriseModules=True,
     # licenseKey=os.environ['AGGRID_ENTERPRISE'],

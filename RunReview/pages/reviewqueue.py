@@ -23,7 +23,7 @@ review_queue = dag.AgGrid(
         resizable=True,
     ),
     rowSelection='single',
-    setRowId="id",
+    # setRowId="id",
     id='review-queue-table'
 )
 

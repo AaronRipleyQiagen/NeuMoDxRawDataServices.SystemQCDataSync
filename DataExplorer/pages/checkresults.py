@@ -566,7 +566,7 @@ def getSampleDataAsync(sample_ids):
 
             tasks = []
             for sample_id in sample_ids:
-                url = os.environ['API_HOST'] + '/api/samples/{}/info-channelsummary-readings'.format(
+                url = os.environ['API_HOST'] + '/api/samples/{}/all-info'.format(
                     sample_id)
                 tasks.append(asyncio.ensure_future(
                     getSampleData(session, url)))
@@ -581,13 +581,12 @@ sample_results_table = dag.AgGrid(
     enableEnterpriseModules=True,
     # licenseKey=os.environ['AGGRID_ENTERPRISE'],
     # columnDefs=initial_columnDefs,
-    # rowData=intial_data,
+    rowData=[],
     columnSize="sizeToFit",
     defaultColDef=dict(
         resizable=True,
     ),
     rowSelection='single',
-    # setRowId="id",
     id='sample-results-table'
 )
 
@@ -729,7 +728,8 @@ def update_pcr_curves(channel, process_step, data):
                   'Max Peak Height'] + [x for x in output_frame.columns if 'Baseline' in x or 'Reading' in x]
     groupables = ['XPCR Module Serial'] + \
         [x for x in output_frame.columns if 'Lot' in x or 'Serial' in x or 'Barcode' in x]
-
+    floats = ['Ct', 'EPR']
+    ints = ['End Point Fluorescence', 'Max Peak Height']
     for column in output_frame.columns:
         column_definition = {"headerName": column,
                              "field": column, "filter": True}
@@ -739,7 +739,9 @@ def update_pcr_curves(channel, process_step, data):
             column_definition['enableValue'] = True
         if column in groupables:
             column_definition['enableRowGroup'] = True
-
+        # if column in ints:
+        #     column_definition['valueFormatter'] = {
+        #         "function": "'$' + (params.value)"}
         column_definitions.append(column_definition)
     return fig, output_frame.to_dict('records'), column_definitions
 

@@ -85,7 +85,7 @@ def getSampleDataAsync(sample_ids):
 
             tasks = []
             for sample_id in sample_ids:
-                url = os.environ['API_HOST'] + '/api/samples/{}/info-channelsummary-readings'.format(
+                url = os.environ['API_HOST'] + '/api/samples/{}/all-info'.format(
                     sample_id)
                 tasks.append(asyncio.ensure_future(
                     getSampleData(session, url)))
@@ -93,6 +93,7 @@ def getSampleDataAsync(sample_ids):
             return await asyncio.gather(*tasks)
 
     samples = asyncio.run(main())
+    print('successfully downloaded data for ', len(samples))
     return samples
 
 
