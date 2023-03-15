@@ -169,9 +169,11 @@ def Add_Dash(app):
 
     apply_layout_with_auth(app, layout)
 
-    @app.callback([Output('review-queue-table', 'rowData'), Output('review-queue-table', 'columnDefs')],
+    @app.callback([Output('review-queue-table', 'rowData'),
+                   Output('review-queue-table', 'columnDefs')],
                   [Input('refresh-review-queue', 'n_clicks')])
     def refresh_review_queue(n):
+        # print(.get("sample-info"))
         intial_data, initial_columnDefs = populate_review_queue(
             session['user'].id, session['user'].group_display)
         return intial_data, initial_columnDefs
