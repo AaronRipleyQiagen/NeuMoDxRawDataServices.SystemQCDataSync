@@ -116,10 +116,15 @@ def upload_file():
         raw_data_container = 'neumodxsystemqc-rawdatafiles'
         blob_client = blob_service_client.get_blob_client(
             container=raw_data_container, blob=filename)
+
         logging.info("Attempting to upload File Data to blob")
 
         # Upload the file to Azure Blob Storage
         blob_client.upload_blob(data=file_content, connection_verify=False)
+        # Add Meta Data for Systems Manufacturing
+        meta_data = {
+            'DataEnvironmentId': session['user'].default_environment}
+        blob_client.set_blob_metadata(meta_data, connection_verify=False)
         flash(filename + ' Was Uploaded Successfully')
         return redirect(url_for('main.upload_file'))
 

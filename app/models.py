@@ -33,6 +33,11 @@ class User:
                  '5e7f84e5-c5d7-4c36-9d34-72d4586e410c': 'PSG Crew',
                  'ca35252d-ec09-4353-9e77-ffc68b9412ae': 'Admin'}
 
+        dataenvironments = {'73b01a3f-0cd6-4809-9661-52633b67fd63': 'D5E6801C-6C4E-4DE9-8BD2-829406E455A5',
+                            '7fdd3800-5468-4550-af37-f803e667a22c': 'D5E6801C-6C4E-4DE9-8BD2-829406E455A5',
+                            '5e7f84e5-c5d7-4c36-9d34-72d4586e410c': 'E19AB550-C121-4958-955C-4253E1673016',
+                            'ca35252d-ec09-4353-9e77-ffc68b9412ae': 'D5E6801C-6C4E-4DE9-8BD2-829406E455A5'}
+
         authority = "https://login.microsoftonline.com/"+app_config.TENANT_ID
         scope = ['https://graph.microsoft.com/.default']
         client = msal.ConfidentialClientApplication(
@@ -59,3 +64,4 @@ class User:
             if group['resourceDisplayName'] == 'WebAppTest':
                 self.group_id = group['appRoleId']
                 self.group_display = roles[group['appRoleId']]
+                self.default_environment = dataenvironments[group['appRoleId']]
