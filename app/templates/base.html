@@ -1,5 +1,6 @@
 <html>
   <head>
+  
     <link
       rel="stylesheet"
       media="screen"
@@ -56,6 +57,8 @@
         </ul>
       </div>
     </nav>
+    
+    <script src="{{url_for('static', filename='js/clearSessionStorage.js')}}"></script>
     {% block content %} {% endblock %}
   </body>
 </html>
