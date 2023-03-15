@@ -645,7 +645,6 @@ layout = html.Div(children=[
           [Input('url', 'href'), State('selected-cartridge-sample-ids', 'data')])
 def get_sample_ids_from_dcc_store(href, selected_cartridge_sample_ids):
 
-    print(href)
     print('Getting Data from DCC Store')
     selected_sample_ids = []
     sample_id_container = []
