@@ -122,8 +122,7 @@ def upload_file():
         # Upload the file to Azure Blob Storage
         blob_client.upload_blob(data=file_content, connection_verify=False)
         # Add Meta Data for Systems Manufacturing
-        meta_data = {
-            'DataEnvironmentId': session['user'].default_environment}
+        meta_data = {'DataEnvironmentId': session['user'].default_environment}
         blob_client.set_blob_metadata(meta_data, connection_verify=False)
         flash(filename + ' Was Uploaded Successfully')
         return redirect(url_for('main.upload_file'))

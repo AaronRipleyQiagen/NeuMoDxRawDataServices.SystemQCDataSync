@@ -58,7 +58,7 @@ def getXPCRModuleCartridges(module_id):
             cartridge_samples[cartridge['id']] = sample_ids
 
     # print(cartridge_samples)
-
+    module_data = module_data[module_data['# of Samples'] > 0]
     module_data.sort_values('Run Start Time', inplace=True, ascending=False)
     module_data.dropna(subset=['Run Start Time'], inplace=True)
     module_data['Run Start Time'] = module_data['Run Start Time'].astype(
