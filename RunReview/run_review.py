@@ -291,7 +291,7 @@ def Add_Dash(app):
         for run in dataframe['RunSetCartridgeId'].unique():
             i += 1
             run_options[run] = "Run "+str(i)
-        dataframe.to_csv('test.csv')
+        # dataframe.to_csv('test.csv')
 
         dataframe['Run'] = dataframe['RunSetCartridgeId'].replace(
             run_options)
@@ -414,8 +414,8 @@ def Add_Dash(app):
                         'Test Strip id',
                         'Test Strip PPM id',
                         'Reading Set Id'], axis=1, inplace=True)
-        with open('output.json', 'w') as f:
-            json.dump(dataframe.to_dict('records'), f)
+        # with open('output.json', 'w') as f:
+        # json.dump(dataframe.to_dict('records'), f)
         return dataframe.to_dict('records'), '/dashboard/run-review/view-results', resp['id'], severity_options, channel_options, run_options, spc_channel, lane_options, runset_subject_ids, xpcrmodule_options, runset_subject_descriptions
 
     @ app.callback([Output('sample-issue-options', 'options'), Output('lane-issue-options', 'options'), Output('module-issue-options', 'options'), Output('run-issue-options', 'options')],
