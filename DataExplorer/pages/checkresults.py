@@ -521,8 +521,8 @@ class SampleJSONReader:
                                    str(reading['cycle'])] = reading['value']
                 cycles.append(reading['cycle'])
                 values.append(reading['value'])
-            unpackedreadingset['Readings Array'] = np.column_stack(
-                zip(cycles, values))
+            # unpackedreadingset['Readings Array'] = np.column_stack(
+            #     zip(cycles, values))
             unpackedreadingsets.append(unpackedreadingset)
         unpackedassaychannelstepsDataFrame.loc[:, [x for x in unpackedreadingsets[0].keys()]] = pd.DataFrame(
             index=unpackedassaychannelstepsDataFrame.index, data=unpackedreadingsets)
@@ -681,10 +681,13 @@ def get_sample_ids_from_dcc_store(href, selected_cartridge_sample_ids):
         request_url = os.environ['RUN_REVIEW_API_BASE'] + \
             "QualificationAssays/{}".format(resultcode)
         print(request_url)
-        resp = requests.get(request_url, verify=False).json()
+        try:
+            resp = requests.get(request_url, verify=False).json()
 
-        for runsettype in resp['runSetTypes']:
-            runsettypeoptions[runsettype['id']] = runsettype['description']
+            for runsettype in resp['runSetTypes']:
+                runsettypeoptions[runsettype['id']] = runsettype['description']
+        except:
+            pass
 
     return SPC2_channel, 'Normalized', dataframe.to_dict(orient='records'), runsettypeoptions
 
@@ -702,10 +705,20 @@ def update_pcr_curves(channel, process_step, data):
     fig = go.Figure()
     df = dataframe.reset_index().set_index(
         ['Channel', 'Processing Step', 'XPCR Module Serial'])
-    df_Channel = df.loc[channel]
+    try:
+        df_Channel = df.loc[channel]
+    except KeyError:
+        channel = df.index.unique(0)[0]
+        df_Channel = df.loc[channel]
 
     df_Channel_Step = df_Channel.loc[process_step].reset_index()
     df_Channel_Step.sort_values('XPCR Module Lane', inplace=True)
+
+    readings_columns = df_Channel_Step[[
+        x for x in df_Channel_Step.columns if "Reading " in x and "Blank" not in x and 'Dark' not in x and 'Id' not in x]]
+    cycles = np.arange(1, len(readings_columns.columns)+1)
+    df_Channel_Step['Readings Array'] = [np.column_stack(
+        zip(cycles, x)) for x in readings_columns.values]
 
     for idx in df_Channel_Step.index:
         X = np.array(
