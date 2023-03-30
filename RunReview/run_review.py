@@ -18,7 +18,6 @@ import base64
 import uuid
 import logging
 
-
 warnings.filterwarnings('ignore')
 
 colorDict = {1: '#FF0000',  # Red 1
@@ -495,7 +494,8 @@ def Add_Dash(app):
 
     @ app.callback([
         Output('run-review-curves', 'figure'),
-        Output('runset-sample-results', 'data'),
+        Output('runset-sample-results', 'rowData'),
+        Output('runset-sample-results', 'columnDefs'),
         Output('pcrcurve-sample-info', 'data')],
         [Input('channel-selected', 'data'),
          Input('run-review-process-step-selector', 'value'),
@@ -601,7 +601,27 @@ def Add_Dash(app):
                 sample_info['SampleId'] = df_Channel_Step.loc[idx, 'SampleId']
                 samples_selected.append(sample_info)
 
-            return fig, df_Channel_Step[['XPCR Module Serial', 'XPCR Module Lane', 'Sample ID', 'Target Name', 'Localized Result', 'Overall Result', 'Ct', 'End Point Fluorescence', 'Max Peak Height', 'EPR']].round(1).to_dict('records'), samples_selected
+            inital_selection = ['XPCR Module Serial', 'XPCR Module Lane', 'Sample ID', 'Target Name', 'Localized Result',
+                                'Overall Result', 'Ct', 'End Point Fluorescence', 'Max Peak Height', 'EPR']
+            column_definitions = []
+            aggregates = ['Ct', 'EPR', 'End Point Fluorescence',
+                          'Max Peak Height'] + [x for x in df_Channel_Step.columns if 'Baseline' in x or 'Reading' in x]
+            groupables = ['XPCR Module Serial'] + \
+                [x for x in df_Channel_Step.columns if 'Lot' in x or 'Serial' in x or 'Barcode' in x]
+            floats = ['Ct', 'EPR']
+            ints = ['End Point Fluorescence', 'Max Peak Height']
+            for column in df_Channel_Step.columns:
+                column_definition = {"headerName": column,
+                                     "field": column, "filter": True}
+                if column not in inital_selection:
+                    column_definition['hide'] = True
+                if column in aggregates:
+                    column_definition['enableValue'] = True
+                if column in groupables:
+                    column_definition['enableRowGroup'] = True
+
+                column_definitions.append(column_definition)
+            return fig, df_Channel_Step.to_dict('records'), column_definitions, samples_selected
         except:
             return no_update
 

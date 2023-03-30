@@ -19,7 +19,6 @@ def update_modules():
             modules_update[module['id']] = module['xpcrModuleSerial']
     return modules_update
 
-
 def getXPCRModuleCartridges(module_id):
     request_url = os.environ['API_HOST']+"/api/xpcrmodules/{}/xpcrmoduleconfigurations".format(
         module_id)
@@ -67,7 +66,6 @@ def getXPCRModuleCartridges(module_id):
         'datetime64').dt.strftime("%d %B %Y %H:%M:%S")
     return module_data.reset_index(), cartridge_samples
 
-
 module_runs = dag.AgGrid(
     enableEnterpriseModules=True,
     # licenseKey=os.environ['AGGRID_ENTERPRISE'],
@@ -106,11 +104,9 @@ layout = html.Div([
 
 ])
 
-
 @callback(Output("xpcr-module-options", "options"), [Input("load-interval", "children")])
 def update_module_options(n):
     return update_modules()
-
 
 # @callback([Output("runs", "data"),
 #            Output("cartridge-sample-ids", "data")], [Input("xpcr-module-options", "value")], prevent_inital_call=True)

@@ -72,8 +72,22 @@ run_review_process_step_selector = dcc.Dropdown(
 
 run_review_curves = dcc.Graph(id="run-review-curves", figure=fig)
 
-run_review_line_data = dash_table.DataTable(
-    id='runset-sample-results', row_selectable='Multi', sort_action='native')
+
+run_review_line_data = dag.AgGrid(
+    enableEnterpriseModules=True,
+    # licenseKey=os.environ['AGGRID_ENTERPRISE'],
+    # columnDefs=initial_columnDefs,
+    rowData=[],
+    columnSize="sizeToFit",
+    defaultColDef=dict(
+        resizable=True,
+    ),
+    rowSelection='single',
+    id='runset-sample-results'
+)
+
+# run_review_line_data = dash_table.DataTable(
+#     id='runset-sample-results', row_selectable='Multi', sort_action='native')
 
 line_data_content = dbc.Card(
     dbc.CardBody(
