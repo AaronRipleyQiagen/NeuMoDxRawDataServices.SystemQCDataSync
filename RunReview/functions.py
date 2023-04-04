@@ -11,59 +11,65 @@ from dash import Input, Output, dcc, html, no_update, ctx
 import base64
 
 
-def populate_review_queue(user_id, user_group):
+def populate_review_queue(user_id, user_group, review_group_ids=[], runset_statuses=[]):
     runsets_url = os.environ['RUN_REVIEW_API_BASE'] + \
         "RunSets/{}/reviewerstatus".format(user_id)
-    print(runsets_url)
-
-    resp = requests.get(url=runsets_url, verify=False)
-    print(resp.status_code)
+    runsets_params = {}
+    if len(review_group_ids) > 0:
+        runsets_params['reviewgroupids'] = review_group_ids
+    if len(runset_statuses) > 0:
+        runsets_params['runsetstatuses'] = runset_statuses
+    resp = requests.get(url=runsets_url, verify=False, params=runsets_params)
     runsets = resp.json()
-    df = pd.DataFrame.from_dict(runsets)
+    if len(runsets) > 0:
+        df = pd.DataFrame.from_dict(runsets)
 
-    # df['Status'] = [x[0]['runSetReviewStatus']['name']
-    #                 for x in df['runSetReviews']]
+        # df['Status'] = [x[0]['runSetReviewStatus']['name']
+        #                 for x in df['runSetReviews']]
 
-    df['Status'] = np.nan
+        df['Status'] = np.nan
 
-    for idx in df.index:
-        try:
-            df.loc[idx, 'Status'] = df.loc[idx,
-                                           'runSetReviews'][0]['runSetReviewStatus']['name']
-        except:
-            df.loc[idx, 'Status'] = 'Not Yet Reviewed'
+        for idx in df.index:
+            try:
+                df.loc[idx, 'Status'] = df.loc[idx,
+                                               'runSetReviews'][0]['runSetReviewStatus']['name']
+            except:
+                df.loc[idx, 'Status'] = 'Not Yet Reviewed'
 
-    df['XPCR Module'] = [x[0]['xpcrModule']
-                          ['xpcrModuleSerial'] for x in df['runSetXPCRModules']]
+        df['XPCR Module'] = [x[0]['xpcrModule']
+                             ['xpcrModuleSerial'] for x in df['runSetXPCRModules']]
 
-    columns = ['id', 'Status', 'XPCR Module', 'name', 'runSetStartDate',
-               'sampleCount']
+        columns = ['id', 'Status', 'XPCR Module', 'name', 'runSetStartDate',
+                   'sampleCount']
 
-    groupable_columns = ['Status']
+        groupable_columns = ['Status']
 
-    column_names = {'name': 'Description',
-                    'runSetStartDate': 'Start Date', 'sampleCount': 'Sample Count'}
-    df = df[columns].rename(column_names, axis=1)
+        column_names = {'name': 'Description',
+                        'runSetStartDate': 'Start Date', 'sampleCount': 'Sample Count'}
+        df = df[columns].rename(column_names, axis=1)
 
-    if user_group == 'PSG Crew':
-        df = df[df['Description'].str.contains('PSG')]
-    else:
-        df = df[~df['Description'].str.contains('PSG')]
+        # if user_group == 'PSG Crew':
+        #     df = df[df['Description'].str.contains('PSG')]
+        # else:
+        #     df = df[~df['Description'].str.contains('PSG')]
 
-    df_columnDefs = []
-    for column in df.columns:
-        if 'Date' in column:
-            df[column] = df[column].astype(
-                'datetime64').dt.strftime("%d %B %Y %H:%M:%S")
-        if column in groupable_columns:
-            df_columnDefs.append(
-                {"headerName": column, "field": column, "rowGroup": True, "filter": True})
-        else:
-            if column != 'id':
+        df_columnDefs = []
+        for column in df.columns:
+            if 'Date' in column:
+                df[column] = df[column].astype(
+                    'datetime64').dt.strftime("%d %B %Y %H:%M:%S")
+            if column in groupable_columns:
                 df_columnDefs.append(
-                    {"headerName": column, "field": column, "filter": True})
+                    {"headerName": column, "field": column, "rowGroup": True, "filter": True})
+            else:
+                if column != 'id':
+                    df_columnDefs.append(
+                        {"headerName": column, "field": column, "filter": True})
 
-    return df.sort_values(['XPCR Module']).to_dict('records'), df_columnDefs
+        return df.sort_values(['XPCR Module']).to_dict('records'), df_columnDefs
+
+    else:
+        return None, None
 
 
 def getSampleDataAsync(sample_ids):
@@ -116,7 +122,6 @@ def save_uploaded_file_to_blob_storage(file_content, filename, container_name):
     return container_client.url + '/' + filename
 
 
-# Define a function to fetch the image from Azure Blob Storage and add a new item to the carousel
 def add_item_to_carousel(title, description, container_name, blob_name):
     items = []
     account_url = 'https://prdqianeumodxrdseusst.blob.core.windows.net'

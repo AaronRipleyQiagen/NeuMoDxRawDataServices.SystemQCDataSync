@@ -1,4 +1,4 @@
-from dash import html, callback, Output, Input, State, register_page, dcc, dash_table
+from dash import html, callback, Output, Input, State, register_page, dcc, dash_table, ctx, no_update
 import dash_bootstrap_components as dbc
 import aiohttp
 import asyncio
@@ -577,6 +577,10 @@ def getSampleDataAsync(sample_ids):
     return samples
 
 
+"""
+Layout Components
+"""
+created_runset_id = dcc.Store(id='created-runset-id', storage_type='session')
 sample_results_table = dag.AgGrid(
     enableEnterpriseModules=True,
     # licenseKey=os.environ['AGGRID_ENTERPRISE'],
@@ -589,52 +593,84 @@ sample_results_table = dag.AgGrid(
     rowSelection='single',
     id='sample-results-table'
 )
+reviewgroup_selector_modal = dbc.Modal(
+    [
+        dbc.ModalHeader(dbc.ModalTitle("Add Runset Review Assignemnts")),
+        dbc.ModalBody(children=[html.Label("Select Groups required to review this runset."),
+                                dbc.Checklist(id="review-group-options",
+                                              switch=True
+                                              ),
+                                ]),
+
+        dbc.ModalFooter(
+            [dbc.Button(
+                "Submit", id="submit-reviewgroup-selection-button", className="ms-auto", n_clicks=0
+            ),
 
 
+                dbc.Button(
+                "Cancel", id="cancel-reviewgroup-selection-button", className="ms-auto", n_clicks=0
+            )]
+        ),
+
+    ],
+    id="reviewgroup-selector-modal",
+    is_open=False,
+)
+post_response = dbc.Modal(
+    [
+        dbc.ModalHeader(dbc.ModalTitle("Run Review Creation Result")),
+        dbc.ModalBody("Run Review was successfully created")
+    ],
+    id="post-response",
+    is_open=False,
+)
+runset_selector_modal = dbc.Modal(
+    [
+        dbc.ModalHeader(dbc.ModalTitle("Run Type Selector")),
+        dbc.ModalBody("Please Make A Run Type Selection"),
+        dcc.Dropdown(
+            id="runset-type-options"
+        ),
+
+        dbc.ModalFooter(
+            [dbc.Button(
+                "Submit", id="submit-button", className="ms-auto", n_clicks=0
+            ),
+
+
+                dbc.Button(
+                "Cancel", id="cancel-button", className="ms-auto", n_clicks=0
+            )]
+        ),
+
+    ],
+    id="runset-selector-modal",
+    is_open=False,
+)
+channel_selector = dcc.Dropdown(
+    ['Yellow', 'Green', 'Orange', 'Red', 'Far Red'], value='Yellow', id='channel-selector')
+process_step_selector = dcc.Dropdown(['Normalized', 'Raw', '2nd'],
+                                     value='Raw', id='process-step-selector')
+create_run_review_button = dbc.Button("Create Run Review from Dataset",
+                                      id='create-run-review-button')
+run_review_confirmation = html.H1(id='run-review-confirmation')
+fig = dcc.Graph(id="curves", figure=fig)
 layout = html.Div(children=[
+    created_runset_id,
     html.H1(id='h1_1', children='Results Viewer'),
     dcc.Loading(id='samples-loading',
                 type='graph',
                 fullscreen=True,
-                children=[dcc.Dropdown(['Yellow', 'Green', 'Orange', 'Red', 'Far Red'], value='Yellow', id='channel-selector'),
-                          dcc.Dropdown(['Normalized', 'Raw', '2nd'],
-                                       value='Raw', id='process-step-selector'),
-                          dcc.Graph(id="curves", figure=fig),
+                children=[channel_selector,
+                          process_step_selector,
+                          fig,
                           sample_results_table,
-                          dbc.Button("Create Run Review from Dataset",
-                                     id='create-run-review-button'),
-                          html.H1(id='run-review-confirmation')]),
-    dcc.Loading(id='pending-post', type='cube', fullscreen='true', children=[dbc.Modal(
-        [
-            dbc.ModalHeader(dbc.ModalTitle("Run Review Creation Result")),
-            dbc.ModalBody("Run Review was successfully created")
-        ],
-        id="post-response",
-        is_open=False,
-    )]),
-    dbc.Modal(
-        [
-            dbc.ModalHeader(dbc.ModalTitle("Run Type Selector")),
-            dbc.ModalBody("Please Make A Run Type Selection"),
-            dcc.Dropdown(
-                id="runset-type-options"
-            ),
-
-            dbc.ModalFooter(
-                [dbc.Button(
-                    "Submit", id="submit-button", className="ms-auto", n_clicks=0
-                ),
-
-
-                    dbc.Button(
-                    "Cancel", id="cancel-button", className="ms-auto", n_clicks=0
-                )]
-            ),
-
-        ],
-        id="runset-selector-modal",
-        is_open=False,
-    )
+                          create_run_review_button,
+                          run_review_confirmation
+                          ]),
+    dcc.Loading(id='pending-post', type='cube', fullscreen='true',
+                children=[reviewgroup_selector_modal, post_response, runset_selector_modal])
 ])
 
 
@@ -759,8 +795,9 @@ def update_pcr_curves(channel, process_step, data):
 
 
 @callback(Output("runset-selector-modal", "is_open"),
-          [Input("create-run-review-button", "n_clicks"), Input("submit-button",
-                                                                "n_clicks"), Input("cancel-button", "n_clicks")],
+          [Input("create-run-review-button", "n_clicks"),
+           Input("submit-button", "n_clicks"),
+           Input("cancel-button", "n_clicks")],
           [State("runset-selector-modal", "is_open")],
           prevent_initial_call=True)
 def switch_runset_selector(create_clicks, submit_clicks, cancel_clicks, is_open):
@@ -768,3 +805,15 @@ def switch_runset_selector(create_clicks, submit_clicks, cancel_clicks, is_open)
         return not is_open
 
     return is_open
+
+
+@callback(Output("reviewgroup-selector-modal", "is_open"),
+          Input("review-group-options", "options"),
+          Input('submit-reviewgroup-selection-button', 'n_clicks'),
+          Input('cancel-reviewgroup-selection-button', 'n_clicks'),
+          State("reviewgroup-selector-modal", "is_open"),
+          prevent_initial_call=True)
+def switch_runset_selector(options, submit_button, cancel_button, reviewgroup_selector_modal_is_open):
+    # if (ctx.triggered_id == 'review-group-options' and len(options) > 0):
+    return not reviewgroup_selector_modal_is_open
+    # return reviewgroup_selector_modal_is_open

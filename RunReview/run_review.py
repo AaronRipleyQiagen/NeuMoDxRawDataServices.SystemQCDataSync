@@ -76,7 +76,8 @@ sidebar = html.Div(
 
 review_loader = html.Div(id='run-reviewer-loader')
 
-content = html.Div(id="run-reviewer-page-content", style=CONTENT_STYLE,
+content = html.Div(id="run-reviewer-page-content",
+                   style=CONTENT_STYLE,
                    children=page_container)
 
 runset_selection = dcc.Store(
@@ -162,20 +163,60 @@ layout = html.Div([review_loader, dcc.Loading(id='run-review-href-loader', fulls
 
 
 def Add_Dash(app):
+
     app = Dash(__name__, server=app,
                url_base_pathname=url_base,
-               use_pages=True, pages_folder="pages", external_stylesheets=[dbc.themes.COSMO])
+               use_pages=True, pages_folder="pages",
+               external_stylesheets=[dbc.themes.COSMO])
 
     apply_layout_with_auth(app, layout)
 
-    @app.callback([Output('review-queue-table', 'rowData'),
-                   Output('review-queue-table', 'columnDefs')],
-                  [Input('refresh-review-queue', 'n_clicks')])
-    def refresh_review_queue(n):
-        # print(.get("sample-info"))
-        intial_data, initial_columnDefs = populate_review_queue(
-            session['user'].id, session['user'].group_display)
-        return intial_data, initial_columnDefs
+    @app.callback(Output('review-assignment-selections', 'options'),
+                  Output('review-assignment-selections', 'value'),
+                  Input('refresh-review-queue', 'n_clicks'))
+    def get_review_group_options(n):
+        review_groups_url = os.environ['RUN_REVIEW_API_BASE'] + "ReviewGroups"
+        review_groups = requests.get(review_groups_url, verify=False).json()
+        review_group_options = {}
+        for review_group in review_groups:
+            review_group_options[review_group['id']
+                                 ] = review_group['description']
+        return review_group_options, session['user'].group_id
+
+    @app.callback(Output('review-queue-table', 'rowData'),
+                  Output('review-queue-table', 'columnDefs'),
+                  Input('refresh-review-queue', 'n_clicks'),
+                  Input('runset-status-selections', 'value'),
+                  Input('review-assignment-selections', 'value'))
+    def refresh_review_queue(n, runset_status_selections, review_assignment_selections):
+        """
+        Convert Runset Status Selections & review assisgnment selections to list in the event only one selection is made.
+        """
+
+        initial_columnDefs = [{'headerName': 'Status', 'field': 'Status', 'rowGroup': True, 'filter': True},
+                              {'headerName': 'XPCR Module',
+                               'field': 'XPCR Module', 'filter': True},
+                              {'headerName': 'Description',
+                               'field': 'Description', 'filter': True},
+                              {'headerName': 'Start Date',
+                               'field': 'Start Date', 'filter': True},
+                              {'headerName': 'Sample Count', 'field': 'Sample Count', 'filter': True}]
+
+        if isinstance(runset_status_selections, str):
+            runset_status_selections = [runset_status_selections]
+
+        if isinstance(review_assignment_selections, str):
+            review_assignment_selections = [review_assignment_selections]
+
+        rowData, columnDefs = populate_review_queue(session['user'].id,
+                                                    session['user'].group_display,
+                                                    review_group_ids=review_assignment_selections,
+                                                    runset_statuses=runset_status_selections)
+
+        if rowData:
+            return rowData, columnDefs
+        else:
+            return [], initial_columnDefs
 
     @app.callback(Output('runset-selection-data', 'data'),
                   [Input('review-queue-table', 'selectionChanged')])
