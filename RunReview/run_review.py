@@ -403,7 +403,7 @@ def Add_Dash(app):
         runset_xpcrmodule_subject_ids_dict = {}
         runset_xpcrmodule_descriptions = {}
         xpcrmodule_options = {}
-        xpcrmodule_options['NoFilter'] = 'All'
+        # xpcrmodule_options['NoFilter'] = 'All'
 
         for idx in dataframe.drop_duplicates(subset=['RunSetXPCRModuleId', 'XPCRModuleId']).index:
             runset_xpcrmodule_subject_ids_dict[dataframe.loc[idx, 'RunSetXPCRModuleId']
@@ -865,10 +865,12 @@ def Add_Dash(app):
                     Input('run-issue-module-options', 'value'),
                     Input('lane-issue-module-options', 'value'),
                     Input('sample-issue-module-options', 'value'),
-                    Input('run-review-xpcrmodule-selector', 'value')], prevent_initial_call=True
+                    Input('run-review-xpcrmodule-selector', 'value'),
+                    Input('run-review-xpcrmodule-selector', 'options')], prevent_initial_call=True
                    )
-    def update_lane_option_selections(module_issue_mod_selection, run_issue_mod_selection, lane_issue_mod_selection, sample_issue_mod_selection, run_review_mod_selection):
+    def update_module_selections(module_issue_mod_selection, run_issue_mod_selection, lane_issue_mod_selection, sample_issue_mod_selection, run_review_mod_selection, run_review_mod_options):
         trigger = ctx.triggered_id
+        print(run_review_mod_options)
         if trigger == 'module-issue-module-options':
             if module_issue_mod_selection == None:
                 return "NoFilter"
@@ -885,10 +887,11 @@ def Add_Dash(app):
             if sample_issue_mod_selection == None:
                 return "NoFilter"
             return sample_issue_mod_selection
-        elif trigger == 'run-review-xpcrmodule-selector':
-            if run_review_mod_selection == None:
-                return "NoFilter"
+        elif trigger == 'run-review-xpcrmodule-selector' and run_review_mod_selection != None:
             return run_review_mod_selection
+        elif trigger == 'run-review-xpcrmodule-selector' and run_review_mod_selection == None:
+            for module_id in run_review_mod_options:
+                return module_id
 
     @ app.callback([Output('module-issue-module-options', 'value'),
                     Output('run-issue-module-options', 'value'),
