@@ -122,22 +122,22 @@ def Add_Dash(app):
             created_runset_id = resp.json()['id']
             print("got created runset id "+created_runset_id)
 
-            if os.environ['SEND_EMAILS'] == "Yes":
-                if 'XPCR Module Qualification' in runset_type_selection_options[runset_type_selection_id]:
-                    msg = Message(runset['name']+" Ready for review", sender='neumodxsystemqcdatasync@gmail.com',
-                                  recipients=['aripley2008@gmail.com'])
+            # if os.environ['SEND_EMAILS'] == "Yes":
+            #     if 'XPCR Module Qualification' in runset_type_selection_options[runset_type_selection_id]:
+            #         msg = Message(runset['name']+" Ready for review", sender='neumodxsystemqcdatasync@gmail.com',
+            #                       recipients=['aripley2008@gmail.com'])
 
-                    with mail.connect() as conn:
-                        for user in mod_qual_review_subscribers:
-                            message = 'Hello '+user+", this message is sent to inform you that " + \
-                                runset['name']+" is now ready for your review."
-                            subject = runset['name']+" Ready for review"
-                            msg = Message(recipients=[mod_qual_review_subscribers[user]],
-                                          body=message,
-                                          subject=subject,
-                                          sender='neumodxsystemqcdatasync@gmail.com')
+            #         with mail.connect() as conn:
+            #             for user in mod_qual_review_subscribers:
+            #                 message = 'Hello '+user+", this message is sent to inform you that " + \
+            #                     runset['name']+" is now ready for your review."
+            #                 subject = runset['name']+" Ready for review"
+            #                 msg = Message(recipients=[mod_qual_review_subscribers[user]],
+            #                               body=message,
+            #                               subject=subject,
+            #                               sender='neumodxsystemqcdatasync@gmail.com')
 
-                            conn.send(msg)
+            #                 conn.send(msg)
 
         """
         Get Review Groups
