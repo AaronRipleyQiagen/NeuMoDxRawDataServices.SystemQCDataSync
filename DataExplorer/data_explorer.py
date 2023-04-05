@@ -12,9 +12,8 @@ import requests
 
 system_qc_reviewers = {'Leanna': 'leanna.hoyer@qiagen.com',
                        'Jeremias': 'jeremias.lioi@qiagen.com'}
-# system_integration_reviewers = {'Catherine': 'catherine.couture@qiagen.com',
-#                                 'Aaron': 'aaron.ripley@qiagen.com'}
-system_integration_reviewers = {'Aaron': 'aaron.ripley@qiagen.com'}
+system_integration_reviewers = {'Catherine': 'catherine.couture@qiagen.com',
+                                'Aaron': 'aaron.ripley@qiagen.com'}
 engineering_reviewers = {'Vik': 'viktoriah.slusher@qiagen.com'}
 admin_reviewers = {'David': 'david.edwin@qiagen.com'}
 
