@@ -142,7 +142,7 @@ def Add_Dash(app):
         """
         Get Review Groups
         """
-        reviewgroups_url = os.environ['RUN_REVIEW_API_Base'] + "ReviewGroups"
+        reviewgroups_url = os.environ['RUN_REVIEW_API_BASE'] + "ReviewGroups"
 
         reviewgroups_response = requests.get(
             reviewgroups_url, verify=False).json()
