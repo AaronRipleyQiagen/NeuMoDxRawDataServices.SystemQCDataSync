@@ -86,8 +86,8 @@ runset_selection = dcc.Store(
 runset_sample_data = dcc.Store(
     id='runset-sample-data', storage_type='session')
 
-runset_review_id = dcc.Store(
-    id='runset-review-id', storage_type='session', data='')
+runset_review = dcc.Store(
+    id='runset-review', storage_type='session', data='')
 
 runset_channel_options = dcc.Store(
     id='runset-channel-options', storage_type='session', data='')
@@ -156,7 +156,7 @@ issue_remediation_type = dcc.Store(
 
 layout = html.Div([review_loader, dcc.Loading(id='run-review-href-loader', fullscreen=True, type='dot', children=[dcc.Location(
     id="run-review-url")]), sidebar, content,
-    runset_selection, runset_sample_data, runset_review_id, runset_severity_options,
+    runset_selection, runset_sample_data, runset_review, runset_severity_options,
     runset_channel_options, channel_selected, runset_run_options, run_option_selected,
     spc_channel, runset_xpcrmodulelane_options, xpcrmodulelane_selected, severity_selected,
     runset_subject_ids, xpcrmodule_options, xpcrmodule_selected, pcrcurve_sample_info, issue_selected, runset_subject_descriptions, flat_data_download, remediation_action_selection, related_runsets, issue_remediation_url, issue_resolution_remediation_action_selection, issue_remediation_type, remediation_action_loader, issue_delete_url])
@@ -230,7 +230,7 @@ def Add_Dash(app):
 
     @app.callback([Output("runset-sample-data", "data"),
                    Output("run-review-url", "href"),
-                   Output('runset-review-id', 'data'),
+                   Output('runset-review', 'data'),
                    Output('runset-severity-options', 'data'),
                    Output('runset-channel-options', 'data'),
                    Output('runset-run-options', 'data'),
@@ -463,7 +463,7 @@ def Add_Dash(app):
                         'Reading Set Id'], axis=1, inplace=True)
         # with open('output.json', 'w') as f:
         # json.dump(dataframe.to_dict('records'), f)
-        return dataframe.to_dict('records'), '/dashboard/run-review/view-results', resp['id'], severity_options, channel_options, run_options, spc_channel, lane_options, runset_subject_ids, xpcrmodule_options, runset_subject_descriptions
+        return dataframe.to_dict('records'), '/dashboard/run-review/view-results', resp, severity_options, channel_options, run_options, spc_channel, lane_options, runset_subject_ids, xpcrmodule_options, runset_subject_descriptions
 
     @ app.callback([Output('sample-issue-options', 'options'), Output('lane-issue-options', 'options'), Output('module-issue-options', 'options'), Output('run-issue-options', 'options')],
                    Input('submit-sample-issue', 'children'))
@@ -919,7 +919,7 @@ def Add_Dash(app):
                    Input('submit-lane-issue', 'n_clicks'),
                    Input('submit-sample-issue', 'n_clicks'),
                    State('issue-post-response', 'is_open'),
-                   State('runset-review-id', 'data'),
+                   State('runset-review', 'data'),
                    State('channel-selected', 'data'),
                    State('severity-selected', 'data'),
                    State('module-issue-options', 'value'),
@@ -931,12 +931,12 @@ def Add_Dash(app):
                    State('xpcrmodulelane-selected', 'data'),
                    State('sample-issue-options', 'value'),
                    State('pcrcurve-sample-info', 'data')], prevent_intial_call=True)
-    def post_issue(mod_issue, run_issue, lane_issue, sample_issue, is_open, runset_review_id, channel_id, severity_id, module_issue_id, runset_subject_ids, xpcrmodule_selected, run_issue_id, run_selected, lane_issue_id, lane_selected, sample_issue_id, samples_selected):
+    def post_issue(mod_issue, run_issue, lane_issue, sample_issue, is_open, runset_review, channel_id, severity_id, module_issue_id, runset_subject_ids, xpcrmodule_selected, run_issue_id, run_selected, lane_issue_id, lane_selected, sample_issue_id, samples_selected):
         print("attempting post.")
 
         issue = {}
         issue['userId'] = session['user'].id
-        issue['runSetReviewReferrerId'] = runset_review_id
+        issue['runSetReviewReferrerId'] = runset_review['id']
         issue['runSetReviewResolverId'] = '00000000-0000-0000-0000-000000000000'
         issue['severityRatingId'] = severity_id
         issue['assayChannelId'] = channel_id
@@ -1091,12 +1091,12 @@ def Add_Dash(app):
     @app.callback(Output('run-review-status-update-post-response', 'is_open'),
                   [Input('run-review-completed-button', 'n_clicks'),
                   State('run-review-status-update-post-response', 'is_open'),
-                  State('runset-review-id', 'data'),
+                  State('runset-review', 'data'),
                   State('run-review-acceptance', 'value')], prevent_intital_call=True)
-    def update_run_review_status(n, is_open, runset_review_id, run_review_acceptance):
+    def update_run_review_status(n, is_open, runset_review, run_review_acceptance):
         if n:
             runsetreview_update_url = os.environ['RUN_REVIEW_API_BASE'] + \
-                "RunSetReviews/{}/status".format(runset_review_id)
+                "RunSetReviews/{}/status".format(runset_review['id'])
             query_params = {'acceptable': run_review_acceptance,
                             'newStatusName': 'Completed'}
             print(query_params)
@@ -1150,11 +1150,11 @@ def Add_Dash(app):
                   [Input("remediation-action-submit", "n_clicks"),
                    State("remediation-action-post-response", "is_open"),
                    State("runset-selection-data", "data"),
-                   State("runset-review-id", "data"),
+                   State("runset-review", "data"),
                    State("xpcrmodule-selected", "data"),
                    State("remediation-action-options", "value"),
                    State("runset-subject-ids", 'data')], prevent_inital_call=True)
-    def post_remediation_action(n, is_open, runset_selection, runset_review_id, xpcr_module_runset_id, remediation_action_id, runset_subject_ids):
+    def post_remediation_action(n, is_open, runset_selection, runset_review, xpcr_module_runset_id, remediation_action_id, runset_subject_ids):
         if n:
             if ctx.triggered_id == 'remediation-action-submit':
                 remediation_action_payload = {"userId": session['user'].id,
@@ -1162,7 +1162,7 @@ def Add_Dash(app):
                                               "xpcrModuleId": runset_subject_ids['XPCRModule'][xpcr_module_runset_id],
                                               "runSetReferrerId": runset_selection['id'],
                                               "runSetResolverId": "00000000-0000-0000-0000-000000000000",
-                                              "runSetReviewReferrerId": runset_review_id,
+                                              "runSetReviewReferrerId": runset_review['id'],
                                               "runSetReviewResolverId": "00000000-0000-0000-0000-000000000000",
                                               "remediationActionTypeId": remediation_action_id}
                 # print(remediation_action_payload)
@@ -1266,8 +1266,8 @@ def Add_Dash(app):
         [Input('upload-cartridge-pictures', 'contents')],
         [State('upload-cartridge-pictures', 'filename'),
          State("runset-selection-data", "data"),
-         State("runset-review-id", "data")])
-    def upload_cartridge_image_to_blob_storage(list_of_contents, list_of_filenames, runset_selection, runset_review_id):
+         State("runset-review", "data")])
+    def upload_cartridge_image_to_blob_storage(list_of_contents, list_of_filenames, runset_selection, runset_review):
 
         if list_of_contents:
             files = {list_of_filenames[i]: list_of_contents[i]
@@ -1289,7 +1289,7 @@ def Add_Dash(app):
                 file_payload = {
                     "userId": session['user'].id,
                     "runSetId": runset_selection['id'],
-                    "runSetReviewId": runset_review_id,
+                    "runSetReviewId": runset_review['id'],
                     "uri": file_url,
                     "name": file,
                     "fileid": file_id
@@ -1344,8 +1344,8 @@ def Add_Dash(app):
                    [Input('upload-tadm-pictures', 'contents')],
                    [State('upload-tadm-pictures', 'filename'),
                     State("runset-selection-data", "data"),
-                    State("runset-review-id", "data")])
-    def upload_tadm_image_to_blob_storage(list_of_contents, list_of_filenames, runset_selection, runset_review_id):
+                    State("runset-review", "data")])
+    def upload_tadm_image_to_blob_storage(list_of_contents, list_of_filenames, runset_selection, runset_review):
 
         if list_of_contents:
             files = {list_of_filenames[i]: list_of_contents[i]
@@ -1367,7 +1367,7 @@ def Add_Dash(app):
                 file_payload = {
                     "userId": session['user'].id,
                     "runSetId": runset_selection['id'],
-                    "runSetReviewId": runset_review_id,
+                    "runSetReviewId": runset_review['id'],
                     "uri": file_url,
                     "name": file,
                     "fileid": file_id
@@ -1491,17 +1491,17 @@ def Add_Dash(app):
     @app.callback(Output('remediation-action-update-response', 'is_open'),
                   [Input('remediation-action-resolution', 'n_clicks'),
                    State('remediation-action-update-response', 'is_open'),
-                   State('runset-review-id', 'data'),
+                   State('runset-review', 'data'),
                    State('runset-selection-data', 'data'),
                    State('remediation-action-table', 'selectionChanged')], prevent_intial_call=True)
-    def update_remediation_action(resolution_submit, is_open, runset_review_id, runset_selection_data, selected_row):
+    def update_remediation_action(resolution_submit, is_open, runset_review, runset_selection_data, selected_row):
 
         if resolution_submit:
             remediation_action_update_url = os.environ['RUN_REVIEW_API_BASE'] + \
                 "RemediationActions/{}/status".format(
                     selected_row[0]['RemediationActionId'])
 
-            query_params = {'runSetReviewId': runset_review_id,
+            query_params = {'runSetReviewId': runset_review['id'],
                             'runSetId': runset_selection_data['id'],
                             'newStatusName': 'Completed'}
 
@@ -1572,8 +1572,8 @@ def Add_Dash(app):
                    State('issue-resolution-remediation-action-options', 'value'),
                    State('issue-selected', 'data'),
                    State('issue-resolution-remediation-success', 'value'),
-                   State('runset-review-id', 'data')])
-    def select_remediation_action(grade_button, submit_button, issue_remediation_url, is_open, issue_remediation_type, remediation_action_selected, issue_selected, success_selected, runset_review_id):
+                   State('runset-review', 'data')])
+    def select_remediation_action(grade_button, submit_button, issue_remediation_url, is_open, issue_remediation_type, remediation_action_selected, issue_selected, success_selected, runset_review):
         trigger = ctx.triggered_id
         print(trigger)
         if trigger == 'issue-remediation-grade-button':
@@ -1609,7 +1609,7 @@ def Add_Dash(app):
                 issue_update_url = issue_remediation_url
                 print(issue_update_url)
 
-                query_params = {'runSetReviewId': runset_review_id,
+                query_params = {'runSetReviewId': runset_review['id'],
                                 'newStatusName': 'Closed'}
                 resp = requests.put(
                     url=issue_update_url, params=query_params, verify=False)
