@@ -298,11 +298,18 @@ def Add_Dash(app):
         runsetreview = {}
         runsetreview['userId'] = session['user'].id
         runsetreview['reviewerName'] = session['user'].display_name
+        runsetreview['reviewGroupId'] = session['user'].group_id
         runsetreview['reviewerEmail'] = session['user'].emails[0]
         runsetreview['runSetId'] = runset_data['id']
         resp = requests.post(url=os.environ['RUN_REVIEW_API_BASE'] +
                              "RunSetReviews", json=runsetreview, verify=False).json()
 
+        runset_update_url = os.environ['RUN_REVIEW_API_BASE'] + \
+            "RunSets/{}/status".format(resp['runSetId'])
+        runset_update_response = requests.put(
+            url=runset_update_url, verify=False)
+        print("Runset Update Response: " +
+              str(runset_update_response.status_code))
         """
         Get Severity Options
         """
@@ -1088,15 +1095,21 @@ def Add_Dash(app):
                   State('run-review-acceptance', 'value')], prevent_intital_call=True)
     def update_run_review_status(n, is_open, runset_review_id, run_review_acceptance):
         if n:
-            update_url = os.environ['RUN_REVIEW_API_BASE'] + \
+            runsetreview_update_url = os.environ['RUN_REVIEW_API_BASE'] + \
                 "RunSetReviews/{}/status".format(runset_review_id)
             query_params = {'acceptable': run_review_acceptance,
                             'newStatusName': 'Completed'}
             print(query_params)
             resp = requests.put(
-                url=update_url, params=query_params, verify=False)
-            print(resp.url)
-            print(resp.status_code)
+                url=runsetreview_update_url, params=query_params, verify=False)
+
+            runsetreview_update = resp.json()
+            runset_update_url = os.environ['RUN_REVIEW_API_BASE'] + \
+                "RunSets/{}/status".format(runsetreview_update['runSetId'])
+            runset_update_response = requests.put(
+                url=runset_update_url, verify=False)
+            print("Runset Update Response: " +
+                  str(runset_update_response.status_code))
             return not is_open
 
         return is_open
