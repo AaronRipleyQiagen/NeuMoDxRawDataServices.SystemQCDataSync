@@ -119,7 +119,8 @@ def Add_Dash(app):
             print("--"*30)
             resp = requests.post(url=os.environ['RUN_REVIEW_API_BASE'] +
                                  "RunSets", json=runset, verify=False)
-            created_runset_id = resp.json()['id']
+
+            created_runset_id = resp.json()
             print("got created runset id "+created_runset_id)
 
             # if os.environ['SEND_EMAILS'] == "Yes":
