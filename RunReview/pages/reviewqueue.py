@@ -45,6 +45,15 @@ runset_status_selections = dcc.Dropdown(id='runset-status-selections',
                                                'width': '100%'},
                                         )
 
+review_group_completed_filter = dcc.Checklist(
+    options=[
+        {'label': 'Filter Out Runsets my Group has Completed?', 'value': True},
+    ],
+    value=[True],
+    inline=True,
+    id='review-group-completed-filter'
+)
+
 review_assignment_label = html.Label("Filter by Review Assignment",
                                      style={'width': '50%',
                                             'display': 'inline-block',
@@ -60,14 +69,17 @@ review_assignment_selections = dcc.Dropdown(id='review-assignment-selections',
                                             )
 
 runset_status_group = html.Div(
-    children=[runset_status_selection_label, runset_status_selections],
+    children=[runset_status_selection_label,
+              runset_status_selections],
     style={'width': '100%',
            'display': 'inline-block',
            'vertical-align': 'middle',
            'horizontal-align': 'left'})
 
+
 review_assignment_group = html.Div(
-    children=[review_assignment_label, review_assignment_selections],
+    children=[review_assignment_label, review_assignment_selections,
+              review_group_completed_filter],
     style={'width': '100%',
            'display': 'inline-block',
            'vertical-align': 'middle',

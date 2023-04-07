@@ -187,8 +187,9 @@ def Add_Dash(app):
                   Output('review-queue-table', 'columnDefs'),
                   Input('refresh-review-queue', 'n_clicks'),
                   Input('runset-status-selections', 'value'),
-                  Input('review-assignment-selections', 'value'))
-    def refresh_review_queue(n, runset_status_selections, review_assignment_selections):
+                  Input('review-assignment-selections', 'value'),
+                  Input('review-group-completed-filter', 'value'))
+    def refresh_review_queue(n, runset_status_selections, review_assignment_selections, review_group_completed_filter):
         """
         Convert Runset Status Selections & review assisgnment selections to list in the event only one selection is made.
         """
@@ -208,10 +209,16 @@ def Add_Dash(app):
         if isinstance(review_assignment_selections, str):
             review_assignment_selections = [review_assignment_selections]
 
+        if True in review_group_completed_filter:
+            review_group_filter = session['user'].group_id
+        else:
+            review_group_filter = None
+
         rowData, columnDefs = populate_review_queue(session['user'].id,
                                                     session['user'].group_display,
                                                     review_group_ids=review_assignment_selections,
-                                                    runset_statuses=runset_status_selections)
+                                                    runset_statuses=runset_status_selections,
+                                                    reviewer_group_id=review_group_filter)
 
         if rowData:
             return rowData, columnDefs
@@ -1659,6 +1666,55 @@ def Add_Dash(app):
                 return False
             else:
                 return True
+
+    @app.callback(Output('runset-reviews-table', 'rowData'),
+                  Output('runset-reviews-table', 'columnDefs'),
+                  Input('review-tabs', 'active_tab'),
+                  State('runset-selection-data', 'data'))
+    def get_runset_reviews(active_tab, runset_data):
+        if ctx.triggered_id == 'review-tabs' and active_tab == 'runset-reviews':
+
+            runset_reviews_url = os.environ['RUN_REVIEW_API_BASE'] + \
+                "RunSets/{}/runsetreviews".format(runset_data['id'])
+
+            runset_reviews_response = requests.get(
+                url=runset_reviews_url, verify=False).json()
+
+            runset_reviews_dataframe = pd.DataFrame(
+                columns=['RunSetReviewId', 'Status', 'Reviewer Name', 'Reviewer Group', 'Accepted?'])
+
+            print(runset_reviews_response)
+            idx = 0
+            for runset_review in runset_reviews_response['runSetReviews']:
+                runset_review_dict = {}
+                runset_review_dict['RunSetReviewId'] = runset_review['id']
+                runset_review_dict['Status'] = runset_review['runSetReviewStatus']['name']
+                runset_review_dict['Reviewer Name'] = runset_review['reviewerName']
+                runset_review_dict['Reviewer Group'] = runset_review['reviewGroup']['description']
+
+                if runset_review['acceptable'] == False:
+                    runset_review_dict['Accepted?'] = 'No'
+                elif runset_review['acceptable'] == True:
+                    runset_review_dict['Accepted?'] = 'Yes'
+                else:
+                    runset_review_dict['Accepted?'] = 'N/A'
+                runset_reviews_dataframe.loc[idx] = runset_review_dict
+                idx += 1
+
+            column_definitions = []
+            initial_selection = [
+                x for x in runset_reviews_dataframe.columns if 'Id' not in x]
+
+            for column in runset_reviews_dataframe.columns:
+                column_definition = {"headerName": column,
+                                     "field": column, "filter": True}
+                if column not in initial_selection:
+                    column_definition['hide'] = True
+                column_definitions.append(column_definition)
+
+            return runset_reviews_dataframe.to_dict(orient='records'), column_definitions
+
+        return no_update
 
     return app.server
 

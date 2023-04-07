@@ -72,7 +72,6 @@ run_review_process_step_selector = dcc.Dropdown(
 
 run_review_curves = dcc.Graph(id="run-review-curves", figure=fig)
 
-
 run_review_line_data = dag.AgGrid(
     enableEnterpriseModules=True,
     # licenseKey=os.environ['AGGRID_ENTERPRISE'],
@@ -85,9 +84,6 @@ run_review_line_data = dag.AgGrid(
     rowSelection='single',
     id='runset-sample-results'
 )
-
-# run_review_line_data = dash_table.DataTable(
-#     id='runset-sample-results', row_selectable='Multi', sort_action='native')
 
 line_data_content = dbc.Card(
     dbc.CardBody(
@@ -285,9 +281,7 @@ tadm_pictures_content = dbc.Card(
                 # Allow multiple files to be uploaded
                 multiple=True,
             ),
-
             html.Div(id='upload-tadm-message'),
-
             dcc.Loading(id='tadm-pictures-loading', type='dot', children=[dbc.Carousel(
                 items=[],
                 id="tadm-images",
@@ -304,6 +298,28 @@ comments_content = dbc.Card(
         ]
     ),
     className="mt-3",
+)
+
+runset_reviews_table = dag.AgGrid(
+    enableEnterpriseModules=True,
+    # licenseKey=os.environ['AGGRID_ENTERPRISE'],
+    # columnDefs=initial_columnDefs,
+    # rowData=[],
+    columnSize="sizeToFit",
+    defaultColDef=dict(
+        resizable=True,
+    ),
+    rowSelection='single',
+    id='runset-reviews-table'
+)
+
+run_review_content = dbc.Card(
+    dbc.CardBody(
+        [
+            runset_reviews_table
+        ]
+    ),
+    className="mt-3"
 )
 
 tabs = dbc.Tabs(
@@ -325,7 +341,9 @@ tabs = dbc.Tabs(
         dbc.Tab(cartridge_pictures_content,
                 label='Cartridge Pictures', tab_id='cartidge-pictures'),
         dbc.Tab(tadm_pictures_content,
-                label='TADM Pictures', tab_id='tadm-pictures')
+                label='TADM Pictures', tab_id='tadm-pictures'),
+        dbc.Tab(run_review_content, label='Runset Reviews',
+                tab_id='runset-reviews')
     ], id='review-tabs'
 )
 

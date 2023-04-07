@@ -11,7 +11,7 @@ from dash import Input, Output, dcc, html, no_update, ctx
 import base64
 
 
-def populate_review_queue(user_id, user_group, review_group_ids=[], runset_statuses=[]):
+def populate_review_queue(user_id, user_group, review_group_ids=[], runset_statuses=[], reviewer_group_id=None):
     runsets_url = os.environ['RUN_REVIEW_API_BASE'] + \
         "RunSets/{}/reviewerstatus".format(user_id)
     runsets_params = {}
@@ -19,6 +19,8 @@ def populate_review_queue(user_id, user_group, review_group_ids=[], runset_statu
         runsets_params['reviewgroupids'] = review_group_ids
     if len(runset_statuses) > 0:
         runsets_params['runsetstatuses'] = runset_statuses
+    if reviewer_group_id:
+        runsets_params['reviewergroupid'] = reviewer_group_id
     resp = requests.get(url=runsets_url, verify=False, params=runsets_params)
     runsets = resp.json()
     if len(runsets) > 0:
