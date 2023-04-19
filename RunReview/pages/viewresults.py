@@ -446,6 +446,43 @@ run_review_acceptance_label = html.P(
 run_review_acceptance = dcc.Dropdown(
     options={True: "Yes", False: "No"}, id='run-review-acceptance', style=threequarterstyle)
 
+reviewgroup_selector_modal = dbc.Modal(
+    [
+        dbc.ModalHeader(dbc.ModalTitle("Add Runset Review Assignemnts")),
+        dbc.ModalBody(children=[html.Label("Select Groups required to review this runset."),
+                                dbc.Checklist(id="review-group-options",
+                                              switch=True
+                                              ),
+                                ]),
+
+        dbc.ModalFooter(
+            [dbc.Button(
+                "Submit", id="submit-reviewgroup-selection-button", className="ms-auto", n_clicks=0
+            ),
+
+
+                dbc.Button(
+                "Cancel", id="cancel-reviewgroup-selection-button", className="ms-auto", n_clicks=0
+            )]
+        ),
+
+    ],
+    id="reviewgroup-selector-modal",
+    is_open=False,
+)
+
+add_review_assignment_response = dbc.Modal(
+    [
+        dbc.ModalHeader(dbc.ModalTitle("Run Review Assignment result")),
+        dbc.ModalBody("Run Review Assignment was added successfully")
+    ],
+    id="add-review-assignment-response",
+    is_open=False,
+)
+
+add_review_group_button = dbc.Button("Add Reviewer for Dataset",
+                                     id='add-review-group-button')
+
 layout = [
     run_review_description,
     issue_post_response,
@@ -458,6 +495,8 @@ layout = [
     issue_delete_response,
     issue_resolution_remediation_action_selection,
     issue_resolution_remediation_action_response,
+    reviewgroup_selector_modal,
+    add_review_assignment_response,
 
     html.Div([html.Div([run_review_channel_selector_label, run_review_channel_selector], style=halfstyle),
               html.Div([run_review_xpcrmodule_selector_label, run_review_xpcrmodule_selector], style=halfstyle)]),
@@ -469,7 +508,8 @@ layout = [
     html.Div([html.Div([run_review_acceptance_label, run_review_acceptance], style=halfstyle),
               html.Div([run_review_status_update_button], style=halfstyle)]),
 
-    html.Div([html.Div([run_review_download_data])]),
+    html.Div([html.Div([run_review_download_data], style=halfstyle),
+              html.Div([add_review_group_button], style=halfstyle)]),
 
     dcc.Loading(id='run-review-loading', type='graph',
                 children=[run_review_curves]),

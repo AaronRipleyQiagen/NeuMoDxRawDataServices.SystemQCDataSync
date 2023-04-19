@@ -17,8 +17,16 @@ import asyncio
 import base64
 import uuid
 import logging
+from flask_mail import Mail, Message
 
 warnings.filterwarnings('ignore')
+
+system_qc_reviewers = {'Leanna': 'leanna.hoyer@qiagen.com',
+                       'Jeremias': 'jeremias.lioi@qiagen.com'}
+system_integration_reviewers = {'Catherine': 'catherine.couture@qiagen.com',
+                                'Aaron': 'aaron.ripley@qiagen.com'}
+engineering_reviewers = {'Vik': 'viktoriah.slusher@qiagen.com'}
+admin_reviewers = {'David': 'david.edwin@qiagen.com'}
 
 colorDict = {1: '#FF0000',  # Red 1
              2: '#00B050',  # Green 2
@@ -168,6 +176,14 @@ def Add_Dash(app):
                url_base_pathname=url_base,
                use_pages=True, pages_folder="pages",
                external_stylesheets=[dbc.themes.COSMO])
+    server = app.server
+    server.config['MAIL_SERVER'] = 'smtp.gmail.com'
+    server.config['MAIL_PORT'] = 465
+    server.config['MAIL_USERNAME'] = 'neumodxsystemqcdatasync@gmail.com'
+    server.config['MAIL_PASSWORD'] = os.environ['EMAIL_PASSWORD']
+    server.config['MAIL_USE_TLS'] = False
+    server.config['MAIL_USE_SSL'] = True
+    mail = Mail(app.server)
 
     apply_layout_with_auth(app, layout)
 
@@ -1716,6 +1732,108 @@ def Add_Dash(app):
 
         return no_update
 
+    @app.callback(Output("reviewgroup-selector-modal", "is_open"),
+                  Output('review-group-options', 'options'),
+                  [Input("add-review-group-button", "n_clicks"),
+                   Input("submit-reviewgroup-selection-button", "n_clicks")
+                   ],
+                  [State("reviewgroup-selector-modal", "is_open")],
+                  prevent_initial_call=True)
+    def open_reviewgroup_addition_modal(create_clicks, submit_clicks, is_open):
+        if create_clicks or submit_clicks:
+            """
+            Get Review Groups
+            """
+            reviewgroup_options = {}
+            reviewgroups_url = os.environ['RUN_REVIEW_API_BASE'] + \
+                "ReviewGroups"
+
+            reviewgroups_response = requests.get(
+                reviewgroups_url, verify=False).json()
+
+            for reviewgroup in reviewgroups_response:
+                reviewgroup_options[reviewgroup['id']
+                                    ] = reviewgroup['description']
+            return not is_open, reviewgroup_options
+
+        return is_open, {}
+
+    @app.callback(Output("add-review-assignment-response", 'is_open'),
+                  Input('submit-reviewgroup-selection-button', 'n_clicks'),
+                  State('review-group-options', 'value'),
+                  State('review-group-options', 'options'),
+                  State('runset-selection-data', 'data'),
+                  State('add-review-assignment-response', 'is_open'),
+                  prevent_initial_call=True
+                  )
+    def add_runsetreviewassignments(submit_button, review_groups_selected, review_groups_dictionary, runset_data, post_response_is_open):
+        if ctx.triggered_id == 'submit-reviewgroup-selection-button':
+
+            review_groups = []
+            review_group_subscribers = {}
+            for review_group_id in review_groups_selected:
+                runsetreviewassignmenturl = os.environ['RUN_REVIEW_API_BASE'] + \
+                    "RunSetReviewAssignments"
+                queryParams = {}
+                queryParams['runsetid'] = runset_data['id']
+                queryParams['reviewgroupid'] = review_group_id
+                queryParams['userid'] = session['user'].id
+                response = requests.post(
+                    runsetreviewassignmenturl, params=queryParams, verify=False)
+                print(response.status_code)
+                review_groups.append(review_groups_dictionary[review_group_id])
+
+            print("Review Groups Assigned: ", review_groups)
+
+            if 'System QC Reviewer' in review_groups:
+                for user in system_qc_reviewers:
+                    review_group_subscribers[user] = system_qc_reviewers[user]
+
+            if 'System Integration Lead' in review_groups:
+                for user in system_integration_reviewers:
+                    review_group_subscribers[user] = system_integration_reviewers[user]
+
+            if 'Engineering' in review_groups:
+                for user in engineering_reviewers:
+                    review_group_subscribers[user] = engineering_reviewers[user]
+
+            if 'Admin' in review_groups:
+                for user in admin_reviewers:
+                    review_group_subscribers[user] = admin_reviewers[user]
+
+            print("Subscribers: ", review_group_subscribers)
+
+            runset_update_url = os.environ['RUN_REVIEW_API_BASE'] + \
+                "RunSets/{}/status".format(runset_data['id'])
+            runset_update_response = requests.put(
+                url=runset_update_url, verify=False)
+            print("Runset Update Response: " +
+                  str(runset_update_response.status_code))
+
+            if os.environ['SEND_EMAILS'] == "Yes":
+                """
+                Get reviewers to send email too
+                """
+                runset_url = os.environ['RUN_REVIEW_API_BASE'] + \
+                    "RunSets/{}".format(runset_data['id'])
+                runset = requests.get(url=runset_url, verify=False).json()
+                # if 'XPCR Module Qualification' in runset_type_selection_options[runset_type_selection_id]:
+                msg = Message(runset['name']+" Ready for review", sender='neumodxsystemqcdatasync@gmail.com',
+                              recipients=['aripley2008@gmail.com'])
+
+                with mail.connect() as conn:
+                    for user in review_group_subscribers:
+                        message = 'Hello '+user+", this message is sent to inform you that " + \
+                            runset['name']+" is now ready for your review."
+                        subject = runset['name']+" Ready for review"
+                        msg = Message(recipients=[review_group_subscribers[user]],
+                                      body=message,
+                                      subject=subject,
+                                      sender='neumodxsystemqcdatasync@gmail.com')
+
+                        conn.send(msg)
+            return not post_response_is_open
+        return post_response_is_open
     return app.server
 
 
