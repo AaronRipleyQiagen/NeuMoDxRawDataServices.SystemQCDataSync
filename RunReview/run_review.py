@@ -773,7 +773,8 @@ def Add_Dash(app):
                 if '%' in column:
                     run_summary_df[column] = run_summary_df[column]*100
                     run_summary_df[column] = run_summary_df[column].round(2)
-                else:
+
+                elif 'Run' not in column and 'N500' not in column and 'XPCR Module Serial' not in column:
                     run_summary_df[column] = run_summary_df[column].round(2)
                 column_definition = {"headerName": column,
                                      "field": column, "filter": True}
