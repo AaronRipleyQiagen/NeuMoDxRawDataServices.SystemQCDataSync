@@ -720,27 +720,40 @@ def Add_Dash(app):
             """
             Define / Apply Aggregations to Dataset.
             """
-            agg_types = {'Ct': ['mean', 'std', cv],
-                         'End Point Fluorescence': ['mean', 'std', cv],
-                         'EPR': ['mean', 'std', cv],
-                         'Max Peak Height': ['mean', 'std', cv],
+            agg_types = {'Ct': ['mean', 'std', cv, 'min', 'max'],
+                         'End Point Fluorescence': ['mean', 'std', cv, 'min', 'max'],
+                         'EPR': ['mean', 'std', cv, 'min', 'max'],
+                         'Max Peak Height': ['mean', 'std', cv, 'min', 'max'],
                          'Target Detected': ['mean']
                          }
-
+            run_summary_df_overall = run_summary_df.groupby(
+                ['N500 Serial Number', 'XPCR Module Serial']).agg(agg_types)
+            run_summary_df_overall['Run'] = 'Overall'
+            run_summary_df_overall.set_index('Run', append=True, inplace=True)
             run_summary_df = run_summary_df.groupby(
                 ['N500 Serial Number', 'XPCR Module Serial', 'Run']).agg(agg_types)
+            run_summary_df = pd.concat(
+                [run_summary_df, run_summary_df_overall], axis=0)
             run_summary_df.columns = ['Ct mean',
                                       'Ct std',
                                       'Ct %CV',
+                                      'Ct min',
+                                      'Ct max',
                                       'EP mean',
                                       'EP std',
                                       'EP %CV',
+                                      'EP min',
+                                      'EP max',
                                       'MPH mean',
                                       'MPH std',
                                       'MPH %CV',
+                                      'MPH min',
+                                      'MPH max',
                                       'EPR mean',
                                       'EPR std',
                                       'EPR %CV',
+                                      'EPR min',
+                                      'EPR max',
                                       'Detection %',
                                       ]
 
