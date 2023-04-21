@@ -94,6 +94,28 @@ line_data_content = dbc.Card(
     className="mt-3",
 )
 
+run_summary_table = dag.AgGrid(
+    enableEnterpriseModules=True,
+    # licenseKey=os.environ['AGGRID_ENTERPRISE'],
+    # columnDefs=initial_columnDefs,
+    rowData=[],
+    columnSize="sizeToFit",
+    defaultColDef=dict(
+        resizable=True,
+    ),
+    rowSelection='single',
+    id='run-summary-table'
+)
+
+run_summary_content = dbc.Card(
+    dbc.CardBody(
+        [
+            run_summary_table
+        ]
+    ),
+    className="mt-3",
+)
+
 module_issue_content = dbc.Card(
     dbc.CardBody(
         [
@@ -326,6 +348,8 @@ tabs = dbc.Tabs(
     children=[
         dbc.Tab(line_data_content, label="View Line Data",
                 tab_id='run-review-line-data'),
+        dbc.Tab(run_summary_content, label="View Run Summary",
+                tab_id='run-summary-data'),
         dbc.Tab(module_issue_content, label="Note Module Issue",
                 tab_id='run-review-module-issues'),
         dbc.Tab(run_issue_content, label="Note Run Issue",
