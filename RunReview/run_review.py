@@ -690,11 +690,86 @@ def Add_Dash(app):
                     column_definition['enableValue'] = True
                 if column in groupables:
                     column_definition['enableRowGroup'] = True
-
                 column_definitions.append(column_definition)
             return fig, df_Channel_Step.to_dict('records'), column_definitions, samples_selected
         except:
             return no_update
+
+    @ app.callback(Output('run-summary-table', 'rowData'),
+                   Output('run-summary-table', 'columnDefs'),
+                   Input('review-tabs', 'active_tab'),
+                   State('runset-sample-data', 'data'))
+    def get_run_summary(active_tab, data):
+        """
+        Define internal Function to calculate %CV Agg Type.
+        """
+        def cv(series):
+            return series.std() / series.mean()
+
+        if ctx.triggered_id == 'review-tabs' and active_tab == 'run-summary-data':
+
+            """
+            Initialize / Filter Dataset to Only SPC Raw Data, Add Target Detected Column.
+            """
+            run_summary_df = pd.DataFrame.from_dict(data)
+            run_summary_df = run_summary_df[run_summary_df['Target Name'].str[0:3] == 'SPC']
+            run_summary_df = run_summary_df[run_summary_df['Processing Step'] == 'Raw']
+            run_summary_df['Target Detected'] = np.where(
+                run_summary_df['Localized Result'] == 'TargetAmplified', 1, 0)
+
+            """
+            Define / Apply Aggregations to Dataset.
+            """
+            agg_types = {'Ct': ['mean', 'std', cv],
+                         'End Point Fluorescence': ['mean', 'std', cv],
+                         'EPR': ['mean', 'std', cv],
+                         'Max Peak Height': ['mean', 'std', cv],
+                         'Target Detected': ['mean']
+                         }
+
+            run_summary_df = run_summary_df.groupby(
+                ['N500 Serial Number', 'XPCR Module Serial', 'Run']).agg(agg_types)
+            run_summary_df.columns = ['Ct mean',
+                                      'Ct std',
+                                      'Ct %CV',
+                                      'EP mean',
+                                      'EP std',
+                                      'EP %CV',
+                                      'MPH mean',
+                                      'MPH std',
+                                      'MPH %CV',
+                                      'EPR mean',
+                                      'EPR std',
+                                      'EPR %CV',
+                                      'Detection %',
+                                      ]
+
+            """
+            Format Data For Rendering
+            """
+
+            run_summary_df.reset_index(inplace=True)
+            initial_selection = ['XPCR Module Serial',
+                                 'Run',
+                                 'Ct %CV',
+                                 'EP %CV',
+                                 'Detection %']
+
+            column_definitions = []
+            for column in run_summary_df.columns:
+                if '%' in column:
+                    run_summary_df[column] = run_summary_df[column]*100
+                    run_summary_df[column] = run_summary_df[column].round(2)
+
+                column_definition = {"headerName": column,
+                                     "field": column, "filter": True}
+                if column not in initial_selection:
+                    column_definition['hide'] = True
+                column_definitions.append(column_definition)
+
+            return run_summary_df.to_dict(orient='records'), column_definitions
+
+        return no_update
 
     @ app.callback([Output('sample-issue-channel-options', 'options'),
                    Output('lane-issue-channel-options', 'options'),
