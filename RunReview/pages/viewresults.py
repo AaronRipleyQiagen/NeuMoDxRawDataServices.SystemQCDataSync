@@ -344,7 +344,7 @@ run_review_content = dbc.Card(
     className="mt-3"
 )
 
-tabs = dbc.Tabs(
+review_tabs = dbc.Tabs(
     children=[
         dbc.Tab(line_data_content, label="View Line Data",
                 tab_id='run-review-line-data'),
@@ -537,4 +537,4 @@ layout = [
 
     dcc.Loading(id='run-review-loading', type='graph',
                 children=[run_review_curves]),
-    tabs]  # , run_review_channel_selector,
+    review_tabs]  # , run_review_channel_selector,
