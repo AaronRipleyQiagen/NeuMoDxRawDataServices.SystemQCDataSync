@@ -698,90 +698,121 @@ def Add_Dash(app):
     @ app.callback(Output('run-summary-table', 'rowData'),
                    Output('run-summary-table', 'columnDefs'),
                    Input('review-tabs', 'active_tab'),
-                   State('runset-sample-data', 'data'))
-    def get_run_summary(active_tab, data):
+                   Input('run-summary-channel-selector', 'value'),
+                   State('runset-sample-data', 'data'),
+                   State('spc-channel', 'data'),
+                   State('runset-channel-options', 'data'))
+    def get_run_summary(active_tab, channel, data,  spc2_channel, channel_dict):
         """
         Define internal Function to calculate %CV Agg Type.
         """
         def cv(series):
             return series.std() / series.mean()
 
-        if ctx.triggered_id == 'review-tabs' and active_tab == 'run-summary-data':
+        if (ctx.triggered_id == 'review-tabs' or ctx.triggered_id == 'run-summary-channel-selector') and active_tab == 'run-summary-data':
 
             """
-            Initialize / Filter Dataset to Only SPC Raw Data, Add Target Detected Column.
+            Initialize / Filter Dataset to Only Raw of Channel of Interest Data, Add Target Detected Column.
             """
+
             run_summary_df = pd.DataFrame.from_dict(data)
-            run_summary_df = run_summary_df[run_summary_df['Target Name'].str[0:3] == 'SPC']
+            run_summary_df = run_summary_df[run_summary_df['Channel']
+                                            == channel_dict[channel]]
             run_summary_df = run_summary_df[run_summary_df['Processing Step'] == 'Raw']
             run_summary_df['Target Detected'] = np.where(
                 run_summary_df['Localized Result'] == 'TargetAmplified', 1, 0)
 
-            """
-            Define / Apply Aggregations to Dataset.
-            """
-            agg_types = {'Ct': ['mean', 'std', cv, 'min', 'max'],
-                         'End Point Fluorescence': ['mean', 'std', cv, 'min', 'max'],
-                         'EPR': ['mean', 'std', cv, 'min', 'max'],
-                         'Max Peak Height': ['mean', 'std', cv, 'min', 'max'],
-                         'Target Detected': ['mean']
-                         }
-            run_summary_df_overall = run_summary_df.groupby(
-                ['N500 Serial Number', 'XPCR Module Serial']).agg(agg_types)
-            run_summary_df_overall['Run'] = 'Overall'
-            run_summary_df_overall.set_index('Run', append=True, inplace=True)
-            run_summary_df = run_summary_df.groupby(
-                ['N500 Serial Number', 'XPCR Module Serial', 'Run']).agg(agg_types)
-            run_summary_df = pd.concat(
-                [run_summary_df, run_summary_df_overall], axis=0)
-            run_summary_df.columns = ['Ct mean',
-                                      'Ct std',
-                                      'Ct %CV',
-                                      'Ct min',
-                                      'Ct max',
-                                      'EP mean',
-                                      'EP std',
-                                      'EP %CV',
-                                      'EP min',
-                                      'EP max',
-                                      'MPH mean',
-                                      'MPH std',
-                                      'MPH %CV',
-                                      'MPH min',
-                                      'MPH max',
-                                      'EPR mean',
-                                      'EPR std',
-                                      'EPR %CV',
-                                      'EPR min',
-                                      'EPR max',
-                                      'Detection %',
-                                      ]
+            if channel != spc2_channel:
+                """
+                Calculate Baseline Stats for Channel of Interest.
+                """
+                print(run_summary_df[[
+                    x for x in run_summary_df.columns if 'Reading ' in x]].mean(axis=1))
+                run_summary_df['Baseline Mean'] = run_summary_df[[
+                    x for x in run_summary_df.columns if 'Reading ' in x]].mean(axis=1)
+                run_summary_df['Baseline Std'] = run_summary_df[[
+                    x for x in run_summary_df.columns if 'Reading ' in x]].std(axis=1)
+                run_summary_df['Max Step'] = run_summary_df[[
+                    x for x in run_summary_df.columns if 'Reading ' in x]].diff(axis=1).max(axis=1)
+                run_summary_df['Baseline %CV'] = run_summary_df['Baseline Std'] / \
+                    run_summary_df['Baseline Mean']
 
-            """
-            Format Data For Rendering
-            """
+                initial_selection = [
+                    'XPCR Module Serial', 'XPCR Module Lane', 'Run', 'Baseline %CV', 'Baseline Std', 'Max Step']
 
-            run_summary_df.reset_index(inplace=True)
-            initial_selection = ['XPCR Module Serial',
-                                 'Run',
-                                 'Ct %CV',
-                                 'EP %CV',
-                                 'Detection %']
+                run_summary_df = run_summary_df[['N500 Serial Number', 'XPCR Module Serial',
+                                                 'XPCR Module Lane', 'Run', 'Baseline Mean', 'Baseline Std', 'Baseline %CV', 'Max Step']]
+
+                run_summary_df.sort_values(
+                    ['XPCR Module Serial', 'XPCR Module Lane', 'Run'], inplace=True)
+            elif channel == spc2_channel:
+
+                """
+                Define / Apply Aggregations to Dataset.
+                """
+                agg_types = {'Ct': ['mean', 'std', cv, 'min', 'max'],
+                             'End Point Fluorescence': ['mean', 'std', cv, 'min', 'max'],
+                             'EPR': ['mean', 'std', cv, 'min', 'max'],
+                             'Max Peak Height': ['mean', 'std', cv, 'min', 'max'],
+                             'Target Detected': ['mean']
+                             }
+                run_summary_df_overall = run_summary_df.groupby(
+                    ['N500 Serial Number', 'XPCR Module Serial']).agg(agg_types)
+                run_summary_df_overall['Run'] = 'Overall'
+                run_summary_df_overall.set_index(
+                    'Run', append=True, inplace=True)
+                run_summary_df = run_summary_df.groupby(
+                    ['N500 Serial Number', 'XPCR Module Serial', 'Run']).agg(agg_types)
+                run_summary_df = pd.concat(
+                    [run_summary_df, run_summary_df_overall], axis=0)
+                run_summary_df.columns = ['Ct mean',
+                                          'Ct std',
+                                          'Ct %CV',
+                                          'Ct min',
+                                          'Ct max',
+                                          'EP mean',
+                                          'EP std',
+                                          'EP %CV',
+                                          'EP min',
+                                          'EP max',
+                                          'MPH mean',
+                                          'MPH std',
+                                          'MPH %CV',
+                                          'MPH min',
+                                          'MPH max',
+                                          'EPR mean',
+                                          'EPR std',
+                                          'EPR %CV',
+                                          'EPR min',
+                                          'EPR max',
+                                          'Detection %',
+                                          ]
+
+                """
+                Format Data For Rendering
+                """
+
+                run_summary_df.reset_index(inplace=True)
+                initial_selection = ['XPCR Module Serial',
+                                     'Run',
+                                     'Ct %CV',
+                                     'EP %CV',
+                                     'Detection %']
 
             column_definitions = []
             for column in run_summary_df.columns:
                 if '%' in column:
                     run_summary_df[column] = run_summary_df[column]*100
-                    run_summary_df[column] = run_summary_df[column].round(2)
-
-                elif 'Run' not in column and 'N500' not in column and 'XPCR Module Serial' not in column:
-                    run_summary_df[column] = run_summary_df[column].round(2)
+                    run_summary_df[column] = run_summary_df[column].round(
+                        2)
+                elif 'Run' not in column and 'N500' not in column and 'XPCR Module Serial' not in column and 'Lane' not in column:
+                    run_summary_df[column] = run_summary_df[column].round(
+                        2)
                 column_definition = {"headerName": column,
                                      "field": column, "filter": True}
                 if column not in initial_selection:
                     column_definition['hide'] = True
                 column_definitions.append(column_definition)
-
             return run_summary_df.to_dict(orient='records'), column_definitions
 
         return no_update
@@ -790,10 +821,11 @@ def Add_Dash(app):
                    Output('lane-issue-channel-options', 'options'),
                    Output('run-issue-channel-options', 'options'),
                    Output('module-issue-channel-options', 'options'),
-                   Output('run-review-channel-selector', 'options')],
+                   Output('run-review-channel-selector', 'options'),
+                   Output('run-summary-channel-selector', 'options')],
                    Input('runset-channel-options', 'data'))
     def update_channel_options(data):
-        return data, data, data, data, data
+        return data, data, data, data, data, data
 
     @ app.callback(Output('channel-selected', 'data'),
                    [Input('sample-issue-channel-options', 'value'),
@@ -801,10 +833,11 @@ def Add_Dash(app):
                    Input('run-issue-channel-options', 'value'),
                    Input('module-issue-channel-options', 'value'),
                    Input('run-review-channel-selector', 'value'),
+                   Input('run-summary-channel-selector', 'value'),
                    State('spc-channel', 'data')
                     ], prevent_initial_call=True
                    )
-    def update_channel_selection(sample_issue_channel, lane_issue_channel, run_issue_channel, module_issue_channel, run_review_channel, spc_channel):
+    def update_channel_selection(sample_issue_channel, lane_issue_channel, run_issue_channel, module_issue_channel, run_review_channel, run_summary_channel, spc_channel):
         channel_adjusted = ctx.triggered_id
 
         if channel_adjusted == 'sample-issue-channel-options':
@@ -827,15 +860,20 @@ def Add_Dash(app):
             if run_review_channel == None:
                 return spc_channel
             return run_review_channel
+        elif channel_adjusted == 'run-summary-channel-selector':
+            if run_summary_channel == None:
+                return spc_channel
+            return run_summary_channel
 
     @ app.callback([Output('sample-issue-channel-options', 'value'),
                    Output('lane-issue-channel-options', 'value'),
                    Output('run-issue-channel-options', 'value'),
                    Output('module-issue-channel-options', 'value'),
-                   Output('run-review-channel-selector', 'value')],
+                   Output('run-review-channel-selector', 'value'),
+                   Output('run-summary-channel-selector', 'value')],
                    Input('channel-selected', 'data'), prevent_initial_call=True)
     def update_channel_selection_value(channel):
-        return channel, channel, channel, channel, channel
+        return channel, channel, channel, channel, channel, channel
 
     @ app.callback([Output('run-issue-run-options', 'options'),
                    Output('sample-issue-run-options', 'options'),
@@ -1924,6 +1962,7 @@ def Add_Dash(app):
                         conn.send(msg)
             return not post_response_is_open
         return post_response_is_open
+
     return app.server
 
 

@@ -13,16 +13,16 @@ register_page(__name__, path="/run-review/view-results/")
 fig = go.Figure()
 
 halfstyle = {'width': '50%', 'display': 'inline-block',
-             'vertical-align': 'middle', 'horizontal-align': 'left'}
+             'vertical-align': 'middle', 'horizontal-align': 'left', 'padding-bottom': 5}
 
 onethirdstyle = {'width': '33%', 'display': 'inline-block',
-                 'vertical-align': 'middle', 'horizontal-align': 'center'}
+                 'vertical-align': 'middle', 'horizontal-align': 'center', 'padding-bottom': 5}
 
 quarterstyle = {'width': '35%', 'display': 'inline-block',
-                'vertical-align': 'middle', 'horizontal-align': 'right'}
+                'vertical-align': 'middle', 'horizontal-align': 'right', 'padding-bottom': 5}
 
 threequarterstyle = {'width': '65%', 'display': 'inline-block',
-                     'vertical-align': 'middle', 'horizontal-align': 'right'}
+                     'vertical-align': 'middle', 'horizontal-align': 'right', 'padding-bottom': 5}
 
 remediation_actions = [{'label': 'Increase Jack Pressure', 'value': 1},
                        {'label': 'Reflange Fluid Line', 'value': 2},
@@ -104,12 +104,21 @@ run_summary_table = dag.AgGrid(
         resizable=True,
     ),
     rowSelection='single',
-    id='run-summary-table'
+    id='run-summary-table',
+
 )
+
+run_summary_channel_label = html.Label(
+    "Choose Optics Channel to Summarize:", style=quarterstyle)
+
+run_summary_channel_selector = dcc.Dropdown(
+    id='run-summary-channel-selector', style=halfstyle)
 
 run_summary_content = dbc.Card(
     dbc.CardBody(
         [
+            run_summary_channel_label,
+            run_summary_channel_selector,
             run_summary_table
         ]
     ),
@@ -348,7 +357,7 @@ review_tabs = dbc.Tabs(
     children=[
         dbc.Tab(line_data_content, label="View Line Data",
                 tab_id='run-review-line-data'),
-        dbc.Tab(run_summary_content, label="View Run Summary",
+        dbc.Tab(run_summary_content, label="View Run Stats",
                 tab_id='run-summary-data'),
         dbc.Tab(module_issue_content, label="Note Module Issue",
                 tab_id='run-review-module-issues'),
