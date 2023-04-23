@@ -1969,6 +1969,56 @@ def Add_Dash(app):
             return not post_response_is_open
         return post_response_is_open
 
+    @app.callback(Output('file-upload-response', 'is_open'),
+                  Input('misc-file-upload-button', 'contents'),
+                  State('misc-file-upload-button', 'filename'),
+                  State("runset-selection-data", "data"),
+                  State("runset-review", "data"),
+                  State('file-upload-response', 'is_open'))
+    def upload_misc_file_to_blob_storage(list_of_contents, list_of_filenames, runset_selection, runset_review, is_open):
+
+        if ctx.triggered_id == 'misc-file-upload-button' and list_of_contents:
+
+            files = {list_of_filenames[i]: list_of_contents[i]
+                     for i in range(len(list_of_filenames))}
+            upload_status = []
+
+            for file in files:
+
+                """
+                Upload file to blob storage
+                """
+                content_type, content_string = files[file].split(',')
+                file_content = base64.b64decode(content_string)
+                file_id = str(uuid.uuid4())+file[file.rfind("."):]
+                file_url = save_uploaded_file_to_blob_storage(
+                    file_content, file_id, 'neumodxsystemqc-miscellaneousfiles')
+
+                """
+                Create Database Entry
+                """
+                file_payload = {
+                    "userId": session['user'].id,
+                    "runSetId": runset_selection['id'],
+                    "runSetReviewId": runset_review['id'],
+                    "uri": file_url,
+                    "name": file,
+                    "fileid": file_id
+                }
+
+                misc_file_url = os.environ['RUN_REVIEW_API_BASE'] + \
+                    "MiscellaneousFiles"
+                print(file_payload)
+                resp = requests.post(
+                    url=misc_file_url, json=file_payload, verify=False)
+                print(resp.status_code)
+
+            # Return a message with the URL of the uploaded file
+            return not is_open
+
+        else:
+            return is_open
+
     return app.server
 
 

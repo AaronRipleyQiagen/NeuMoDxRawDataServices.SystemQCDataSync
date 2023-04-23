@@ -331,6 +331,63 @@ comments_content = dbc.Card(
     className="mt-3",
 )
 
+misc_files_table = dag.AgGrid(
+    enableEnterpriseModules=True,
+    # licenseKey=os.environ['AGGRID_ENTERPRISE'],
+    # columnDefs=initial_columnDefs,
+    # rowData=[],
+    columnSize="sizeToFit",
+    defaultColDef=dict(
+        resizable=True,
+    ),
+    rowSelection='single',
+    id='misc-files-table'
+)
+
+misc_file_download_button = dbc.Button(
+    "Download File", id='misc-file-download-button')
+
+# misc_file_upload_button = dbc.Button(
+#     "Upload File", id='misc-file-upload-button')
+
+misc_file_upload_button = dcc.Upload(
+    id='misc-file-upload-button',
+    children=html.Div([
+        'Drag and Drop or ',
+        html.A('Select Files')
+    ]),
+    style={
+        'width': '100%',
+        'borderWidth': '1px',
+        'borderStyle': 'dashed',
+        'borderRadius': '5px',
+        'textAlign': 'center',
+        'margin-left': '0%',
+        'padding': '10px'
+    },
+    # Allow multiple files to be uploaded
+    multiple=True,
+)
+
+
+misc_files_content = dbc.Card(
+    dbc.CardBody(
+        [
+            misc_file_upload_button,
+            misc_files_table,
+            misc_file_download_button
+        ]
+    ),
+    className="mt-3",
+)
+
+file_upload_response = dbc.Modal([
+    dbc.ModalHeader(dbc.ModalTitle("File Upload Status")),
+    dbc.ModalBody("File was uploaded successfully")
+],
+    id="file-upload-response",
+    is_open=False)
+
 runset_reviews_table = dag.AgGrid(
     enableEnterpriseModules=True,
     # licenseKey=os.environ['AGGRID_ENTERPRISE'],
@@ -375,6 +432,8 @@ review_tabs = dbc.Tabs(
                 label='Cartridge Pictures', tab_id='cartidge-pictures'),
         dbc.Tab(tadm_pictures_content,
                 label='TADM Pictures', tab_id='tadm-pictures'),
+        dbc.Tab(misc_files_content, label='Miscellaneous Files',
+                tab_id='misc-files'),
         dbc.Tab(run_review_content, label='Runset Reviews',
                 tab_id='runset-reviews')
     ], id='review-tabs'
@@ -530,6 +589,7 @@ layout = [
     issue_resolution_remediation_action_response,
     reviewgroup_selector_modal,
     add_review_assignment_response,
+    file_upload_response,
 
     html.Div([html.Div([run_review_channel_selector_label, run_review_channel_selector], style=halfstyle),
               html.Div([run_review_xpcrmodule_selector_label, run_review_xpcrmodule_selector], style=halfstyle)]),
