@@ -2019,6 +2019,64 @@ def Add_Dash(app):
         else:
             return is_open
 
+    @app.callback(Output('misc-files-table', 'rowData'),
+                  Output('misc-files-table', 'columnDefs'),
+                  Input('review-tabs', 'active_tab'),
+                  State('runset-selection-data', 'data'))
+    def get_misc_files(active_tab, runset_data):
+        if ctx.triggered_id == 'review-tabs' and active_tab == 'misc-files':
+
+            """
+            Get Misc file Info from API 
+            """
+            misc_files_url = os.environ['RUN_REVIEW_API_BASE'] + \
+                "RunSets/{}/miscellaneousfiles".format(runset_data['id'])
+            runset = requests.get(misc_files_url, verify=False).json()
+
+            """
+            Extract Details from each Misc File into pandas DataFrame
+            """
+
+            misc_file_data = pd.DataFrame(
+                columns=['FileId', 'File Name', 'Uploaded By', 'Upload Date'])
+
+            idx = 0
+            for misc_file in runset['miscellaneousFiles']:
+
+                entry = {}
+                entry['FileId'] = misc_file['fileid']
+                entry['File Name'] = misc_file['name']
+                entry['Uploaded By'] = misc_file['runSetReview']['reviewerName']
+                entry['Upload Date'] = misc_file['validFrom']
+
+                misc_file_data.loc[idx] = entry
+                idx += 1
+
+            """
+            Create Column Definitions for Table
+            """
+
+            column_definitions = []
+            initial_selection = [
+                x for x in misc_file_data.columns if 'Id' not in x]
+
+            for column in misc_file_data.columns:
+
+                column_definition = {"headerName": column,
+                                     "field": column,
+                                     "filter": True,
+                                     "sortable": True}
+                if column not in initial_selection:
+                    column_definition['hide'] = True
+
+                if 'Date' in column:
+                    misc_file_data[column] = misc_file_data[column].astype(
+                        'datetime64').dt.strftime("%d %B %Y %H:%M:%S")
+
+                column_definitions.append(column_definition)
+
+            return misc_file_data.to_dict(orient='records'), column_definitions
+        return no_update
     return app.server
 
 

@@ -347,9 +347,6 @@ misc_files_table = dag.AgGrid(
 misc_file_download_button = dbc.Button(
     "Download File", id='misc-file-download-button')
 
-# misc_file_upload_button = dbc.Button(
-#     "Upload File", id='misc-file-upload-button')
-
 misc_file_upload_button = dcc.Upload(
     id='misc-file-upload-button',
     children=html.Div([
@@ -368,7 +365,6 @@ misc_file_upload_button = dcc.Upload(
     # Allow multiple files to be uploaded
     multiple=True,
 )
-
 
 misc_files_content = dbc.Card(
     dbc.CardBody(
