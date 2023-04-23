@@ -683,7 +683,9 @@ def Add_Dash(app):
             ints = ['End Point Fluorescence', 'Max Peak Height']
             for column in df_Channel_Step.columns:
                 column_definition = {"headerName": column,
-                                     "field": column, "filter": True}
+                                     "field": column,
+                                     "filter": True,
+                                     "sortable": True}
                 if column not in inital_selection:
                     column_definition['hide'] = True
                 if column in aggregates:
@@ -809,7 +811,9 @@ def Add_Dash(app):
                     run_summary_df[column] = run_summary_df[column].round(
                         2)
                 column_definition = {"headerName": column,
-                                     "field": column, "filter": True}
+                                     "field": column,
+                                     "filter": True,
+                                     "sortable": True}
                 if column not in initial_selection:
                     column_definition['hide'] = True
                 column_definitions.append(column_definition)
@@ -1223,10 +1227,10 @@ def Add_Dash(app):
             for column in issue_dataframe.columns:
                 if 'Id' not in column:
                     column_definitions.append(
-                        {"headerName": column, "field": column, "filter": True})
+                        {"headerName": column, "field": column, "filter": True, "sortable": True})
                 else:
                     column_definitions.append(
-                        {"headerName": column, "field": column, "filter": True, "hide": True})
+                        {"headerName": column, "field": column, "filter": True, "sortable": True, "hide": True})
 
             return issue_dataframe.to_dict('records'), column_definitions
         else:
@@ -1371,10 +1375,10 @@ def Add_Dash(app):
             for column in actions_dataframe.columns:
                 if 'Id' not in column:
                     column_definitions.append(
-                        {"headerName": column, "field": column, "filter": True})
+                        {"headerName": column, "field": column, "filter": True, "sortable": True})
                 else:
                     column_definitions.append(
-                        {"headerName": column, "field": column, "filter": True, "hide": True})
+                        {"headerName": column, "field": column, "filter": True, "sortable": True, "hide": True})
 
             return actions_dataframe.to_dict('records'), column_definitions
         else:
@@ -1851,7 +1855,9 @@ def Add_Dash(app):
 
             for column in runset_reviews_dataframe.columns:
                 column_definition = {"headerName": column,
-                                     "field": column, "filter": True}
+                                     "field": column,
+                                     "filter": True,
+                                     "sortable": True}
                 if column not in initial_selection:
                     column_definition['hide'] = True
                 column_definitions.append(column_definition)
