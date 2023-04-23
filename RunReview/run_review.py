@@ -1971,11 +1971,12 @@ def Add_Dash(app):
 
     @app.callback(Output('file-upload-response', 'is_open'),
                   Input('misc-file-upload-button', 'contents'),
+                  Input('file-upload-response-close-button', 'n_clicks'),
                   State('misc-file-upload-button', 'filename'),
                   State("runset-selection-data", "data"),
                   State("runset-review", "data"),
                   State('file-upload-response', 'is_open'))
-    def upload_misc_file_to_blob_storage(list_of_contents, list_of_filenames, runset_selection, runset_review, is_open):
+    def upload_misc_file_to_blob_storage(list_of_contents, n_clicks, list_of_filenames, runset_selection, runset_review, is_open):
 
         if ctx.triggered_id == 'misc-file-upload-button' and list_of_contents:
 
@@ -2016,15 +2017,18 @@ def Add_Dash(app):
             # Return a message with the URL of the uploaded file
             return not is_open
 
+        elif ctx.triggered_id == 'file-upload-response-close-button' and n_clicks:
+            return not is_open
         else:
             return is_open
 
     @app.callback(Output('misc-files-table', 'rowData'),
                   Output('misc-files-table', 'columnDefs'),
                   Input('review-tabs', 'active_tab'),
+                  Input('file-upload-response', 'is_open'),
                   State('runset-selection-data', 'data'))
-    def get_misc_files(active_tab, runset_data):
-        if ctx.triggered_id == 'review-tabs' and active_tab == 'misc-files':
+    def get_misc_files(active_tab, is_open, runset_data):
+        if ((ctx.triggered_id == 'file-upload-response' and is_open == False) or ctx.triggered_id == 'review-tabs') and active_tab == 'misc-files':
 
             """
             Get Misc file Info from API 

@@ -379,7 +379,9 @@ misc_files_content = dbc.Card(
 
 file_upload_response = dbc.Modal([
     dbc.ModalHeader(dbc.ModalTitle("File Upload Status")),
-    dbc.ModalBody("File was uploaded successfully")
+    dbc.ModalBody("File was uploaded successfully"),
+    dbc.ModalFooter(children=[dbc.Button(
+        "Close", id='file-upload-response-close-button')])
 ],
     id="file-upload-response",
     is_open=False)
