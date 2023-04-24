@@ -40,6 +40,8 @@ colorDict = {1: '#FF0000',  # Red 1
              10: '#808000',  # Goldish 10
              11: '#FF99CC',  # Hot Pink 11
              12: '#003300',  # Dark Green 12
+             'Left': '#FF0000',  # Red Left
+             'Right': '#00B050'  # Green Right
              }
 
 url_base = '/dashboard/'
@@ -311,6 +313,8 @@ def Add_Dash(app):
         dataframe['RawDataDatabaseId'] = dataframe.reset_index()['id'].values
         dataframe['Channel'] = dataframe['Channel'].replace(
             'Far_Red', 'Far Red')
+        dataframe['XPCR Module Side'] = np.where(
+            dataframe['XPCR Module Lane'] < 7, 'Right', 'Left')
         dataframe = dataframe.set_index(
             'RawDataDatabaseId').join(runset_map_df).reset_index()
 

@@ -61,7 +61,7 @@ run_review_lane_selector = dcc.Dropdown(
 run_review_color_selector_label = html.P(
     "Choose Color Attribute", style=quarterstyle)
 
-run_review_color_selector = dcc.Dropdown(options=['XPCR Module Lane', 'Run'], value='XPCR Module Lane',
+run_review_color_selector = dcc.Dropdown(options=['XPCR Module Lane', 'Run', 'XPCR Module Side'], value='XPCR Module Lane',
                                          id='run-review-color-selector', style=threequarterstyle)
 
 run_review_process_step_selector_label = html.P(
