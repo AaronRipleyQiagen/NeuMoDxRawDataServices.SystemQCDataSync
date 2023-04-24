@@ -142,6 +142,31 @@ def add_item_to_carousel(title, description, container_name, blob_name):
     return item
 
 
+def download_file(filename, container_name):
+
+    account_url = 'https://prdqianeumodxrdseusst.blob.core.windows.net'
+
+    # Create a BlobServiceClient object
+    blob_service_client = BlobServiceClient(
+        account_url=account_url, credential=os.environ['NEUMODXSYSTEMQC_RAWDATAFILES_KEY'])
+
+    # Get a reference to the Blob Storage container
+    container_client = blob_service_client.get_container_client(container_name)
+
+    blob_client = container_client.get_blob_client(filename)
+
+    # download the blob to a bytes buffer
+    stream_downloader = blob_client.download_blob(connection_verify=False)
+
+    stream = io.BytesIO()
+    stream.write(stream_downloader.readall())
+
+    # encode the bytes buffer as base64 for the download link
+    base64_blob = base64.b64encode(stream.getvalue()).decode()
+
+    return base64_blob
+
+
 class SampleJSONReader:
     """
     A class used to read sampleJSON style data from NeuMoDxResultsDB into a Pandas DataFrame

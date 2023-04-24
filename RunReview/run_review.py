@@ -4,7 +4,7 @@ import dash_bootstrap_components as dbc
 from dash import Dash
 from .appbuildhelpers import apply_layout_with_auth
 from dash import html, callback, Output, Input, State, register_page, dcc, dash_table, page_container
-from .functions import populate_review_queue, getSampleDataAsync, SampleJSONReader, save_uploaded_file_to_blob_storage, add_item_to_carousel
+from .functions import *
 import os
 import requests
 import json
@@ -1276,14 +1276,11 @@ def Add_Dash(app):
                    State("runset-selection-data", "data")], prevent_initial_call=True)
     def download_function(n, data, runset_selection):
         if n:
-            print("Downloading")
             data_output = pd.DataFrame.from_dict(data)
-            print(data_output)
             data_output.set_index(
                 ['Sample ID', 'Test Guid', 'Replicate Number', 'Processing Step', 'Channel'], inplace=True)
             data_output.drop(
                 [x for x in data_output.columns if x[-2:] == 'Id' or "Array" in x], axis=1, inplace=True)
-
             return dcc.send_data_frame(data_output.reset_index().to_csv, runset_selection['id']+".csv", index=False), None
         return no_update, None
 
@@ -2080,6 +2077,19 @@ def Add_Dash(app):
                 column_definitions.append(column_definition)
 
             return misc_file_data.to_dict(orient='records'), column_definitions
+        return no_update
+
+    @app.callback(Output('misc-file-download', 'data'),
+                  Input('misc-file-download-button', 'n_clicks'),
+                  State('misc-files-table', 'selectionChanged'))
+    def download_misc_file(n_clicks, misc_file_selection):
+        if ctx.triggered_id == 'misc-file-download-button' and n_clicks:
+            print("doing this...")
+            print(misc_file_selection)
+            file_data = download_file(
+                misc_file_selection[0]['FileId'], 'neumodxsystemqc-miscellaneousfiles')
+            print("got file data.")
+            return dict(content=file_data, filename=misc_file_selection[0]['File Name'], base64=True)
         return no_update
     return app.server
 
