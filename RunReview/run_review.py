@@ -21,6 +21,13 @@ from flask_mail import Mail, Message
 
 warnings.filterwarnings('ignore')
 
+system_qc_tech_IIs = {'Brian': 'brian.colson1@contractor.qiagen.com',
+                      'Hunter': 'hunter.rose1@contractor.qiagen.com',
+                      'Isaiah': 'isaiah.thompson1@contractor.qiagen.com',
+                      'Keller': 'keller.masing@contractor.qiagen.com',
+                      'Kyla': 'kyla.tackett1@contractor.qiagen.com',
+                      'Nathan': 'nathan.king1@contractor.qiagen.com',
+                      'Richie': 'richard.wynn1@contractor.qiagen.com'}
 system_qc_reviewers = {'Leanna': 'leanna.hoyer@qiagen.com',
                        'Jeremias': 'jeremias.lioi@qiagen.com'}
 system_integration_reviewers = {'Catherine': 'catherine.couture@qiagen.com',
@@ -1935,6 +1942,9 @@ def Add_Dash(app):
             if 'Admin' in review_groups:
                 for user in admin_reviewers:
                     review_group_subscribers[user] = admin_reviewers[user]
+            if 'System QC Tech' in review_groups:
+                for user in system_qc_tech_IIs:
+                    review_group_subscribers[user] = system_qc_tech_IIs[user]
 
             print("Subscribers: ", review_group_subscribers)
 
@@ -2095,6 +2105,7 @@ def Add_Dash(app):
             print("got file data.")
             return dict(content=file_data, filename=misc_file_selection[0]['File Name'], base64=True)
         return no_update
+
     return app.server
 
 
