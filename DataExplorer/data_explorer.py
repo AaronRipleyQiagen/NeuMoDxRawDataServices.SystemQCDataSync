@@ -129,9 +129,9 @@ def Add_Dash(app):
 
             created_runset = resp.json()
             created_runset_id = created_runset['id']
-            with open('test_runset.json', 'w') as f:
-                # Write the dictionary to the file as JSON
-                json.dump(created_runset, f)
+            # with open('test_runset.json', 'w') as f:
+            #     # Write the dictionary to the file as JSON
+            #     json.dump(created_runset, f)
             print("got created runset id "+created_runset_id)
 
             # if os.environ['SEND_EMAILS'] == "Yes":
