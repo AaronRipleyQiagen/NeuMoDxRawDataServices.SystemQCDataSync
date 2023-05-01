@@ -499,7 +499,11 @@ def Add_Dash(app):
         # json.dump(dataframe.to_dict('records'), f)
         return dataframe.to_dict('records'), '/dashboard/run-review/view-results', resp, severity_options, channel_options, run_options, spc_channel, lane_options, runset_subject_ids, xpcrmodule_options, runset_subject_descriptions
 
-    @ app.callback([Output('sample-issue-options', 'options'), Output('lane-issue-options', 'options'), Output('module-issue-options', 'options'), Output('run-issue-options', 'options')],
+    @ app.callback([Output('sample-issue-options', 'options'),
+                    Output('lane-issue-options', 'options'),
+                    Output('module-issue-options', 'options'),
+                    Output('run-issue-options', 'options'),
+                    Output('tadm-issue-options', 'options')],
                    Input('submit-sample-issue', 'children'))
     def getIssueTypes(_):
 
@@ -512,7 +516,7 @@ def Add_Dash(app):
 
             async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(verify_ssl=False)) as session:
                 issueTypeEndpoints = [
-                    'SampleIssueTypes', 'XPCRModuleLaneIssueTypes', 'CartridgeIssueTypes', 'XPCRModuleIssueTypes']
+                    'SampleIssueTypes', 'XPCRModuleLaneIssueTypes', 'CartridgeIssueTypes', 'XPCRModuleIssueTypes', 'XPCRModuleTADMIssueTypes']
                 tasks = []
                 tasksTracker = {}
                 for issueType in issueTypeEndpoints:
@@ -528,7 +532,7 @@ def Add_Dash(app):
 
         issueTypeOptions = {}
         issueTypeEndpoints = ['SampleIssueTypes', 'XPCRModuleLaneIssueTypes',
-                              'CartridgeIssueTypes', 'XPCRModuleIssueTypes']
+                              'CartridgeIssueTypes', 'XPCRModuleIssueTypes', 'XPCRModuleTADMIssueTypes']
         for endpoint in issueTypeEndpoints:
             issue_type_options = []
             for issueType in issueTypes[endpoint]:
@@ -536,16 +540,17 @@ def Add_Dash(app):
                     {'label': issueType['name'], 'value': issueType['id']})
             issueTypeOptions[endpoint] = issue_type_options
 
-        return issueTypeOptions['SampleIssueTypes'], issueTypeOptions['XPCRModuleLaneIssueTypes'], issueTypeOptions['XPCRModuleIssueTypes'], issueTypeOptions['CartridgeIssueTypes']
+        return issueTypeOptions['SampleIssueTypes'], issueTypeOptions['XPCRModuleLaneIssueTypes'], issueTypeOptions['XPCRModuleIssueTypes'], issueTypeOptions['CartridgeIssueTypes'], issueTypeOptions['XPCRModuleTADMIssueTypes']
 
     @ app.callback([Output('sample-issue-severity-options', 'options'),
                    Output('lane-issue-severity-options', 'options'),
                    Output('run-issue-severity-options', 'options'),
-                   Output('module-issue-severity-options', 'options')
+                   Output('module-issue-severity-options', 'options'),
+                   Output('tadm-issue-severity-options', 'options')
                     ],
                    Input('runset-severity-options', 'data'))
     def update_severity_options(data):
-        return data, data, data, data
+        return data, data, data, data, data
 
     @ app.callback(Output('severity-selected', 'data'),
                    [Input('sample-issue-severity-options', 'value'),
@@ -1028,10 +1033,12 @@ def Add_Dash(app):
                    Output('run-issue-module-options', 'options'),
                    Output('lane-issue-module-options', 'options'),
                    Output('sample-issue-module-options', 'options'),
-                   Output('run-review-xpcrmodule-selector', 'options')],
+                   Output('tadm-issue-module-options', 'options'),
+                   Output('run-review-xpcrmodule-selector', 'options')
+                    ],
                    Input('xpcrmodule-options', 'data'))
     def update_run_options(data):
-        return data, data, data, data, data
+        return data, data, data, data, data, data
 
     @ app.callback(Output('xpcrmodule-selected', 'data'),
                    [Input('module-issue-module-options', 'value'),
@@ -1039,9 +1046,10 @@ def Add_Dash(app):
                     Input('lane-issue-module-options', 'value'),
                     Input('sample-issue-module-options', 'value'),
                     Input('run-review-xpcrmodule-selector', 'value'),
-                    Input('run-review-xpcrmodule-selector', 'options')], prevent_initial_call=True
+                    Input('run-review-xpcrmodule-selector', 'options'),
+                    Input('tadm-issue-module-options', 'value')], prevent_initial_call=True
                    )
-    def update_module_selections(module_issue_mod_selection, run_issue_mod_selection, lane_issue_mod_selection, sample_issue_mod_selection, run_review_mod_selection, run_review_mod_options):
+    def update_module_selections(module_issue_mod_selection, run_issue_mod_selection, lane_issue_mod_selection, sample_issue_mod_selection, run_review_mod_selection, run_review_mod_options, tadm_issue_mod_selection):
         trigger = ctx.triggered_id
         print(run_review_mod_options)
         if trigger == 'module-issue-module-options':
@@ -1060,6 +1068,10 @@ def Add_Dash(app):
             if sample_issue_mod_selection == None:
                 return "NoFilter"
             return sample_issue_mod_selection
+        elif trigger == 'tadm-issue-module-options':
+            if tadm_issue_mod_selection == None:
+                return "NoFilter"
+            return tadm_issue_mod_selection
         elif trigger == 'run-review-xpcrmodule-selector' and run_review_mod_selection != None:
             return run_review_mod_selection
         elif trigger == 'run-review-xpcrmodule-selector' and run_review_mod_selection == None:
@@ -1070,10 +1082,11 @@ def Add_Dash(app):
                     Output('run-issue-module-options', 'value'),
                     Output('lane-issue-module-options', 'value'),
                     Output('sample-issue-module-options', 'value'),
-                    Output('run-review-xpcrmodule-selector', 'value')],
+                    Output('run-review-xpcrmodule-selector', 'value'),
+                    Output('tadm-issue-module-options', 'value')],
                    Input('xpcrmodule-selected', 'data'), prevent_initial_call=True)
     def update_lane_option_selected(data):
-        return data, data, data, data, data
+        return data, data, data, data, data, data
 
     @ app.callback([Output('issue-post-response', 'is_open'),
                    Output('submit-module-issue', 'n_clicks'),

@@ -199,6 +199,21 @@ sample_issue_content = dbc.Card(
     )
 )
 
+tadm_issue_content = dbc.Card(
+    dbc.CardBody(
+        [
+            html.Div([html.P("What XPCR Module is Affected?", className="card-text", style={'width': '30%', 'display': 'inline-block', 'vertical-align': 'middle'}),
+                      dcc.Dropdown(id='tadm-issue-module-options', style={'width': '70%', 'display': 'inline-block', 'vertical-align': 'middle'})]),
+            html.Div([html.P("What type of issue is this?", className="card-text", style={'width': '30%', 'display': 'inline-block', 'vertical-align': 'middle'}),
+                      dcc.Dropdown(id='tadm-issue-options', style={'width': '70%', 'display': 'inline-block', 'vertical-align': 'middle'})]),
+            html.Div([html.P("How severe is this issue?", className="card-text", style={'width': '30%', 'display': 'inline-block', 'vertical-align': 'middle'}),
+                      dcc.Dropdown(id='tadm-issue-severity-options', style={'width': '70%', 'display': 'inline-block', 'vertical-align': 'middle'})]),
+            dbc.Button('Submit TADM Issue', id='submit-tadm-issue')
+        ]
+    ),
+    className="mt-3",
+)
+
 active_issues_content = dbc.Card(
     dbc.CardBody(
         [
@@ -348,6 +363,7 @@ misc_file_download_button = dbc.Button(
     "Download File", id='misc-file-download-button')
 
 misc_file_download = dcc.Download(id='misc-file-download')
+
 misc_file_upload_button = dcc.Upload(
     id='misc-file-upload-button',
     children=html.Div([
@@ -424,6 +440,8 @@ review_tabs = dbc.Tabs(
                 tab_id='run-review-module-lane-issues'),
         dbc.Tab(sample_issue_content, label="Note Sample Issue",
                 tab_id='run-review-sample-issues'),
+        dbc.Tab(tadm_issue_content, label="Note TADM Issue",
+                tab_id='run-review-tadm-issues'),
         dbc.Tab(active_issues_content, label='View Active Issues',
                 tab_id='run-review-active-issues'),
         dbc.Tab(remediation_action_content, label='Manage Remediation Actions',
