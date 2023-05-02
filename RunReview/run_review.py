@@ -1756,7 +1756,7 @@ def Add_Dash(app):
                   State('issue-delete-response', 'is_open'),
                   State('issue-delete-url', 'data'),
                   Input('issue-delete-confirmed-button', 'n_clicks'))
-    def delete_remediation_action(is_open, delete_url, remediation_action_delete_confirmed_button):
+    def delete_issue(is_open, delete_url, remediation_action_delete_confirmed_button):
 
         trigger = ctx.triggered_id
         if trigger == 'issue-delete-confirmed-button':
@@ -1791,7 +1791,8 @@ def Add_Dash(app):
             remediation_attempt_urls = {'Sample': 'SampleIssueRemediationAttempts',
                                         'XPCR Module Lane': 'XPCRModuleLaneIssueRemediationAttempts',
                                         'Run': 'CartridgeIssueRemediationAttempts',
-                                        'XPCR Module': 'XPCRModuleIssueRemediationAttempts'}
+                                        'XPCR Module': 'XPCRModuleIssueRemediationAttempts',
+                                        'TADM': 'XPCRModuleTADMIssueRemediationAttempts'}
 
             issue_remediation_attempt_url = os.environ['RUN_REVIEW_API_BASE'] + \
                 remediation_attempt_urls[issue_remediation_type]
