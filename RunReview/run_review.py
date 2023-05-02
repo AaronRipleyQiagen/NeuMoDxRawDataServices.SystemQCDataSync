@@ -1663,7 +1663,8 @@ def Add_Dash(app):
         issue_urls = {'Sample': 'SampleIssues',
                       'XPCR Module Lane': 'XPCRModuleLaneIssues',
                       'Run': 'CartridgeIssues',
-                      'XPCR Module': 'XPCRModuleIssues'}
+                      'XPCR Module': 'XPCRModuleIssues',
+                      'TADM': 'XPCRModuleTADMIssues'}
 
         issue_remediation_url = os.environ['RUN_REVIEW_API_BASE'] + \
             issue_urls[issue_selected["Level"]] + \
@@ -1727,7 +1728,8 @@ def Add_Dash(app):
         issue_urls = {'Sample': 'SampleIssues',
                       'XPCR Module Lane': 'XPCRModuleLaneIssues',
                       'Run': 'CartridgeIssues',
-                      'XPCR Module': 'XPCRModuleIssues'}
+                      'XPCR Module': 'XPCRModuleIssues',
+                      'TADM': 'XPCRModuleTADMIssues'}
 
         issue_remediation_url = os.environ['RUN_REVIEW_API_BASE'] + \
             issue_urls[issue_selected["Level"]] + \
