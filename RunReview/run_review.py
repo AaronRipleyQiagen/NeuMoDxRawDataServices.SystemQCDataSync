@@ -1223,6 +1223,7 @@ def Add_Dash(app):
                                     'XPCR Module Lane': 'xpcrModuleLaneIssuesReferred',
                                     'Run': 'cartridgeIssuesReferred',
                                     'XPCR Module': 'xpcrModuleIssuesReferred',
+                                    'TADM': 'xpcrModuleTADMIssuesReferred'
                                     }
 
                     for issue_level in issue_levels:
@@ -1262,6 +1263,9 @@ def Add_Dash(app):
                                     subject_id = issue['subject']['xpcrModuleId']
 
                                 elif issue_level == 'XPCR Module':
+                                    subject_id = issue['subjectId']
+
+                                elif issue_level == 'TADM':
                                     subject_id = issue['subjectId']
 
                             issue_entry = [issue_id, issue_user_id, attempt, issue_level, status, severity, channel, reviewer_name,
