@@ -556,10 +556,11 @@ def Add_Dash(app):
                    [Input('sample-issue-severity-options', 'value'),
                    Input('lane-issue-severity-options', 'value'),
                    Input('run-issue-severity-options', 'value'),
-                   Input('module-issue-severity-options', 'value')
+                   Input('module-issue-severity-options', 'value'),
+                   Input('tadm-issue-severity-options', 'value')
                     ], prevent_initial_call=True
                    )
-    def update_severity_selection(sample_issue_severity, lane_issue_severity, run_issue_severity, module_issue_severity):
+    def update_severity_selection(sample_issue_severity, lane_issue_severity, run_issue_severity, module_issue_severity, tadm_issue_severity):
         trigger = ctx.triggered_id
         print(trigger)
         if trigger == 'sample-issue-severity-options':
@@ -570,6 +571,8 @@ def Add_Dash(app):
             return run_issue_severity
         elif trigger == 'module-issue-severity-options':
             return module_issue_severity
+        elif trigger == 'tadm-issue-severity-options':
+            return tadm_issue_severity
 
     @ app.callback([Output('sample-issue-severity-options', 'value'),
                    Output('lane-issue-severity-options', 'value'),
@@ -1092,11 +1095,13 @@ def Add_Dash(app):
                    Output('submit-module-issue', 'n_clicks'),
                    Output('submit-run-issue', 'n_clicks'),
                    Output('submit-lane-issue', 'n_clicks'),
-                   Output('submit-sample-issue', 'n_clicks')],
+                   Output('submit-sample-issue', 'n_clicks'),
+                   Output('submit-tadm-issue', 'n_clicks'),],
                    [Input('submit-module-issue', 'n_clicks'),
                    Input('submit-run-issue', 'n_clicks'),
                    Input('submit-lane-issue', 'n_clicks'),
                    Input('submit-sample-issue', 'n_clicks'),
+                   Input('submit-tadm-issue', 'n_clicks'),
                    State('issue-post-response', 'is_open'),
                    State('runset-review', 'data'),
                    State('channel-selected', 'data'),
@@ -1109,8 +1114,9 @@ def Add_Dash(app):
                    State('lane-issue-options', 'value'),
                    State('xpcrmodulelane-selected', 'data'),
                    State('sample-issue-options', 'value'),
-                   State('pcrcurve-sample-info', 'data')], prevent_intial_call=True)
-    def post_issue(mod_issue, run_issue, lane_issue, sample_issue, is_open, runset_review, channel_id, severity_id, module_issue_id, runset_subject_ids, xpcrmodule_selected, run_issue_id, run_selected, lane_issue_id, lane_selected, sample_issue_id, samples_selected):
+                   State('pcrcurve-sample-info', 'data'),
+                   State('tadm-issue-options', 'value')], prevent_intial_call=True)
+    def post_issue(mod_issue, run_issue, lane_issue, sample_issue, tadm_issue, is_open, runset_review, channel_id, severity_id, module_issue_id, runset_subject_ids, xpcrmodule_selected, run_issue_id, run_selected, lane_issue_id, lane_selected, sample_issue_id, samples_selected, tadm_issue_id):
         print("attempting post.")
 
         issue = {}
@@ -1165,10 +1171,25 @@ def Add_Dash(app):
                 "SampleIssues"
             requests.post(url=sample_issue_url, json=issue, verify=False)
 
-        if mod_issue or run_issue or lane_issue or sample_issue:
-            return not is_open, None, None, None, None
+        if tadm_issue:
+            """
+            Post information to XPCR Module TADM Issue Endpoint
+            """
+            issue['assayChannelId'] = '00000000-0000-0000-0000-000000000000'
+            issue['issueTypeId'] = tadm_issue_id
+            issue['subjectId'] = runset_subject_ids['XPCRModule'][xpcrmodule_selected]
+            issue['runSetSubjectReferrerId'] = xpcrmodule_selected
+            print(issue)
+            mod_tadm_issue_url = os.environ['RUN_REVIEW_API_BASE'] + \
+                "XPCRModuleTADMIssues"
+            response = requests.post(
+                url=mod_tadm_issue_url, json=issue, verify=False)
+            print(response.content)
 
-        return is_open, None, None, None, None
+        if mod_issue or run_issue or lane_issue or sample_issue or tadm_issue:
+            return not is_open, None, None, None, None, None
+
+        return is_open, None, None, None, None, None
 
     @app.callback([Output('issues-table', 'rowData'),
                    Output('issues-table', 'columnDefs')],
@@ -1201,7 +1222,8 @@ def Add_Dash(app):
                     issue_levels = {'Sample': 'sampleIssuesReferred',
                                     'XPCR Module Lane': 'xpcrModuleLaneIssuesReferred',
                                     'Run': 'cartridgeIssuesReferred',
-                                    'XPCR Module': 'xpcrModuleIssuesReferred'}
+                                    'XPCR Module': 'xpcrModuleIssuesReferred',
+                                    }
 
                     for issue_level in issue_levels:
                         for issue in runset_review[issue_levels[issue_level]]:
