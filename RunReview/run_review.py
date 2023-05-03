@@ -2148,6 +2148,32 @@ def Add_Dash(app):
             return dict(content=file_data, filename=misc_file_selection[0]['File Name'], base64=True)
         return no_update
 
+    @app.callback(Output('comments-modal', 'is_open'),
+                  Input('create-comment-button', 'n_clicks'),
+                  Input('cancel-comment-button', 'n_clicks'),
+                  Input('add-comment-button', 'n_clicks'),
+                  State('comments-modal', 'is_open'))
+    def open_comment_entry(create_click, cancel_click, add_click, is_open):
+        if ctx.triggered_id in ['create-comment-button', 'cancel-comment-button', 'add-comment-button']:
+            return not is_open
+        return is_open
+
+    @app.callback(Output('comments-post-response', 'is_open'),
+                  Input('add-comment-button', 'n_clicks'),
+                  State('comments-text', 'value'),
+                  State("runset-review", "data"),
+                  State('comments-post-response', 'is_open'))
+    def add_comment(add_click, entrytext, runset_review, is_open):
+        if ctx.triggered_id == 'add-comment-button':
+            add_comment_url = os.environ['RUN_REVIEW_API_BASE'] + "Comments"
+            add_comment_payload = {'entry': entrytext,
+                                   'runsetReviewId': runset_review['id'],
+                                   'userId': session['user'].id}
+            response_status_code = requests.post(url=add_comment_url,
+                                                 json=add_comment_payload, verify=False).status_code
+            print(response_status_code)
+            return not is_open
+        return is_open
     return app.server
 
 
