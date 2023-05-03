@@ -337,10 +337,53 @@ tadm_pictures_content = dbc.Card(
     )
 )
 
+comments_table = dag.AgGrid(
+    enableEnterpriseModules=True,
+    # licenseKey=os.environ['AGGRID_ENTERPRISE'],
+    # columnDefs=initial_columnDefs,
+    # rowData=[],
+    columnSize="sizeToFit",
+    defaultColDef=dict(
+        resizable=True,
+    ),
+    rowSelection='single',
+    id='comments-table'
+)
+
+comments_text = dcc.Textarea(
+    id='comments-text',
+    value='Enter Comment Here',
+    style={'width': '100%', 'height': 300},
+),
+
+create_comment_button = dbc.Button(
+    "Create Comment", id='create-comment-button', style={'width': '20%', 'margin-left': '10%', 'display': 'inline-block'})
+
+delete_comment_button = dbc.Button(
+    "Delete Comment", id='delete-comment-button', style={'width': '20%', 'margin-left': '10%', 'display': 'inline-block'})
+
+add_comment_button = dbc.Button("Add Comment", id='add-comment-button', style={
+    'width': '35%', 'margin-left': '10%', 'display': 'inline-block'})
+
+cancel_comment_button = dbc.Button("Cancel", id='cancel-comment-button', style={
+                                   'width': '35%', 'margin-left': '10%', 'display': 'inline-block'})
+
+comments_modal = dbc.Modal([
+    dbc.ModalHeader(dbc.ModalTitle("Add Comment to Runset")),
+    dbc.ModalBody(comments_text),
+    html.Div([add_comment_button, cancel_comment_button])
+],
+    id="comments-modal",
+    is_open=False)
+
+comments_post_response = dbc.Modal([dbc.ModalHeader(dbc.ModalTitle('Comment Added to Runset'))
+                                    ], id='comments-post-response', is_open=False)
+
 comments_content = dbc.Card(
     dbc.CardBody(
         [
-            html.P("Coming Soon :)", className="card-text")
+            comments_table,
+            html.Div(children=[create_comment_button, delete_comment_button])
         ]
     ),
     className="mt-3",
@@ -453,7 +496,8 @@ review_tabs = dbc.Tabs(
         dbc.Tab(misc_files_content, label='Miscellaneous Files',
                 tab_id='misc-files'),
         dbc.Tab(run_review_content, label='Runset Reviews',
-                tab_id='runset-reviews')
+                tab_id='runset-reviews'),
+        dbc.Tab(comments_content, label='Comments', tab_id='runset-comments')
     ], id='review-tabs'
 )
 
@@ -601,6 +645,8 @@ layout = [
     remediation_action_update_response,
     remediation_action_delete_confirmation,
     remediation_action_delete_response,
+    comments_modal,
+    comments_post_response,
     issue_delete_confirmation,
     issue_delete_response,
     issue_resolution_remediation_action_selection,
