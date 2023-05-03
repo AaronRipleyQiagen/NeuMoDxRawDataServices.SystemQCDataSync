@@ -2171,9 +2171,74 @@ def Add_Dash(app):
                                    'userId': session['user'].id}
             response_status_code = requests.post(url=add_comment_url,
                                                  json=add_comment_payload, verify=False).status_code
-            print(response_status_code)
             return not is_open
         return is_open
+
+    @app.callback(Output('comments-table', 'rowData'),
+                  Output('comments-table', 'columnDefs'),
+                  Input('review-tabs', 'active_tab'),
+                  Input('comments-post-response', 'is_open'),
+                  State('runset-selection-data', 'data'))
+    def get_comments(active_tab, is_open, runset_data):
+        print("function found")
+        if (ctx.triggered_id == 'review-tabs' and active_tab == 'runset-comments') or (ctx.triggered_id == 'comment-post-response' and is_open == False):
+            # if True:
+            print("getting comments")
+            """
+            Get Comments for runset
+            """
+            get_runset_comments_url = os.environ['RUN_REVIEW_API_BASE'] + \
+                "RunSets/{}/Comments".format(runset_data['id'])
+
+            runset = requests.get(get_runset_comments_url, verify=False).json()
+            print('ID:', runset_data['id'])
+            """
+            Extract Details from each Misc File into pandas DataFrame
+            """
+
+            comment_data = pd.DataFrame(
+                columns=['Entry', 'Added By', 'Added Date', 'CommentId'])
+
+            idx = 0
+            for runset_review in runset['runSetReviews']:
+                if runset_review['comments']:
+                    for comment in runset_review['comments']:
+
+                        entry = {}
+                        entry['CommentId'] = comment['id']
+                        entry['Entry'] = comment['entry']
+                        entry['Added By'] = runset_review['reviewerName']
+                        entry['Added Date'] = comment['validFrom']
+
+                        comment_data.loc[idx] = entry
+                        idx += 1
+
+            """
+            Create Column Definitions for Table
+            """
+
+            column_definitions = []
+            initial_selection = [
+                x for x in comment_data.columns if 'Id' not in x]
+
+            for column in comment_data.columns:
+
+                column_definition = {"headerName": column,
+                                     "field": column,
+                                     "filter": True,
+                                     "sortable": True}
+                if column not in initial_selection:
+                    column_definition['hide'] = True
+
+                if 'Date' in column:
+                    comment_data[column] = comment_data[column].astype(
+                        'datetime64').dt.strftime("%d %B %Y %H:%M:%S")
+
+                column_definitions.append(column_definition)
+
+            return comment_data.to_dict(orient='records'), column_definitions
+        return no_update
+
     return app.server
 
 
