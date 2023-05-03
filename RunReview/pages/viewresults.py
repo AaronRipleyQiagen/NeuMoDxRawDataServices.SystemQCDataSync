@@ -379,6 +379,23 @@ comments_modal = dbc.Modal([
 comments_post_response = dbc.Modal([dbc.ModalHeader(dbc.ModalTitle('Comment Added to Runset'))
                                     ], id='comments-post-response', is_open=False)
 
+confirm_comment_delete_button = dbc.Button("Yes", id='confirm-comment-delete-button', style={
+    'width': '35%', 'margin-left': '10%', 'display': 'inline-block'})
+
+cancel_comment_delete_button = dbc.Button("No", id='cancel-comment-delete-button', style={
+    'width': '35%', 'margin-left': '10%', 'display': 'inline-block'})
+
+comments_delete_confirmation = dbc.Modal([
+    dbc.ModalHeader(dbc.ModalTitle("Confirm Comment Deletion")),
+    dbc.ModalBody("Are You Sure you want to delete this comment?"),
+    html.Div([confirm_comment_delete_button, cancel_comment_delete_button])
+],
+    id="comments-delete-confirmation",
+    is_open=False)
+
+comments_delete_response = dbc.Modal([dbc.ModalHeader(dbc.ModalTitle('Comment Removed from Runset'))
+                                      ], id='comments-delete-response', is_open=False)
+
 comments_content = dbc.Card(
     dbc.CardBody(
         [
@@ -647,6 +664,8 @@ layout = [
     remediation_action_delete_response,
     comments_modal,
     comments_post_response,
+    comments_delete_response,
+    comments_delete_confirmation,
     issue_delete_confirmation,
     issue_delete_response,
     issue_resolution_remediation_action_selection,

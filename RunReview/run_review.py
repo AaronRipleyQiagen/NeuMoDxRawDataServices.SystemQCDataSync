@@ -2178,10 +2178,11 @@ def Add_Dash(app):
                   Output('comments-table', 'columnDefs'),
                   Input('review-tabs', 'active_tab'),
                   Input('comments-post-response', 'is_open'),
+                  Input('comments-delete-response', 'is_open'),
                   State('runset-selection-data', 'data'))
-    def get_comments(active_tab, is_open, runset_data):
+    def get_comments(active_tab, post_response_is_open, delete_response_is_open, runset_data):
         print("function found")
-        if (ctx.triggered_id == 'review-tabs' and active_tab == 'runset-comments') or (ctx.triggered_id == 'comment-post-response' and is_open == False):
+        if (ctx.triggered_id == 'review-tabs' and active_tab == 'runset-comments') or (ctx.triggered_id == 'comments-post-response' and post_response_is_open == False) or (ctx.triggered_id == 'comments-delete-response' and delete_response_is_open == False):
             # if True:
             print("getting comments")
             """
@@ -2191,13 +2192,12 @@ def Add_Dash(app):
                 "RunSets/{}/Comments".format(runset_data['id'])
 
             runset = requests.get(get_runset_comments_url, verify=False).json()
-            print('ID:', runset_data['id'])
             """
             Extract Details from each Misc File into pandas DataFrame
             """
 
             comment_data = pd.DataFrame(
-                columns=['Entry', 'Added By', 'Added Date', 'CommentId'])
+                columns=['Entry', 'Added By', 'Added Date', 'CommentId', 'RunSetReviewId'])
 
             idx = 0
             for runset_review in runset['runSetReviews']:
@@ -2206,6 +2206,7 @@ def Add_Dash(app):
 
                         entry = {}
                         entry['CommentId'] = comment['id']
+                        entry['RunSetReviewId'] = runset_review['id']
                         entry['Entry'] = comment['entry']
                         entry['Added By'] = runset_review['reviewerName']
                         entry['Added Date'] = comment['validFrom']
@@ -2238,6 +2239,37 @@ def Add_Dash(app):
 
             return comment_data.to_dict(orient='records'), column_definitions
         return no_update
+
+    @app.callback(Output('delete-comment-button', 'disabled'),
+                  Input('comments-table', 'selectionChanged'),
+                  State('runset-review', 'data'))
+    def check_delete_comment_validity(selection, runset_review):
+        if ctx.triggered_id == 'comments-table' and selection[0]['RunSetReviewId'] == runset_review['id']:
+            return False
+        return True
+
+    @app.callback(Output('comments-delete-confirmation', 'is_open'),
+                  Input('delete-comment-button', 'n_clicks'),
+                  Input('confirm-comment-delete-button', 'n_clicks'),
+                  Input('cancel-comment-delete-button', 'n_clicks'),
+                  State('comments-delete-confirmation', 'is_open'))
+    def confirm_comment_delete(delete_click, confirm_click, cancel_click, is_open):
+        if ctx.triggered_id in ['delete-comment-button', 'confirm-comment-delete-button', 'cancel-comment-delete-button']:
+            return not is_open
+        return is_open
+
+    @app.callback(Output('comments-delete-response', 'is_open'),
+                  Input('confirm-comment-delete-button', 'n_clicks'),
+                  State('comments-table', 'selectionChanged'),
+                  State('comments-delete-response', 'is_open'))
+    def confirm_comment_delete(confirm_click, selection, is_open):
+        if ctx.triggered_id == 'confirm-comment-delete-button':
+            delete_comment_url = os.environ['RUN_REVIEW_API_BASE'] + \
+                "Comments/{}".format(selection[0]['CommentId'])
+            requests.delete(url=delete_comment_url, verify=False)
+            return not is_open
+
+        return is_open
 
     return app.server
 
