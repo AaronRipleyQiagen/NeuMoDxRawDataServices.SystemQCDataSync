@@ -2271,6 +2271,23 @@ def Add_Dash(app):
 
         return is_open
 
+    @app.callback(Output('view-comment-button', 'disabled'),
+                  Input('comments-table', 'selectionChanged'))
+    def check_view_comment_validity(selection):
+        print(selection)
+        if ctx.triggered_id == 'comments-table' and selection:
+            return False
+        return True
+
+    @app.callback(Output('comments-view-modal', 'is_open'),
+                  Output('comments-view-text', 'children'),
+                  Input('view-comment-button', 'n_clicks'),
+                  State('comments-table', 'selectionChanged'),
+                  State('comments-view-modal', 'is_open'))
+    def view_selected_comment(view_click, selection, is_open):
+        if ctx.triggered_id == 'view-comment-button':
+            return not is_open, selection[0]['Entry']
+        return is_open, ''
     return app.server
 
 

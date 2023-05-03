@@ -362,6 +362,9 @@ create_comment_button = dbc.Button(
 delete_comment_button = dbc.Button(
     "Delete Comment", id='delete-comment-button', style={'width': '20%', 'margin-left': '10%', 'display': 'inline-block'})
 
+view_comment_button = dbc.Button(
+    "View Comment", id='view-comment-button', style={'width': '20%', 'margin-left': '10%', 'display': 'inline-block'})
+
 add_comment_button = dbc.Button("Add Comment", id='add-comment-button', style={
     'width': '35%', 'margin-left': '10%', 'display': 'inline-block'})
 
@@ -376,6 +379,14 @@ comments_modal = dbc.Modal([
     id="comments-modal",
     is_open=False)
 
+comments_view_text = html.P(id='comments-view-text')
+
+comments_view_modal = dbc.Modal([
+    dbc.ModalHeader(dbc.ModalTitle("Comment Text")),
+    dbc.ModalBody(comments_view_text)
+],
+    id="comments-view-modal",
+    is_open=False)
 comments_post_response = dbc.Modal([dbc.ModalHeader(dbc.ModalTitle('Comment Added to Runset'))
                                     ], id='comments-post-response', is_open=False)
 
@@ -400,7 +411,8 @@ comments_content = dbc.Card(
     dbc.CardBody(
         [
             comments_table,
-            html.Div(children=[create_comment_button, delete_comment_button])
+            html.Div(children=[create_comment_button,
+                     delete_comment_button, view_comment_button])
         ]
     ),
     className="mt-3",
@@ -666,6 +678,7 @@ layout = [
     comments_post_response,
     comments_delete_response,
     comments_delete_confirmation,
+    comments_view_modal,
     issue_delete_confirmation,
     issue_delete_response,
     issue_resolution_remediation_action_selection,
