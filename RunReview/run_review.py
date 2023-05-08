@@ -736,19 +736,21 @@ def Add_Dash(app):
             Initialize / Filter Dataset to Only Raw of Channel of Interest Data, Add Target Detected Column.
             """
 
-            run_summary_df = pd.DataFrame.from_dict(data)
-            run_summary_df = run_summary_df[run_summary_df['Channel']
-                                            == channel_dict[channel]]
-            run_summary_df = run_summary_df[run_summary_df['Processing Step'] == 'Raw']
-            run_summary_df['Target Detected'] = np.where(
-                run_summary_df['Localized Result'] == 'TargetAmplified', 1, 0)
+            raw_data = pd.DataFrame.from_dict(data)
+            raw_data = raw_data[raw_data['Channel']
+                                == channel_dict[channel]]
+            raw_data = raw_data[raw_data['Processing Step'] == 'Raw']
+
+            raw_data['Target Detected'] = np.where(
+                raw_data['Localized Result'] == 'TargetAmplified', 1, 0)
+
+            run_summary_df = raw_data.copy()
 
             if channel != spc2_channel:
                 """
                 Calculate Baseline Stats for Channel of Interest.
                 """
-                print(run_summary_df[[
-                    x for x in run_summary_df.columns if 'Reading ' in x]].mean(axis=1))
+
                 run_summary_df['Baseline Mean'] = run_summary_df[[
                     x for x in run_summary_df.columns if 'Reading ' in x]].mean(axis=1)
                 run_summary_df['Baseline Std'] = run_summary_df[[
@@ -810,6 +812,21 @@ def Add_Dash(app):
                                           ]
 
                 """
+                Calculate Left vs Right EP Split
+                """
+
+                for idx in run_summary_df.index.unique():
+                    run_number = idx[2]
+                    if run_number != 'Overall':
+                        run_summary_df.loc[idx, 'Left vs Right EP Split'] = abs(raw_data.loc[((raw_data['Run'] == run_number) & (
+                            raw_data['XPCR Module Side'] == 'Left')), 'End Point Fluorescence'].mean() - raw_data.loc[((raw_data['Run'] == run_number) & (
+                                raw_data['XPCR Module Side'] == 'Right')), 'End Point Fluorescence'].mean())
+                    else:
+                        run_summary_df.loc[idx, 'Left vs Right EP Split'] = abs(raw_data.loc[((
+                            raw_data['XPCR Module Side'] == 'Left')), 'End Point Fluorescence'].mean() - raw_data.loc[((
+                                raw_data['XPCR Module Side'] == 'Right')), 'End Point Fluorescence'].mean())
+
+                """
                 Format Data For Rendering
                 """
 
@@ -818,7 +835,8 @@ def Add_Dash(app):
                                      'Run',
                                      'Ct %CV',
                                      'EP %CV',
-                                     'Detection %']
+                                     'Detection %',
+                                     'Left vs Right EP Split']
 
             column_definitions = []
             for column in run_summary_df.columns:
