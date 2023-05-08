@@ -2241,9 +2241,10 @@ def Add_Dash(app):
                   Output('misc-files-table', 'columnDefs'),
                   Input('review-tabs', 'active_tab'),
                   Input('file-upload-response', 'is_open'),
+                  Input('delete-misc-file-response', 'is_open'),
                   State('runset-selection-data', 'data'))
-    def get_misc_files(active_tab, is_open, runset_data):
-        if ((ctx.triggered_id == 'file-upload-response' and is_open == False) or ctx.triggered_id == 'review-tabs') and active_tab == 'misc-files':
+    def get_misc_files(active_tab, upload_response_is_open, delete_response_is_open, runset_data):
+        if ((ctx.triggered_id == 'file-upload-response' and upload_response_is_open == False) or (ctx.triggered_id == 'delete-misc-file-response' and delete_response_is_open == False) or ctx.triggered_id == 'review-tabs') and active_tab == 'misc-files':
 
             """
             Get Misc file Info from API 
@@ -2257,16 +2258,18 @@ def Add_Dash(app):
             """
 
             misc_file_data = pd.DataFrame(
-                columns=['FileId', 'File Name', 'Uploaded By', 'Upload Date'])
+                columns=['Id', 'FileId', 'File Name', 'Uploaded By', 'Upload Date', 'UserId'])
 
             idx = 0
             for misc_file in runset['miscellaneousFiles']:
 
                 entry = {}
+                entry['Id'] = misc_file['id']
                 entry['FileId'] = misc_file['fileid']
                 entry['File Name'] = misc_file['name']
                 entry['Uploaded By'] = misc_file['runSetReview']['reviewerName']
                 entry['Upload Date'] = misc_file['validFrom']
+                entry['UserId'] = misc_file['validFromUser']
 
                 misc_file_data.loc[idx] = entry
                 idx += 1
@@ -2309,6 +2312,43 @@ def Add_Dash(app):
             print("got file data.")
             return dict(content=file_data, filename=misc_file_selection[0]['File Name'], base64=True)
         return no_update
+
+    @app.callback(Output('delete-misc-file-button', 'disabled'),
+                  Input('misc-files-table', 'selectionChanged'))
+    def check_misc_file_delete_validity(selection):
+        if ctx.triggered_id == 'misc-files-table':
+            if selection[0]['UserId'] == session['user'].id:
+                return False
+
+        return True
+
+    @app.callback(Output('delete-misc-file-confirmation', 'is_open'),
+                  Input('delete-misc-file-button', 'n_clicks'),
+                  Input('delete-misc-file-confirm', 'n_clicks'),
+                  Input('delete-misc-file-cancel', 'n_clicks'),
+                  State('delete-misc-file-confirmation', 'is_open'),
+                  prevent_intitial_call=True)
+    def control_delete_cartridge_picture_popup(delete_click, confirm_click, cancel_click, is_open):
+        if 'delete' in ctx.triggered_id:
+            return not is_open
+        return is_open
+
+    @app.callback(Output('delete-misc-file-response', 'is_open'),
+                  Input('delete-misc-file-confirm', 'n_clicks'),
+                  State('misc-files-table', 'selectionChanged'),
+                  State('delete-misc-file-response', 'is_open'))
+    def delete_cartridge_picture(confirm_click, selection, is_open):
+        if ctx.triggered_id == 'delete-misc-file-confirm':
+            delete_cartridge_picture_url = os.environ['RUN_REVIEW_API_BASE'] + \
+                "miscellaneousfiles/{}".format(selection[0]['Id'])
+            print(delete_cartridge_picture_url)
+            response = requests.delete(
+                url=delete_cartridge_picture_url, verify=False)
+            print("Cartridge Picture Delete Status Code: ", response.status_code)
+
+            return not is_open
+        else:
+            return is_open
 
     @app.callback(Output('comments-modal', 'is_open'),
                   Input('create-comment-button', 'n_clicks'),

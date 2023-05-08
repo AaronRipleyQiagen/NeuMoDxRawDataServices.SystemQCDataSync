@@ -881,25 +881,6 @@ tadm_pictures_table = dag.AgGrid(
 delete_tadm_button = dbc.Button(
     "Delete Selected Picture", id='delete-tadm-picture-button')
 
-upload_tadm_response = dbc.Modal(
-    [
-        dbc.ModalHeader("TADM Upload Status"),
-        dbc.ModalBody(
-            [
-                html.Div(
-                    [
-                        html.P(
-                            "The following files have been successfully uploaded:"),
-                        html.Ul(id="upload-tadm-message")
-                    ]
-                )
-            ]
-        )
-    ],
-    is_open=False,
-    id='upload-tadm-response'
-)
-
 delete_tadm_picture_confirmation = dbc.Modal(
     [
         dbc.ModalHeader("Delete TADM Picture Confirmation"),
@@ -939,6 +920,25 @@ delete_tadm_picture_response = dbc.Modal(
     ],
     is_open=False,
     id='delete-tadm-picture-response'
+)
+
+upload_tadm_response = dbc.Modal(
+    [
+        dbc.ModalHeader("TADM Upload Status"),
+        dbc.ModalBody(
+            [
+                html.Div(
+                    [
+                        html.P(
+                            "The following files have been successfully uploaded:"),
+                        html.Ul(id="upload-tadm-message")
+                    ]
+                )
+            ]
+        )
+    ],
+    is_open=False,
+    id='upload-tadm-response'
 )
 
 tadm_pictures_content = dbc.Card(
@@ -1109,7 +1109,11 @@ misc_files_table = dag.AgGrid(
 )
 
 misc_file_download_button = dbc.Button(
-    "Download File", id="misc-file-download-button")
+    "Download File", id="misc-file-download-button", style={
+        "width": "35%",
+        "margin-left": "10%",
+        "display": "inline-block",
+    })
 
 misc_file_download = dcc.Download(id="misc-file-download")
 
@@ -1129,13 +1133,63 @@ misc_file_upload_button = dcc.Upload(
     multiple=True,
 )
 
+delete_misc_file_button = dbc.Button(
+    "Delete Selected File", id='delete-misc-file-button', style={
+        "width": "35%",
+        "margin-left": "10%",
+        "display": "inline-block",
+    })
+
+delete_misc_file_picture_confirmation = dbc.Modal(
+    [
+        dbc.ModalHeader("Delete Miscellaneous File Confirmation"),
+        dbc.ModalBody([
+            html.P("Are you sure you would like to delete this file?"),
+            html.Div(
+                [
+                    dbc.Button(
+                        "Confirm", id='delete-misc-file-confirm', style={
+                            "width": "35%",
+                            "margin-left": "10%",
+                            "display": "inline-block",
+                        }),
+                    dbc.Button(
+                        "Cancel", id='delete-misc-file-cancel', style={
+                            "width": "35%",
+                            "margin-left": "10%",
+                            "display": "inline-block",
+                        })
+                ]
+            )
+        ]
+        ),
+
+        dbc.ModalFooter()
+    ],
+    is_open=False,
+    id='delete-misc-file-confirmation'
+)
+
+delete_misc_file_picture_response = dbc.Modal(
+    [
+        dbc.ModalHeader("Delete Miscellaneous File Result"),
+        dbc.ModalBody(
+            "Miscellaneous Picture Successfully Deleted."),
+        dbc.ModalFooter()
+    ],
+    is_open=False,
+    id='delete-misc-file-response'
+)
+
 misc_files_content = dbc.Card(
     dbc.CardBody(
         [
+            delete_misc_file_picture_confirmation,
+            delete_misc_file_picture_response,
             misc_file_upload_button,
             misc_files_table,
-            misc_file_download_button,
             misc_file_download,
+            html.Div([misc_file_download_button, delete_misc_file_button])
         ]
     ),
     className="mt-3",
