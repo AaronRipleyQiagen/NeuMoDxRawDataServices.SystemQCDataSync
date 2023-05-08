@@ -1445,8 +1445,6 @@ def Add_Dash(app):
             runset_cartridge_pictures_url = os.environ['RUN_REVIEW_API_BASE'] + \
                 "RunSets/{}/cartridgepictures".format(runset_selection['id'])
 
-            print(runset_cartridge_pictures_url)
-
             runset_cartridge_picture_response = requests.get(
                 url=runset_cartridge_pictures_url, verify=False).json()
 
@@ -1465,12 +1463,13 @@ def Add_Dash(app):
 
     @ app.callback(
         Output('upload-cartridge-message', 'children'),
-        [Input('upload-cartridge-pictures', 'contents')],
-        [State('upload-cartridge-pictures', 'filename'),
-         State("runset-selection-data", "data"),
-         State("runset-review", "data")])
-    def upload_cartridge_image_to_blob_storage(list_of_contents, list_of_filenames, runset_selection, runset_review):
-
+        Output('upload-cartridge-response', 'is_open'),
+        Input('upload-cartridge-pictures', 'contents'),
+        State('upload-cartridge-pictures', 'filename'),
+        State("runset-selection-data", "data"),
+        State("runset-review", "data"),
+        State("upload-cartridge-response", 'is_open'))
+    def upload_cartridge_image_to_blob_storage(list_of_contents, list_of_filenames, runset_selection, runset_review, is_open):
         if list_of_contents:
             files = {list_of_filenames[i]: list_of_contents[i]
                      for i in range(len(list_of_filenames))}
@@ -1498,17 +1497,101 @@ def Add_Dash(app):
                 }
                 cartridge_picture_url = os.environ['RUN_REVIEW_API_BASE'] + \
                     "CartridgePictures"
-                print(file_payload)
                 resp = requests.post(
                     url=cartridge_picture_url, json=file_payload, verify=False)
-                print(resp.status_code)
-                upload_status.append(html.H4(file+" Uploaded successfully"))
-
+                upload_status.append(file)
+            print(upload_status)
             # Return a message with the URL of the uploaded file
-            return upload_status
+            return upload_status, not is_open
 
         else:
             return no_update
+
+    @app.callback(Output('cartridge-pictures-table', 'rowData'),
+                  Output('cartridge-pictures-table', 'columnDefs'),
+                  Input('review-tabs', 'active_tab'),
+                  Input('upload-cartridge-message', 'children'),
+                  Input('delete-cartridge-picture-response', 'is_open'),
+                  State('runset-selection-data', 'data'))
+    def get_cartridge_picture_table(active_tab, message_children, is_open, runset_data):
+        if ((ctx.triggered_id == 'upload-cartridge-message') or ctx.triggered_id == 'review-tabs' or (ctx.triggered_id == 'delete-cartridge-picture-response' and is_open == False)) and active_tab == 'cartidge-pictures':
+            """
+            Get Cartridge Picture Info from API 
+            """
+            cartridge_pictures_url = os.environ['RUN_REVIEW_API_BASE'] + \
+                "RunSets/{}/cartridgepictures".format(runset_data['id'])
+            runset = requests.get(cartridge_pictures_url, verify=False).json()
+            """
+            Extract Details from each Cartridge Picture into pandas DataFrame
+            """
+            cartridge_picture_data = pd.DataFrame(
+                columns=['Id', 'FileId', 'File Name', 'Uploaded By', 'Upload Date'])
+
+            idx = 0
+            for cartridge_picture in runset['cartridgePictures']:
+
+                entry = {}
+                entry['Id'] = cartridge_picture['id']
+                entry['FileId'] = cartridge_picture['fileid']
+                entry['File Name'] = cartridge_picture['name']
+                entry['Uploaded By'] = cartridge_picture['runSetReview']['reviewerName']
+                entry['Upload Date'] = cartridge_picture['validFrom']
+
+                cartridge_picture_data.loc[idx] = entry
+                idx += 1
+
+            """
+            Create Column Definitions for Table
+            """
+
+            column_definitions = []
+            initial_selection = [
+                x for x in cartridge_picture_data.columns if 'Id' not in x]
+
+            for column in cartridge_picture_data.columns:
+
+                column_definition = {"headerName": column,
+                                     "field": column,
+                                     "filter": True,
+                                     "sortable": True}
+                if column not in initial_selection:
+                    column_definition['hide'] = True
+
+                if 'Date' in column:
+                    cartridge_picture_data[column] = cartridge_picture_data[column].astype(
+                        'datetime64').dt.strftime("%d %B %Y %H:%M:%S")
+
+                column_definitions.append(column_definition)
+
+            return cartridge_picture_data.to_dict(orient='records'), column_definitions
+        return no_update
+
+    @app.callback(Output('delete-cartridge-picture-confirmation', 'is_open'),
+                  Input('delete-cartridge-picture-button', 'n_clicks'),
+                  Input('delete-cartridge-picture-confirm', 'n_clicks'),
+                  Input('delete-cartridge-picture-cancel', 'n_clicks'),
+                  State('delete-cartridge-picture-confirmation', 'is_open'))
+    def control_delete_cartridge_picture_popup(delete_click, confirm_click, cancel_click, is_open):
+        if 'delete' in ctx.triggered_id:
+            return not is_open
+        return is_open
+
+    @app.callback(Output('delete-cartridge-picture-response', 'is_open'),
+                  Input('delete-cartridge-picture-confirm', 'n_clicks'),
+                  State('cartridge-pictures-table', 'selectionChanged'),
+                  State('delete-cartridge-picture-response', 'is_open'))
+    def delete_cartridge_picture(confirm_click, selection, is_open):
+        if ctx.triggered_id == 'delete-cartridge-picture-confirm':
+            delete_cartridge_picture_url = os.environ['RUN_REVIEW_API_BASE'] + \
+                "cartridgepictures/{}".format(selection[0]['Id'])
+            print(delete_cartridge_picture_url)
+            response = requests.delete(
+                url=delete_cartridge_picture_url, verify=False)
+            print("Cartridge Picture Delete Status Code: ", response.status_code)
+
+            return not is_open
+        else:
+            return is_open
 
     @app.callback(Output('tadm-images', 'items'),
                   [Input('review-tabs', 'active_tab'),
