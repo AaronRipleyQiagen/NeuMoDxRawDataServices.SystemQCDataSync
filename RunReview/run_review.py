@@ -1432,9 +1432,10 @@ def Add_Dash(app):
             return no_update
 
     @app.callback(Output('cartridge-images', 'items'),
-                  Input('cartridge-pictures-table', 'selectionChanged'))
-    def get_cartridge_pictures(selection):
-        if ctx.triggered_id == 'cartridge-pictures-table':
+                  Input('cartridge-pictures-table', 'selectionChanged'),
+                  Input('cartridge-pictures-table', 'rowData'))
+    def get_cartridge_pictures(selection, data):
+        if ctx.triggered_id == 'cartridge-pictures-table' and data:
             items = []
             item = add_item_to_carousel(
                 title="Some ID",
@@ -1445,7 +1446,7 @@ def Add_Dash(app):
             items.append(item)
             return items
 
-        return no_update
+        return []
 
     @ app.callback(
         Output('upload-cartridge-message', 'children'),
@@ -1485,8 +1486,7 @@ def Add_Dash(app):
                     "CartridgePictures"
                 resp = requests.post(
                     url=cartridge_picture_url, json=file_payload, verify=False)
-                upload_status.append(file)
-            print(upload_status)
+                upload_status.append(html.Li(file))
             # Return a message with the URL of the uploaded file
             return upload_status, not is_open
 
@@ -1511,13 +1511,14 @@ def Add_Dash(app):
             Extract Details from each Cartridge Picture into pandas DataFrame
             """
             cartridge_picture_data = pd.DataFrame(
-                columns=['Id', 'FileId', 'File Name', 'Uploaded By', 'Upload Date'])
+                columns=['Id', 'FileId', 'File Name', 'Uploaded By', 'Upload Date', 'UserId'])
 
             idx = 0
             for cartridge_picture in runset['cartridgePictures']:
 
                 entry = {}
                 entry['Id'] = cartridge_picture['id']
+                entry['UserId'] = cartridge_picture['validFromUser']
                 entry['FileId'] = cartridge_picture['fileid']
                 entry['File Name'] = cartridge_picture['name']
                 entry['Uploaded By'] = cartridge_picture['runSetReview']['reviewerName']
@@ -1551,6 +1552,15 @@ def Add_Dash(app):
 
             return cartridge_picture_data.to_dict(orient='records'), column_definitions
         return no_update
+
+    @app.callback(Output('delete-cartridge-picture-button', 'disabled'),
+                  Input('cartridge-pictures-table', 'selectionChanged'))
+    def check_delete_validity(selection):
+        if ctx.triggered_id == 'cartridge-pictures-table':
+            if selection[0]['UserId'] == session['user'].id:
+                return False
+
+        return True
 
     @app.callback(Output('delete-cartridge-picture-confirmation', 'is_open'),
                   Input('delete-cartridge-picture-button', 'n_clicks'),
