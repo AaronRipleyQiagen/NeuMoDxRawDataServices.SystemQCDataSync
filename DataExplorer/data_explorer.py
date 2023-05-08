@@ -160,7 +160,9 @@ def Add_Dash(app):
             reviewgroups_url, verify=False).json()
 
         for reviewgroup in reviewgroups_response:
-            reviewgroup_options[reviewgroup['id']] = reviewgroup['description']
+            if reviewgroup['description'] != 'System QC Tech I':
+                reviewgroup_options[reviewgroup['id']
+                                    ] = reviewgroup['description']
 
         if submit_clicks:
             return reviewgroup_options, created_runset_id

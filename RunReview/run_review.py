@@ -2015,8 +2015,9 @@ def Add_Dash(app):
                 reviewgroups_url, verify=False).json()
 
             for reviewgroup in reviewgroups_response:
-                reviewgroup_options[reviewgroup['id']
-                                    ] = reviewgroup['description']
+                if reviewgroup['description'] != 'System QC Tech I':
+                    reviewgroup_options[reviewgroup['id']
+                                        ] = reviewgroup['description']
             return not is_open, reviewgroup_options
 
         return is_open, {}
@@ -2367,6 +2368,7 @@ def Add_Dash(app):
         if ctx.triggered_id == 'view-comment-button':
             return not is_open, selection[0]['Entry']
         return is_open, ''
+
     return app.server
 
 
