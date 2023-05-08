@@ -1432,34 +1432,20 @@ def Add_Dash(app):
             return no_update
 
     @app.callback(Output('cartridge-images', 'items'),
-                  [Input('review-tabs', 'active_tab'),
-                  State("runset-selection-data", "data")])
-    def get_cartridge_pictures(active_tab, runset_selection):
-        if active_tab == 'cartidge-pictures':
+                  Input('cartridge-pictures-table', 'selectionChanged'))
+    def get_cartridge_pictures(selection):
+        if ctx.triggered_id == 'cartridge-pictures-table':
             items = []
-
-            """
-            Call API to determine Cartridge Picture Details (name, url etc)
-            """
-
-            runset_cartridge_pictures_url = os.environ['RUN_REVIEW_API_BASE'] + \
-                "RunSets/{}/cartridgepictures".format(runset_selection['id'])
-
-            runset_cartridge_picture_response = requests.get(
-                url=runset_cartridge_pictures_url, verify=False).json()
-
-            for cartridge_picture in runset_cartridge_picture_response['cartridgePictures']:
-                item = add_item_to_carousel(
-                    title="Some ID",
-                    description="Some Photo",
-                    container_name="neumodxsystemqc-cartridgepictures",
-                    blob_name=cartridge_picture['fileid'],
-                )
-                items.append(item)
+            item = add_item_to_carousel(
+                title="Some ID",
+                description="Some Photo",
+                container_name="neumodxsystemqc-cartridgepictures",
+                blob_name=selection[0]['FileId'],
+            )
+            items.append(item)
             return items
 
-        else:
-            return no_update
+        return no_update
 
     @ app.callback(
         Output('upload-cartridge-message', 'children'),
