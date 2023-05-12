@@ -28,10 +28,6 @@ def populate_review_queue(
     runsets = resp.json()
     if len(runsets) > 0:
         df = pd.DataFrame.from_dict(runsets)
-
-        # df['Status'] = [x[0]['runSetReviewStatus']['name']
-        #                 for x in df['runSetReviews']]
-        df.to_csv("test.csv")
         df["Status"] = np.nan
 
         for idx in df.index:
