@@ -171,7 +171,8 @@ delete_runset_confirmation_modal = dbc.Modal(
             ]
         ),
         dbc.ModalFooter(),
-    ]
+    ],
+    id="delete-runset-confirmation",
 )
 
 delete_runset_response = dbc.Modal(
