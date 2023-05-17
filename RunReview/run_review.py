@@ -94,7 +94,8 @@ sidebar = html.Div(
         html.Hr(),
         dbc.Nav(
             [
-                dbc.NavLink("Home", href="/dashboard/run-review/", active="exact"),
+                dbc.NavLink("Home", href="/dashboard/run-review/",
+                            active="exact"),
                 dbc.NavLink(
                     "Run Review Queue",
                     href="/dashboard/run-review/review-queue",
@@ -131,7 +132,8 @@ runset_channel_options = dcc.Store(
     id="runset-channel-options", storage_type="session", data=""
 )
 
-channel_selected = dcc.Store(id="channel-selected", storage_type="session", data="")
+channel_selected = dcc.Store(
+    id="channel-selected", storage_type="session", data="")
 
 spc_channel = dcc.Store(id="spc-channel", storage_type="session", data="")
 
@@ -139,9 +141,11 @@ runset_severity_options = dcc.Store(
     id="runset-severity-options", storage_type="session", data=""
 )
 
-severity_selected = dcc.Store(id="severity-selected", storage_type="session", data="")
+severity_selected = dcc.Store(
+    id="severity-selected", storage_type="session", data="")
 
-runset_run_options = dcc.Store(id="runset-run-options", storage_type="session", data="")
+runset_run_options = dcc.Store(
+    id="runset-run-options", storage_type="session", data="")
 
 run_option_selected = dcc.Store(
     id="run-option-selected", storage_type="session", data=""
@@ -155,19 +159,22 @@ xpcrmodulelane_selected = dcc.Store(
     id="xpcrmodulelane-selected", storage_type="session", data=""
 )
 
-xpcrmodule_options = dcc.Store(id="xpcrmodule-options", storage_type="session", data="")
+xpcrmodule_options = dcc.Store(
+    id="xpcrmodule-options", storage_type="session", data="")
 
 xpcrmodule_selected = dcc.Store(
     id="xpcrmodule-selected", storage_type="session", data=""
 )
 
-runset_subject_ids = dcc.Store(id="runset-subject-ids", storage_type="session", data="")
+runset_subject_ids = dcc.Store(
+    id="runset-subject-ids", storage_type="session", data="")
 
 runset_subject_descriptions = dcc.Store(
     id="runset-subject-descriptions", storage_type="session"
 )
 
-pcrcurve_sample_info = dcc.Store(id="pcrcurve-sample-info", storage_type="session")
+pcrcurve_sample_info = dcc.Store(
+    id="pcrcurve-sample-info", storage_type="session")
 
 issue_selected = dcc.Store(id="issue-selected", storage_type="session")
 
@@ -183,7 +190,8 @@ remediation_action_loader = dcc.Interval(
 
 related_runsets = dcc.Store(id="related-runsets", storage_type="session")
 
-issue_remediation_url = dcc.Store(id="issue-remediation-url", storage_type="session")
+issue_remediation_url = dcc.Store(
+    id="issue-remediation-url", storage_type="session")
 
 issue_delete_url = dcc.Store(id="issue-delete-url", storage_type="session")
 
@@ -191,7 +199,8 @@ issue_resolution_remediation_action_selection = dcc.Store(
     id="issue-resolution-remediation-action-selection", storage_type="session"
 )
 
-issue_remediation_type = dcc.Store(id="issue-remediation-type", storage_type="session")
+issue_remediation_type = dcc.Store(
+    id="issue-remediation-type", storage_type="session")
 
 layout = html.Div(
     [
@@ -264,7 +273,8 @@ def Add_Dash(app):
         review_groups = requests.get(review_groups_url, verify=False).json()
         review_group_options = {}
         for review_group in review_groups:
-            review_group_options[review_group["id"]] = review_group["description"]
+            review_group_options[review_group["id"]
+                                 ] = review_group["description"]
         return review_group_options, session["user"].group_id
 
     @app.callback(
@@ -299,7 +309,8 @@ def Add_Dash(app):
                 {"headerName": "XPCR Module", "field": "XPCR Module", "filter": True},
                 {"headerName": "Description", "field": "Description", "filter": True},
                 {"headerName": "Start Date", "field": "Start Date", "filter": True},
-                {"headerName": "Sample Count", "field": "Sample Count", "filter": True},
+                {"headerName": "Sample Count",
+                    "field": "Sample Count", "filter": True},
                 {"headerName": "Id", "field": "Id", "filter": True, "hide": True},
                 {
                     "headerName": "UserId",
@@ -372,7 +383,8 @@ def Add_Dash(app):
                 "RUN_REVIEW_API_BASE"
             ] + "Runsets/{}".format(selection[0]["Id"])
             print(delete_cartridge_picture_url)
-            response = requests.delete(url=delete_cartridge_picture_url, verify=False)
+            response = requests.delete(
+                url=delete_cartridge_picture_url, verify=False)
             print("Runset Delete Status Code: ", response.status_code)
             if response.status_code == 200:
                 message = "Runset was deleted successfully"
@@ -409,7 +421,8 @@ def Add_Dash(app):
             Output("xpcrmodule-options", "data"),
             Output("runset-subject-descriptions", "data"),
         ],
-        [Input("get-runset-data", "n_clicks"), State("runset-selection-data", "data")],
+        [Input("get-runset-data", "n_clicks"),
+         State("runset-selection-data", "data")],
         prevent_inital_call=True,
     )
     def initialize_runset_data(n, runset_data):
@@ -440,7 +453,8 @@ def Add_Dash(app):
         )
         idx = 0
         for runsetsample in runset_data["runSetSamples"]:
-            runset_sample_ids.append(runsetsample["sample"]["rawDataDatabaseId"])
+            runset_sample_ids.append(
+                runsetsample["sample"]["rawDataDatabaseId"])
 
             runset_map = [
                 runsetsample["sample"]["rawDataDatabaseId"],
@@ -477,12 +491,14 @@ def Add_Dash(app):
         jsonReader.standardDecode()
         dataframe = jsonReader.DataFrame
         dataframe["RawDataDatabaseId"] = dataframe.reset_index()["id"].values
-        dataframe["Channel"] = dataframe["Channel"].replace("Far_Red", "Far Red")
+        dataframe["Channel"] = dataframe["Channel"].replace(
+            "Far_Red", "Far Red")
         dataframe["XPCR Module Side"] = np.where(
             dataframe["XPCR Module Lane"] < 7, "Right", "Left"
         )
         dataframe = (
-            dataframe.set_index("RawDataDatabaseId").join(runset_map_df).reset_index()
+            dataframe.set_index("RawDataDatabaseId").join(
+                runset_map_df).reset_index()
         )
 
         """
@@ -504,8 +520,10 @@ def Add_Dash(app):
         runset_update_url = os.environ[
             "RUN_REVIEW_API_BASE"
         ] + "RunSets/{}/status".format(resp["runSetId"])
-        runset_update_response = requests.put(url=runset_update_url, verify=False)
-        print("Runset Update Response: " + str(runset_update_response.status_code))
+        runset_update_response = requests.put(
+            url=runset_update_url, verify=False)
+        print("Runset Update Response: " +
+              str(runset_update_response.status_code))
         """
         Get Severity Options
         """
@@ -739,7 +757,8 @@ def Add_Dash(app):
                 for issueType in issueTypeEndpoints:
                     url = os.environ["RUN_REVIEW_API_BASE"] + issueType
                     tasks.append(
-                        asyncio.ensure_future(getIssueTypeOptions(session, url))
+                        asyncio.ensure_future(
+                            getIssueTypeOptions(session, url))
                     )
 
                 responses = await asyncio.gather(*tasks)
@@ -1094,7 +1113,8 @@ def Add_Dash(app):
                     .max(axis=1)
                 )
                 run_summary_df["Baseline %CV"] = (
-                    run_summary_df["Baseline Std"] / run_summary_df["Baseline Mean"]
+                    run_summary_df["Baseline Std"] /
+                    run_summary_df["Baseline Mean"]
                 )
 
                 initial_selection = [
@@ -1137,7 +1157,8 @@ def Add_Dash(app):
                     ["N500 Serial Number", "XPCR Module Serial"]
                 ).agg(agg_types)
                 run_summary_df_overall["Run"] = "Overall"
-                run_summary_df_overall.set_index("Run", append=True, inplace=True)
+                run_summary_df_overall.set_index(
+                    "Run", append=True, inplace=True)
                 run_summary_df = run_summary_df.groupby(
                     ["N500 Serial Number", "XPCR Module Serial", "Run"]
                 ).agg(agg_types)
@@ -1654,7 +1675,8 @@ def Add_Dash(app):
             issue["issueTypeId"] = module_issue_id
             issue["subjectId"] = runset_subject_ids["XPCRModule"][xpcrmodule_selected]
             issue["runSetSubjectReferrerId"] = xpcrmodule_selected
-            mod_issue_url = os.environ["RUN_REVIEW_API_BASE"] + "XPCRModuleIssues"
+            mod_issue_url = os.environ["RUN_REVIEW_API_BASE"] + \
+                "XPCRModuleIssues"
             requests.post(url=mod_issue_url, json=issue, verify=False)
 
         if run_issue:
@@ -1664,7 +1686,8 @@ def Add_Dash(app):
             issue["issueTypeId"] = run_issue_id
             issue["subjectId"] = runset_subject_ids["Cartridge"][run_selected]
             issue["runSetSubjectReferrerId"] = run_selected
-            cartridge_issue_url = os.environ["RUN_REVIEW_API_BASE"] + "CartridgeIssues"
+            cartridge_issue_url = os.environ["RUN_REVIEW_API_BASE"] + \
+                "CartridgeIssues"
             requests.post(url=cartridge_issue_url, json=issue, verify=False)
 
         if lane_issue:
@@ -1674,7 +1697,8 @@ def Add_Dash(app):
             issue["issueTypeId"] = lane_issue_id
             issue["subjectId"] = runset_subject_ids["XPCRModuleLane"][lane_selected]
             issue["runSetSubjectReferrerId"] = lane_selected
-            lane_issue_url = os.environ["RUN_REVIEW_API_BASE"] + "XPCRModuleLaneIssues"
+            lane_issue_url = os.environ["RUN_REVIEW_API_BASE"] + \
+                "XPCRModuleLaneIssues"
             print(issue)
             requests.post(url=lane_issue_url, json=issue, verify=False)
 
@@ -1685,7 +1709,8 @@ def Add_Dash(app):
             issue["issueTypeId"] = sample_issue_id
             issue["subjectId"] = samples_selected[0]["SampleId"]
             issue["runSetSubjectReferrerId"] = samples_selected[0]["RunSetSampleId"]
-            sample_issue_url = os.environ["RUN_REVIEW_API_BASE"] + "SampleIssues"
+            sample_issue_url = os.environ["RUN_REVIEW_API_BASE"] + \
+                "SampleIssues"
             requests.post(url=sample_issue_url, json=issue, verify=False)
 
         if tadm_issue:
@@ -1700,7 +1725,8 @@ def Add_Dash(app):
             mod_tadm_issue_url = (
                 os.environ["RUN_REVIEW_API_BASE"] + "XPCRModuleTADMIssues"
             )
-            response = requests.post(url=mod_tadm_issue_url, json=issue, verify=False)
+            response = requests.post(
+                url=mod_tadm_issue_url, json=issue, verify=False)
             print(response.content)
 
         if mod_issue or run_issue or lane_issue or sample_issue or tadm_issue:
@@ -1709,7 +1735,8 @@ def Add_Dash(app):
         return is_open, None, None, None, None, None
 
     @app.callback(
-        [Output("issues-table", "rowData"), Output("issues-table", "columnDefs")],
+        [Output("issues-table", "rowData"),
+         Output("issues-table", "columnDefs")],
         [
             Input("review-tabs", "active_tab"),
             Input("issue-delete-response", "is_open"),
@@ -1757,7 +1784,8 @@ def Add_Dash(app):
                     "RUN_REVIEW_API_BASE"
                 ] + "RunSets/{}/issues".format(runset_id)
 
-                runset_data = requests.get(url=runset_issues_url, verify=False).json()
+                runset_data = requests.get(
+                    url=runset_issues_url, verify=False).json()
 
                 for runset_review in runset_data["runSetReviews"]:
                     reviewer_name = runset_review["reviewerName"]
@@ -1896,8 +1924,10 @@ def Add_Dash(app):
             runset_update_url = os.environ[
                 "RUN_REVIEW_API_BASE"
             ] + "RunSets/{}/status".format(runsetreview_update["runSetId"])
-            runset_update_response = requests.put(url=runset_update_url, verify=False)
-            print("Runset Update Response: " + str(runset_update_response.status_code))
+            runset_update_response = requests.put(
+                url=runset_update_url, verify=False)
+            print("Runset Update Response: " +
+                  str(runset_update_response.status_code))
             return not is_open
 
         return is_open
@@ -2081,7 +2111,10 @@ def Add_Dash(app):
                 status = remediation_action["remediationActionStatus"]["name"]
                 action = remediation_action["remediationActionType"]["name"]
                 assignee = remediation_action["runSetReviewReferrer"]["reviewerName"]
-                origin = related_runsets[remediation_action["runSetReferrer"]["id"]]
+                try:
+                    origin = related_runsets[remediation_action["runSetReferrer"]["id"]]
+                except:
+                    origin = "N/A"
                 try:
                     completed = related_runsets[remediation_action["runSetResolverId"]]
                 except:
@@ -2313,7 +2346,8 @@ def Add_Dash(app):
                 "RUN_REVIEW_API_BASE"
             ] + "cartridgepictures/{}".format(selection[0]["Id"])
             print(delete_cartridge_picture_url)
-            response = requests.delete(url=delete_cartridge_picture_url, verify=False)
+            response = requests.delete(
+                url=delete_cartridge_picture_url, verify=False)
             print("Cartridge Picture Delete Status Code: ", response.status_code)
 
             return not is_open
@@ -2378,7 +2412,8 @@ def Add_Dash(app):
                     "name": file,
                     "fileid": file_id,
                 }
-                tadm_picture_url = os.environ["RUN_REVIEW_API_BASE"] + "TADMPictures"
+                tadm_picture_url = os.environ["RUN_REVIEW_API_BASE"] + \
+                    "TADMPictures"
                 resp = requests.post(
                     url=tadm_picture_url, json=file_payload, verify=False
                 )
@@ -2442,7 +2477,8 @@ def Add_Dash(app):
             """
 
             column_definitions = []
-            initial_selection = [x for x in tadm_picture_data.columns if "Id" not in x]
+            initial_selection = [
+                x for x in tadm_picture_data.columns if "Id" not in x]
 
             for column in tadm_picture_data.columns:
                 column_definition = {
@@ -2504,7 +2540,8 @@ def Add_Dash(app):
                 "RUN_REVIEW_API_BASE"
             ] + "tadmpictures/{}".format(selection[0]["Id"])
             print(delete_tadm_picture_url)
-            response = requests.delete(url=delete_tadm_picture_url, verify=False)
+            response = requests.delete(
+                url=delete_tadm_picture_url, verify=False)
             print("TADM Picture Delete Status Code: ", response.status_code)
 
             return not is_open
@@ -2512,7 +2549,8 @@ def Add_Dash(app):
             return is_open
 
     @app.callback(
-        [Output("runset-description", "children"), Output("related-runsets", "data")],
+        [Output("runset-description", "children"),
+         Output("related-runsets", "data")],
         Input("runset-selection-data", "data"),
     )
     def update_runset_description(runset_selection):
@@ -2536,7 +2574,8 @@ def Add_Dash(app):
             ] + "XPCRModules/{}/runsets".format(
                 runset_xpcrmodules[0]["xpcrModule"]["id"]
             )
-            xpcrmodule = requests.get(url=xpcrmodule_runsets_url, verify=False).json()
+            xpcrmodule = requests.get(
+                url=xpcrmodule_runsets_url, verify=False).json()
 
             """
             Get Related runset basic info (by xpcr module & runset type match)
@@ -2999,13 +3038,16 @@ def Add_Dash(app):
             Get Review Groups
             """
             reviewgroup_options = {}
-            reviewgroups_url = os.environ["RUN_REVIEW_API_BASE"] + "ReviewGroups"
+            reviewgroups_url = os.environ["RUN_REVIEW_API_BASE"] + \
+                "ReviewGroups"
 
-            reviewgroups_response = requests.get(reviewgroups_url, verify=False).json()
+            reviewgroups_response = requests.get(
+                reviewgroups_url, verify=False).json()
 
             for reviewgroup in reviewgroups_response:
                 if reviewgroup["description"] != "System QC Tech I":
-                    reviewgroup_options[reviewgroup["id"]] = reviewgroup["description"]
+                    reviewgroup_options[reviewgroup["id"]
+                                        ] = reviewgroup["description"]
             return not is_open, reviewgroup_options
 
         return is_open, {}
@@ -3031,7 +3073,8 @@ def Add_Dash(app):
             review_group_subscribers = {}
             for review_group_id in review_groups_selected:
                 runsetreviewassignmenturl = (
-                    os.environ["RUN_REVIEW_API_BASE"] + "RunSetReviewAssignments"
+                    os.environ["RUN_REVIEW_API_BASE"] +
+                    "RunSetReviewAssignments"
                 )
                 queryParams = {}
                 queryParams["runsetid"] = runset_data["id"]
@@ -3069,8 +3112,10 @@ def Add_Dash(app):
             runset_update_url = os.environ[
                 "RUN_REVIEW_API_BASE"
             ] + "RunSets/{}/status".format(runset_data["id"])
-            runset_update_response = requests.put(url=runset_update_url, verify=False)
-            print("Runset Update Response: " + str(runset_update_response.status_code))
+            runset_update_response = requests.put(
+                url=runset_update_url, verify=False)
+            print("Runset Update Response: " +
+                  str(runset_update_response.status_code))
 
             if os.environ["SEND_EMAILS"] == "Yes":
                 """
@@ -3138,7 +3183,7 @@ def Add_Dash(app):
                 """
                 content_type, content_string = files[file].split(",")
                 file_content = base64.b64decode(content_string)
-                file_id = str(uuid.uuid4()) + file[file.rfind(".") :]
+                file_id = str(uuid.uuid4()) + file[file.rfind("."):]
                 file_url = save_uploaded_file_to_blob_storage(
                     file_content, file_id, "neumodxsystemqc-miscellaneousfiles"
                 )
@@ -3155,9 +3200,11 @@ def Add_Dash(app):
                     "fileid": file_id,
                 }
 
-                misc_file_url = os.environ["RUN_REVIEW_API_BASE"] + "MiscellaneousFiles"
+                misc_file_url = os.environ["RUN_REVIEW_API_BASE"] + \
+                    "MiscellaneousFiles"
                 print(file_payload)
-                resp = requests.post(url=misc_file_url, json=file_payload, verify=False)
+                resp = requests.post(
+                    url=misc_file_url, json=file_payload, verify=False)
                 print(resp.status_code)
 
             # Return a message with the URL of the uploaded file
@@ -3231,7 +3278,8 @@ def Add_Dash(app):
             """
 
             column_definitions = []
-            initial_selection = [x for x in misc_file_data.columns if "Id" not in x]
+            initial_selection = [
+                x for x in misc_file_data.columns if "Id" not in x]
 
             for column in misc_file_data.columns:
                 column_definition = {
@@ -3313,7 +3361,8 @@ def Add_Dash(app):
                 "RUN_REVIEW_API_BASE"
             ] + "miscellaneousfiles/{}".format(selection[0]["Id"])
             print(delete_cartridge_picture_url)
-            response = requests.delete(url=delete_cartridge_picture_url, verify=False)
+            response = requests.delete(
+                url=delete_cartridge_picture_url, verify=False)
             print("Cartridge Picture Delete Status Code: ", response.status_code)
 
             return not is_open
@@ -3423,7 +3472,8 @@ def Add_Dash(app):
             """
 
             column_definitions = []
-            initial_selection = [x for x in comment_data.columns if "Id" not in x]
+            initial_selection = [
+                x for x in comment_data.columns if "Id" not in x]
 
             for column in comment_data.columns:
                 column_definition = {
