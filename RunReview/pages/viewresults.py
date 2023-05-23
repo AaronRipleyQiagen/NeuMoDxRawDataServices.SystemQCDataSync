@@ -1281,7 +1281,7 @@ review_tabs = dbc.Tabs(
 issue_post_response = dbc.Modal(
     [
         dbc.ModalHeader(dbc.ModalTitle("Issue Creation Result")),
-        dbc.ModalBody("Issue was added successfully"),
+        dbc.ModalBody(html.P(id='issue-post-response-message')),
     ],
     id="issue-post-response",
     is_open=False,

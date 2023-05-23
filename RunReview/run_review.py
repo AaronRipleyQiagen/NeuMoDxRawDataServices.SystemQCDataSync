@@ -1609,6 +1609,7 @@ def Add_Dash(app):
     @app.callback(
         [
             Output("issue-post-response", "is_open"),
+            Output("issue-post-response-message", 'children'),
             Output("submit-module-issue", "n_clicks"),
             Output("submit-run-issue", "n_clicks"),
             Output("submit-lane-issue", "n_clicks"),
@@ -1668,71 +1669,75 @@ def Add_Dash(app):
         issue["severityRatingId"] = severity_id
         issue["assayChannelId"] = channel_id
 
-        if mod_issue:
-            """
-            Post information to XPCR Module Issue Endpoint
-            """
-            issue["issueTypeId"] = module_issue_id
-            issue["subjectId"] = runset_subject_ids["XPCRModule"][xpcrmodule_selected]
-            issue["runSetSubjectReferrerId"] = xpcrmodule_selected
-            mod_issue_url = os.environ["RUN_REVIEW_API_BASE"] + \
-                "XPCRModuleIssues"
-            requests.post(url=mod_issue_url, json=issue, verify=False)
+        try:
+            if mod_issue:
+                """
+                Post information to XPCR Module Issue Endpoint
+                """
+                issue["issueTypeId"] = module_issue_id
+                issue["subjectId"] = runset_subject_ids["XPCRModule"][xpcrmodule_selected]
+                issue["runSetSubjectReferrerId"] = xpcrmodule_selected
+                issue_url = os.environ["RUN_REVIEW_API_BASE"] + \
+                    "XPCRModuleIssues"
 
-        if run_issue:
-            """
-            Post information to XPCR Module Issue Endpoint
-            """
-            issue["issueTypeId"] = run_issue_id
-            issue["subjectId"] = runset_subject_ids["Cartridge"][run_selected]
-            issue["runSetSubjectReferrerId"] = run_selected
-            cartridge_issue_url = os.environ["RUN_REVIEW_API_BASE"] + \
-                "CartridgeIssues"
-            requests.post(url=cartridge_issue_url, json=issue, verify=False)
+            if run_issue:
+                """
+                Post information to XPCR Module Issue Endpoint
+                """
+                issue["issueTypeId"] = run_issue_id
+                issue["subjectId"] = runset_subject_ids["Cartridge"][run_selected]
+                issue["runSetSubjectReferrerId"] = run_selected
+                issue_url = os.environ["RUN_REVIEW_API_BASE"] + \
+                    "CartridgeIssues"
 
-        if lane_issue:
-            """
-            Post information to XPCR Module Issue Endpoint
-            """
-            issue["issueTypeId"] = lane_issue_id
-            issue["subjectId"] = runset_subject_ids["XPCRModuleLane"][lane_selected]
-            issue["runSetSubjectReferrerId"] = lane_selected
-            lane_issue_url = os.environ["RUN_REVIEW_API_BASE"] + \
-                "XPCRModuleLaneIssues"
-            print(issue)
-            requests.post(url=lane_issue_url, json=issue, verify=False)
+            if lane_issue:
+                """
+                Post information to XPCR Module Issue Endpoint
+                """
+                issue["issueTypeId"] = lane_issue_id
+                issue["subjectId"] = runset_subject_ids["XPCRModuleLane"][lane_selected]
+                issue["runSetSubjectReferrerId"] = lane_selected
+                issue_url = os.environ["RUN_REVIEW_API_BASE"] + \
+                    "XPCRModuleLaneIssues"
 
-        if sample_issue:
-            """
-            Post information to XPCR Module Issue Endpoint
-            """
-            issue["issueTypeId"] = sample_issue_id
-            issue["subjectId"] = samples_selected[0]["SampleId"]
-            issue["runSetSubjectReferrerId"] = samples_selected[0]["RunSetSampleId"]
-            sample_issue_url = os.environ["RUN_REVIEW_API_BASE"] + \
-                "SampleIssues"
-            requests.post(url=sample_issue_url, json=issue, verify=False)
+            if sample_issue:
+                """
+                Post information to XPCR Module Issue Endpoint
+                """
+                issue["issueTypeId"] = sample_issue_id
+                issue["subjectId"] = samples_selected[0]["SampleId"]
+                issue["runSetSubjectReferrerId"] = samples_selected[0]["RunSetSampleId"]
+                issue_url = os.environ["RUN_REVIEW_API_BASE"] + \
+                    "SampleIssues"
 
-        if tadm_issue:
-            """
-            Post information to XPCR Module TADM Issue Endpoint
-            """
-            issue["assayChannelId"] = "00000000-0000-0000-0000-000000000000"
-            issue["issueTypeId"] = tadm_issue_id
-            issue["subjectId"] = runset_subject_ids["XPCRModule"][xpcrmodule_selected]
-            issue["runSetSubjectReferrerId"] = xpcrmodule_selected
-            print(issue)
-            mod_tadm_issue_url = (
-                os.environ["RUN_REVIEW_API_BASE"] + "XPCRModuleTADMIssues"
-            )
-            response = requests.post(
-                url=mod_tadm_issue_url, json=issue, verify=False)
-            print(response.content)
+            if tadm_issue:
+                """
+                Post information to XPCR Module TADM Issue Endpoint
+                """
+                issue["assayChannelId"] = "00000000-0000-0000-0000-000000000000"
+                issue["issueTypeId"] = tadm_issue_id
+                issue["subjectId"] = runset_subject_ids["XPCRModule"][xpcrmodule_selected]
+                issue["runSetSubjectReferrerId"] = xpcrmodule_selected
+                print(issue)
+                issue_url = (
+                    os.environ["RUN_REVIEW_API_BASE"] + "XPCRModuleTADMIssues"
+                )
+
+            response = requests.post(url=issue_url, json=issue, verify=False)
+
+            status_code = response.status_code
+
+            if status_code == 200:
+                response_message = "Issue was created successfully."
+            else:
+                response_message = "Issue creation was unsuccessful."
+        except:
+            response_message = "Issue creation was unsuccessful."
 
         if mod_issue or run_issue or lane_issue or sample_issue or tadm_issue:
-            return not is_open, None, None, None, None, None
+            return not is_open, response_message, None, None, None, None, None
 
-        return is_open, None, None, None, None, None
+        return no_update
 
     @app.callback(
         [Output("issues-table", "rowData"),
