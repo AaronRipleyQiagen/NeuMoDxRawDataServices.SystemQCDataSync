@@ -781,9 +781,14 @@ class SampleJSONReader:
             # unpackedreadingset['Readings Array'] = np.column_stack(
             #     zip(cycles, values))
             unpackedreadingsets.append(unpackedreadingset)
-        unpackedassaychannelstepsDataFrame.loc[
-            :, [x for x in unpackedreadingsets[0].keys()]
-        ] = pd.DataFrame(
+
+        columns = [x for x in unpackedreadingsets[0].keys()]
+        for readingset in unpackedreadingsets:
+            for column in [x for x in readingset.keys()]:
+                if column not in columns:
+                    columns.append(column)
+
+        unpackedassaychannelstepsDataFrame.loc[:, columns] = pd.DataFrame(
             index=unpackedassaychannelstepsDataFrame.index, data=unpackedreadingsets
         )
         unpackedassaychannelstepsDataFrame.drop("readingSets", axis=1, inplace=True)
