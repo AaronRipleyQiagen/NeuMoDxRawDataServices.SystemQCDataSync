@@ -120,7 +120,8 @@ def upload_file():
         logging.info("Attempting to upload File Data to blob")
 
         # Upload the file to Azure Blob Storage
-        blob_client.upload_blob(data=file_content, connection_verify=False)
+        blob_client.upload_blob(
+            data=file_content, connection_verify=False, overwrite=True)
         # Add Meta Data for Systems Manufacturing
         meta_data = {'DataEnvironmentId': session['user'].default_environment}
         blob_client.set_blob_metadata(meta_data, connection_verify=False)
