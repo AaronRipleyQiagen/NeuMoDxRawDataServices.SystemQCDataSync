@@ -485,8 +485,6 @@ def Add_Dash(app):
             dataframe.set_index("RawDataDatabaseId").join(runset_map_df).reset_index()
         )
 
-        dataframe.to_csv("initialize_test.csv")
-
         """
         Get or Add RunSet Review
         """
@@ -943,7 +941,7 @@ def Add_Dash(app):
         df_Channel_Step = df_Channel_Step[
             df_Channel_Step["Overall Result"] != "NoResult"
         ]
-        df_Channel_Step.to_csv("Test.csv")
+
         """
         Make the Readings Array
         """
@@ -988,7 +986,16 @@ def Add_Dash(app):
             sample_info["SampleId"] = df_Channel_Step.loc[idx, "SampleId"]
             samples_selected.append(sample_info)
 
+        """
+        Move N500 Serial Number to front.
+        """
+        columns = df_Channel_Step.columns.tolist()
+        columns.remove("N500 Serial Number")
+        new_columns = ["N500 Serial Number"] + columns
+
+        df_Channel_Step = df_Channel_Step[new_columns]
         inital_selection = [
+            "N500 Serial Number",
             "XPCR Module Serial",
             "XPCR Module Lane",
             "Sample ID",
