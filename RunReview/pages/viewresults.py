@@ -53,15 +53,13 @@ remediation_actions = [
 
 run_review_description = html.H1(id="runset-description")
 
-run_review_channel_selector_label = html.P(
-    "Choose Channel", style=quarterstyle)
+run_review_channel_selector_label = html.P("Choose Channel", style=quarterstyle)
 
 run_review_channel_selector = dcc.Dropdown(
     id="run-review-channel-selector", style=threequarterstyle
 )
 
-run_review_xpcrmodule_selector_label = html.P(
-    "Choose XPCR Module", style=quarterstyle)
+run_review_xpcrmodule_selector_label = html.P("Choose XPCR Module", style=quarterstyle)
 
 run_review_xpcrmodule_selector = dcc.Dropdown(
     id="run-review-xpcrmodule-selector", style=threequarterstyle
@@ -71,22 +69,19 @@ run_review_download_data = dbc.Button(
     "Download Data", style={"margin": "auto"}, id="run-review-download-data"
 )
 
-run_review_run_selector_label = html.P(
-    "Filter for specific runs", style=quarterstyle)
+run_review_run_selector_label = html.P("Filter for specific runs", style=quarterstyle)
 
 run_review_run_selector = dcc.Dropdown(
     id="run-review-run-selector", style=threequarterstyle
 )
 
-run_review_lane_selector_label = html.P(
-    "Filter for specific lanes", style=quarterstyle)
+run_review_lane_selector_label = html.P("Filter for specific lanes", style=quarterstyle)
 
 run_review_lane_selector = dcc.Dropdown(
     id="run-review-lane-selector", style=threequarterstyle
 )
 
-run_review_color_selector_label = html.P(
-    "Choose Color Attribute", style=quarterstyle)
+run_review_color_selector_label = html.P("Choose Color Attribute", style=quarterstyle)
 
 run_review_color_selector = dcc.Dropdown(
     options=["XPCR Module Lane", "Run", "XPCR Module Side"],
@@ -723,8 +718,7 @@ remediation_action_content = dbc.Card(
             html.P("Please Choose a Remediation Action", className="card-text"),
             html.Div(
                 [
-                    dcc.Dropdown(id="remediation-action-options",
-                                 style=halfstyle),
+                    dcc.Dropdown(id="remediation-action-options", style=halfstyle),
                     dbc.Button(
                         "Submit Action", id="remediation-action-submit", style=halfstyle
                     ),
@@ -769,7 +763,8 @@ cartridge_pictures_table = dag.AgGrid(
 )
 
 delete_cartridge_button = dbc.Button(
-    "Delete Selected Picture", id='delete-cartridge-picture-button')
+    "Delete Selected Picture", id="delete-cartridge-picture-button"
+)
 
 upload_cartridge_response = dbc.Modal(
     [
@@ -778,57 +773,61 @@ upload_cartridge_response = dbc.Modal(
             [
                 html.Div(
                     [
-                        html.P(
-                            "The following files have been successfully uploaded:"),
-                        html.Ul(id="upload-cartridge-message")
+                        html.P("The following files have been successfully uploaded:"),
+                        html.Ul(id="upload-cartridge-message"),
                     ]
                 )
             ]
-        )
+        ),
     ],
     is_open=False,
-    id='upload-cartridge-response'
+    id="upload-cartridge-response",
 )
 
 delete_cartridge_picture_confirmation = dbc.Modal(
     [
         dbc.ModalHeader("Delete Cartridge Picture Confirmation"),
-        dbc.ModalBody([
-            html.P("Are you sure you would like to delete this picture?"),
-            html.Div(
-                [
-                    dbc.Button(
-                        "Confirm", id='delete-cartridge-picture-confirm', style={
-                            "width": "35%",
-                            "margin-left": "10%",
-                            "display": "inline-block",
-                        }),
-                    dbc.Button(
-                        "Cancel", id='delete-cartridge-picture-cancel', style={
-                            "width": "35%",
-                            "margin-left": "10%",
-                            "display": "inline-block",
-                        })
-                ]
-            )
-        ]
+        dbc.ModalBody(
+            [
+                html.P("Are you sure you would like to delete this picture?"),
+                html.Div(
+                    [
+                        dbc.Button(
+                            "Confirm",
+                            id="delete-cartridge-picture-confirm",
+                            style={
+                                "width": "35%",
+                                "margin-left": "10%",
+                                "display": "inline-block",
+                            },
+                        ),
+                        dbc.Button(
+                            "Cancel",
+                            id="delete-cartridge-picture-cancel",
+                            style={
+                                "width": "35%",
+                                "margin-left": "10%",
+                                "display": "inline-block",
+                            },
+                        ),
+                    ]
+                ),
+            ]
         ),
-
-        dbc.ModalFooter()
+        dbc.ModalFooter(),
     ],
     is_open=False,
-    id='delete-cartridge-picture-confirmation'
+    id="delete-cartridge-picture-confirmation",
 )
 
 delete_cartridge_picture_response = dbc.Modal(
     [
         dbc.ModalHeader("Delete Cartridge Picture Result"),
-        dbc.ModalBody(
-            "Cartridge Picture Successfully Deleted."),
-        dbc.ModalFooter()
+        dbc.ModalBody("Cartridge Picture Successfully Deleted."),
+        dbc.ModalFooter(),
     ],
     is_open=False,
-    id='delete-cartridge-picture-response'
+    id="delete-cartridge-picture-response",
 )
 
 cartridge_pictures_content = dbc.Card(
@@ -839,8 +838,7 @@ cartridge_pictures_content = dbc.Card(
             delete_cartridge_picture_response,
             dcc.Upload(
                 id="upload-cartridge-pictures",
-                children=html.Div(
-                    ["Drag and Drop or ", html.A("Select Files")]),
+                children=html.Div(["Drag and Drop or ", html.A("Select Files")]),
                 style={
                     "width": "50%",
                     "borderWidth": "1px",
@@ -857,13 +855,9 @@ cartridge_pictures_content = dbc.Card(
                 children=[
                     cartridge_pictures_table,
                     delete_cartridge_button,
-                    dbc.Carousel(
-                        items=[],
-                        id="cartridge-images",
-                        controls=False
-                    )
+                    dbc.Carousel(items=[], id="cartridge-images", controls=False),
                 ],
-            )
+            ),
         ]
     )
 )
@@ -879,47 +873,53 @@ tadm_pictures_table = dag.AgGrid(
 )
 
 delete_tadm_button = dbc.Button(
-    "Delete Selected Picture", id='delete-tadm-picture-button')
+    "Delete Selected Picture", id="delete-tadm-picture-button"
+)
 
 delete_tadm_picture_confirmation = dbc.Modal(
     [
         dbc.ModalHeader("Delete TADM Picture Confirmation"),
-        dbc.ModalBody([
-            html.P("Are you sure you would like to delete this picture?"),
-            html.Div(
-                [
-                    dbc.Button(
-                        "Confirm", id='delete-tadm-picture-confirm', style={
-                            "width": "35%",
-                            "margin-left": "10%",
-                            "display": "inline-block",
-                        }),
-                    dbc.Button(
-                        "Cancel", id='delete-tadm-picture-cancel', style={
-                            "width": "35%",
-                            "margin-left": "10%",
-                            "display": "inline-block",
-                        })
-                ]
-            )
-        ]
+        dbc.ModalBody(
+            [
+                html.P("Are you sure you would like to delete this picture?"),
+                html.Div(
+                    [
+                        dbc.Button(
+                            "Confirm",
+                            id="delete-tadm-picture-confirm",
+                            style={
+                                "width": "35%",
+                                "margin-left": "10%",
+                                "display": "inline-block",
+                            },
+                        ),
+                        dbc.Button(
+                            "Cancel",
+                            id="delete-tadm-picture-cancel",
+                            style={
+                                "width": "35%",
+                                "margin-left": "10%",
+                                "display": "inline-block",
+                            },
+                        ),
+                    ]
+                ),
+            ]
         ),
-
-        dbc.ModalFooter()
+        dbc.ModalFooter(),
     ],
     is_open=False,
-    id='delete-tadm-picture-confirmation'
+    id="delete-tadm-picture-confirmation",
 )
 
 delete_tadm_picture_response = dbc.Modal(
     [
         dbc.ModalHeader("Delete TADM Picture Result"),
-        dbc.ModalBody(
-            "TADM Picture Successfully Deleted."),
-        dbc.ModalFooter()
+        dbc.ModalBody("TADM Picture Successfully Deleted."),
+        dbc.ModalFooter(),
     ],
     is_open=False,
-    id='delete-tadm-picture-response'
+    id="delete-tadm-picture-response",
 )
 
 upload_tadm_response = dbc.Modal(
@@ -929,16 +929,15 @@ upload_tadm_response = dbc.Modal(
             [
                 html.Div(
                     [
-                        html.P(
-                            "The following files have been successfully uploaded:"),
-                        html.Ul(id="upload-tadm-message")
+                        html.P("The following files have been successfully uploaded:"),
+                        html.Ul(id="upload-tadm-message"),
                     ]
                 )
             ]
-        )
+        ),
     ],
     is_open=False,
-    id='upload-tadm-response'
+    id="upload-tadm-response",
 )
 
 tadm_pictures_content = dbc.Card(
@@ -949,8 +948,7 @@ tadm_pictures_content = dbc.Card(
             delete_tadm_picture_response,
             dcc.Upload(
                 id="upload-tadm-pictures",
-                children=html.Div(
-                    ["Drag and Drop or ", html.A("Select Files")]),
+                children=html.Div(["Drag and Drop or ", html.A("Select Files")]),
                 style={
                     "width": "50%",
                     "borderWidth": "1px",
@@ -967,13 +965,9 @@ tadm_pictures_content = dbc.Card(
                 children=[
                     tadm_pictures_table,
                     delete_tadm_button,
-                    dbc.Carousel(
-                        items=[],
-                        id="tadm-images",
-                        controls=False
-                    )
+                    dbc.Carousel(items=[], id="tadm-images", controls=False),
                 ],
-            )
+            ),
         ]
     )
 )
@@ -1069,8 +1063,7 @@ comments_delete_confirmation = dbc.Modal(
     [
         dbc.ModalHeader(dbc.ModalTitle("Confirm Comment Deletion")),
         dbc.ModalBody("Are You Sure you want to delete this comment?"),
-        html.Div([confirm_comment_delete_button,
-                 cancel_comment_delete_button]),
+        html.Div([confirm_comment_delete_button, cancel_comment_delete_button]),
     ],
     id="comments-delete-confirmation",
     is_open=False,
@@ -1109,11 +1102,14 @@ misc_files_table = dag.AgGrid(
 )
 
 misc_file_download_button = dbc.Button(
-    "Download File", id="misc-file-download-button", style={
+    "Download File",
+    id="misc-file-download-button",
+    style={
         "width": "35%",
         "margin-left": "10%",
         "display": "inline-block",
-    })
+    },
+)
 
 misc_file_download = dcc.Download(id="misc-file-download")
 
@@ -1134,51 +1130,59 @@ misc_file_upload_button = dcc.Upload(
 )
 
 delete_misc_file_button = dbc.Button(
-    "Delete Selected File", id='delete-misc-file-button', style={
+    "Delete Selected File",
+    id="delete-misc-file-button",
+    style={
         "width": "35%",
         "margin-left": "10%",
         "display": "inline-block",
-    })
+    },
+)
 
 delete_misc_file_picture_confirmation = dbc.Modal(
     [
         dbc.ModalHeader("Delete Miscellaneous File Confirmation"),
-        dbc.ModalBody([
-            html.P("Are you sure you would like to delete this file?"),
-            html.Div(
-                [
-                    dbc.Button(
-                        "Confirm", id='delete-misc-file-confirm', style={
-                            "width": "35%",
-                            "margin-left": "10%",
-                            "display": "inline-block",
-                        }),
-                    dbc.Button(
-                        "Cancel", id='delete-misc-file-cancel', style={
-                            "width": "35%",
-                            "margin-left": "10%",
-                            "display": "inline-block",
-                        })
-                ]
-            )
-        ]
+        dbc.ModalBody(
+            [
+                html.P("Are you sure you would like to delete this file?"),
+                html.Div(
+                    [
+                        dbc.Button(
+                            "Confirm",
+                            id="delete-misc-file-confirm",
+                            style={
+                                "width": "35%",
+                                "margin-left": "10%",
+                                "display": "inline-block",
+                            },
+                        ),
+                        dbc.Button(
+                            "Cancel",
+                            id="delete-misc-file-cancel",
+                            style={
+                                "width": "35%",
+                                "margin-left": "10%",
+                                "display": "inline-block",
+                            },
+                        ),
+                    ]
+                ),
+            ]
         ),
-
-        dbc.ModalFooter()
+        dbc.ModalFooter(),
     ],
     is_open=False,
-    id='delete-misc-file-confirmation'
+    id="delete-misc-file-confirmation",
 )
 
 delete_misc_file_picture_response = dbc.Modal(
     [
         dbc.ModalHeader("Delete Miscellaneous File Result"),
-        dbc.ModalBody(
-            "Miscellaneous Picture Successfully Deleted."),
-        dbc.ModalFooter()
+        dbc.ModalBody("Miscellaneous Picture Successfully Deleted."),
+        dbc.ModalFooter(),
     ],
     is_open=False,
-    id='delete-misc-file-response'
+    id="delete-misc-file-response",
 )
 
 misc_files_content = dbc.Card(
@@ -1189,7 +1193,7 @@ misc_files_content = dbc.Card(
             misc_file_upload_button,
             misc_files_table,
             misc_file_download,
-            html.Div([misc_file_download_button, delete_misc_file_button])
+            html.Div([misc_file_download_button, delete_misc_file_button]),
         ]
     ),
     className="mt-3",
@@ -1200,8 +1204,7 @@ file_upload_response = dbc.Modal(
         dbc.ModalHeader(dbc.ModalTitle("File Upload Status")),
         dbc.ModalBody("File was uploaded successfully"),
         dbc.ModalFooter(
-            children=[dbc.Button(
-                "Close", id="file-upload-response-close-button")]
+            children=[dbc.Button("Close", id="file-upload-response-close-button")]
         ),
     ],
     id="file-upload-response",
@@ -1221,16 +1224,24 @@ runset_reviews_table = dag.AgGrid(
     id="runset-reviews-table",
 )
 
-run_review_content = dbc.Card(dbc.CardBody(
-    [runset_reviews_table]), className="mt-3")
+runset_info = html.Div(children=[html.P(id="runset-creator-name")])
+
+run_review_content = dbc.Card(
+    dbc.CardBody(
+        [
+            runset_info,
+            runset_reviews_table,
+        ]
+    ),
+    className="mt-3",
+)
 
 review_tabs = dbc.Tabs(
     children=[
         dbc.Tab(
             line_data_content, label="View Line Data", tab_id="run-review-line-data"
         ),
-        dbc.Tab(run_summary_content, label="View Run Stats",
-                tab_id="run-summary-data"),
+        dbc.Tab(run_summary_content, label="View Run Stats", tab_id="run-summary-data"),
         dbc.Tab(
             module_issue_content,
             label="Note Module Issue",
@@ -1267,12 +1278,9 @@ review_tabs = dbc.Tabs(
             label="Cartridge Pictures",
             tab_id="cartidge-pictures",
         ),
-        dbc.Tab(tadm_pictures_content, label="TADM Pictures",
-                tab_id="tadm-pictures"),
-        dbc.Tab(misc_files_content, label="Miscellaneous Files",
-                tab_id="misc-files"),
-        dbc.Tab(run_review_content, label="Runset Reviews",
-                tab_id="runset-reviews"),
+        dbc.Tab(tadm_pictures_content, label="TADM Pictures", tab_id="tadm-pictures"),
+        dbc.Tab(misc_files_content, label="Miscellaneous Files", tab_id="misc-files"),
+        dbc.Tab(run_review_content, label="Runset Reviews", tab_id="runset-reviews"),
         dbc.Tab(comments_content, label="Comments", tab_id="runset-comments"),
     ],
     id="review-tabs",
@@ -1281,7 +1289,7 @@ review_tabs = dbc.Tabs(
 issue_post_response = dbc.Modal(
     [
         dbc.ModalHeader(dbc.ModalTitle("Issue Creation Result")),
-        dbc.ModalBody(html.P(id='issue-post-response-message')),
+        dbc.ModalBody(html.P(id="issue-post-response-message")),
     ],
     id="issue-post-response",
     is_open=False,
@@ -1347,10 +1355,8 @@ remediation_action_update_response = dbc.Modal(
 
 remediation_action_delete_confirmation = dbc.Modal(
     [
-        dbc.ModalHeader(dbc.ModalTitle(
-            "Remediation Action Deletion Confirmation")),
-        dbc.ModalBody(
-            "Are you sure you want to delete this remediation action?"),
+        dbc.ModalHeader(dbc.ModalTitle("Remediation Action Deletion Confirmation")),
+        dbc.ModalBody("Are you sure you want to delete this remediation action?"),
         html.Div(
             [
                 dbc.Button(
@@ -1420,8 +1426,7 @@ issue_resolution_remediation_action_response = dbc.Modal(
 
 run_review_update_response = dbc.Modal(
     [
-        dbc.ModalHeader(dbc.ModalTitle(
-            "Run Review Status Updated Successfully")),
+        dbc.ModalHeader(dbc.ModalTitle("Run Review Status Updated Successfully")),
         dbc.ModalBody("Run Review Status Changed to Completed."),
     ],
     id="run-review-status-update-post-response",
@@ -1510,8 +1515,7 @@ layout = [
                 style=halfstyle,
             ),
             html.Div(
-                [run_review_xpcrmodule_selector_label,
-                    run_review_xpcrmodule_selector],
+                [run_review_xpcrmodule_selector_label, run_review_xpcrmodule_selector],
                 style=halfstyle,
             ),
         ]
@@ -1557,7 +1561,6 @@ layout = [
             html.Div([add_review_group_button], style=halfstyle),
         ]
     ),
-    dcc.Loading(id="run-review-loading", type="graph",
-                children=[run_review_curves]),
+    dcc.Loading(id="run-review-loading", type="graph", children=[run_review_curves]),
     review_tabs,
 ]  # , run_review_channel_selector,
