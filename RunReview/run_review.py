@@ -2266,11 +2266,11 @@ def Add_Dash(app):
             or ctx.triggered_id == "review-tabs"
             or (
                 ctx.triggered_id == "delete-cartridge-picture-response"
-                and delete_response_is_open == False
+                and delete_response_is_open == True
             )
             or (
                 ctx.triggered_id == "update-cartridge-run-confirmation"
-                and update_run_response_is_open == False
+                and update_run_response_is_open == True
             )
         ) and active_tab == "cartidge-pictures":
             """
@@ -2434,7 +2434,7 @@ def Add_Dash(app):
                     "Run for Cartridge Picture was successfully updated."
                 )
             else:
-                confirmation_message = "Run for Cartridge Picture was not successful."
+                confirmation_message = "Run for Cartridge Picture was not successful updated."
 
             return (not is_open, confirmation_message)
 
@@ -2534,8 +2534,9 @@ def Add_Dash(app):
                     "name": file,
                     "fileid": file_id,
                 }
-                tadm_picture_url = os.environ["RUN_REVIEW_API_BASE"] + \
-                    "TADMPictures"
+                tadm_picture_url = (
+                    os.environ["RUN_REVIEW_API_BASE"] + "TADMPictures"
+                )
                 resp = requests.post(
                     url=tadm_picture_url, json=file_payload, verify=False
                 )
@@ -2552,13 +2553,31 @@ def Add_Dash(app):
         Input("review-tabs", "active_tab"),
         Input("upload-tadm-message", "children"),
         Input("delete-tadm-picture-response", "is_open"),
+        Input("update-tadm-run-confirmation", "is_open"),
         State("runset-selection-data", "data"),
+        State("runset-subject-ids", "data"),
+        State("runset-subject-descriptions", "data"),
     )
-    def get_tadm_picture_table(active_tab, message_children, is_open, runset_data):
+    def get_tadm_picture_table(
+        active_tab,
+        message_children,
+        delete_response_is_open,
+        update_run_response_is_open,
+        runset_data,
+        runset_subject_ids,
+        runset_subject_descriptions,
+    ):
         if (
             (ctx.triggered_id == "upload-tadm-message")
             or ctx.triggered_id == "review-tabs"
-            or (ctx.triggered_id == "delete-tadm-picture-response" and is_open == False)
+            or (
+                ctx.triggered_id == "delete-tadm-picture-response"
+                and delete_response_is_open == True
+            )
+            or (
+                ctx.triggered_id == "update-tadm-run-confirmation"
+                and update_run_response_is_open == True
+            )
         ) and active_tab == "tadm-pictures":
             """
             Get TADM Picture Info from API
@@ -2577,11 +2596,15 @@ def Add_Dash(app):
                     "File Name",
                     "Uploaded By",
                     "Upload Date",
+                    "Run Number",
                     "UserId",
                 ]
             )
 
             idx = 0
+            runset_tadm_ids = runset_subject_ids["Cartridge"]
+            runset_run_descriptions = runset_subject_descriptions["Run"]
+
             for tadm_picture in runset["tadmPictures"]:
                 entry = {}
                 entry["Id"] = tadm_picture["id"]
@@ -2590,6 +2613,18 @@ def Add_Dash(app):
                 entry["File Name"] = tadm_picture["name"]
                 entry["Uploaded By"] = tadm_picture["runSetReview"]["reviewerName"]
                 entry["Upload Date"] = tadm_picture["validFrom"]
+
+                if tadm_picture["cartridgeId"]:
+                    tadm_id = tadm_picture["cartridgeId"]
+                    runset_tadm_id = [
+                        key
+                        for key, val in runset_tadm_ids.items()
+                        if val == tadm_id
+                    ][0]
+                    run_number = runset_run_descriptions[runset_tadm_id]
+                    entry["Run Number"] = run_number
+                else:
+                    entry["Run Number"] = tadm_picture["cartridgeId"]
 
                 tadm_picture_data.loc[idx] = entry
                 idx += 1
@@ -2600,7 +2635,8 @@ def Add_Dash(app):
 
             column_definitions = []
             initial_selection = [
-                x for x in tadm_picture_data.columns if "Id" not in x]
+                x for x in tadm_picture_data.columns if "Id" not in x
+            ]
 
             for column in tadm_picture_data.columns:
                 column_definition = {
@@ -2634,6 +2670,82 @@ def Add_Dash(app):
                 return False
 
         return True
+
+    @app.callback(
+        Output("update-tadm-run-button", "disabled"),
+        Input("tadm-pictures-table", "selectionChanged"),
+    )
+    def check_tadm_run_update_validity(selection):
+        if ctx.triggered_id == "tadm-pictures-table":
+            if selection[0]:
+                return False
+
+        return True
+
+    @app.callback(
+        Output("update-tadm-run-selection", "is_open"),
+        Output("update-tadm-run-options", "options"),
+        Output("update-tadm-run-options", "value"),
+        Input("update-tadm-run-button", "n_clicks"),
+        Input("update-tadm-run-submit", "n_clicks"),
+        Input("update-tadm-run-cancel", "n_clicks"),
+        State("update-tadm-run-selection", "is_open"),
+        State("runset-subject-descriptions", "data"),
+        State("runset-subject-ids", "data"),
+    )
+    def control_update_tadm_run_selection_popup(
+        update_click,
+        submit_click,
+        cancel_click,
+        is_open,
+        runset_subject_descriptions,
+        runset_subject_ids,
+    ):
+        runset_tadm_descriptions = runset_subject_descriptions["Run"]
+        runset_tadm_ids = runset_subject_ids["Cartridge"]
+        run_options = {}
+
+        for runset_tadm_id in runset_tadm_ids:
+            run_options[
+                runset_tadm_ids[runset_tadm_id]
+            ] = runset_tadm_descriptions[runset_tadm_id]
+
+        if ctx.triggered_id:
+            return (not is_open, run_options, [x for x in run_options][0])
+        else:
+            return is_open, run_options, [x for x in run_options][0]
+
+    @app.callback(
+        Output("update-tadm-run-confirmation", "is_open"),
+        Output("update-tadm-run-message", "children"),
+        Input("update-tadm-run-submit", "n_clicks"),
+        State("update-tadm-run-options", "value"),
+        State("tadm-pictures-table", "selectionChanged"),
+        State("update-tadm-run-confirmation", "is_open"),
+    )
+    def update_tadm_run(submit_button, cartridge_id, rowSelection, is_open):
+        confirmation_message = ""
+
+        if ctx.triggered_id:
+            update_tadm_picture_run_url = os.environ[
+                "RUN_REVIEW_API_BASE"
+            ] + "TADMPictures/{}/cartridge".format(rowSelection[0]["Id"])
+            query_params = {"cartridgeid": cartridge_id}
+            response = requests.put(
+                url=update_tadm_picture_run_url, params=query_params, verify=False
+            )
+
+            if response.status_code == 200:
+                confirmation_message = (
+                    "Run for TADM Picture was successfully updated."
+                )
+            else:
+                confirmation_message = "Run for TADM Picture was not successful updated."
+
+            return (not is_open, confirmation_message)
+
+        else:
+            return is_open, confirmation_message
 
     @app.callback(
         Output("delete-tadm-picture-confirmation", "is_open"),
