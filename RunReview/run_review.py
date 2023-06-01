@@ -485,8 +485,6 @@ def Add_Dash(app):
             dataframe.set_index("RawDataDatabaseId").join(runset_map_df).reset_index()
         )
 
-        dataframe.to_csv("initialize_test.csv")
-
         """
         Get or Add RunSet Review
         """
@@ -2205,15 +2203,30 @@ def Add_Dash(app):
         Input("review-tabs", "active_tab"),
         Input("upload-cartridge-message", "children"),
         Input("delete-cartridge-picture-response", "is_open"),
+        Input("update-cartridge-run-confirmation", "is_open"),
         State("runset-selection-data", "data"),
+        State("runset-subject-ids", "data"),
+        State("runset-subject-descriptions", "data"),
     )
-    def get_cartridge_picture_table(active_tab, message_children, is_open, runset_data):
+    def get_cartridge_picture_table(
+        active_tab,
+        message_children,
+        delete_response_is_open,
+        update_run_response_is_open,
+        runset_data,
+        runset_subject_ids,
+        runset_subject_descriptions,
+    ):
         if (
             (ctx.triggered_id == "upload-cartridge-message")
             or ctx.triggered_id == "review-tabs"
             or (
                 ctx.triggered_id == "delete-cartridge-picture-response"
-                and is_open == False
+                and delete_response_is_open == False
+            )
+            or (
+                ctx.triggered_id == "update-cartridge-run-confirmation"
+                and update_run_response_is_open == False
             )
         ) and active_tab == "cartidge-pictures":
             """
@@ -2233,11 +2246,15 @@ def Add_Dash(app):
                     "File Name",
                     "Uploaded By",
                     "Upload Date",
+                    "Run Number",
                     "UserId",
                 ]
             )
 
             idx = 0
+            runset_cartridge_ids = runset_subject_ids["Cartridge"]
+            runset_run_descriptions = runset_subject_descriptions["Run"]
+
             for cartridge_picture in runset["cartridgePictures"]:
                 entry = {}
                 entry["Id"] = cartridge_picture["id"]
@@ -2246,6 +2263,18 @@ def Add_Dash(app):
                 entry["File Name"] = cartridge_picture["name"]
                 entry["Uploaded By"] = cartridge_picture["runSetReview"]["reviewerName"]
                 entry["Upload Date"] = cartridge_picture["validFrom"]
+
+                if cartridge_picture["cartridgeId"]:
+                    cartridge_id = cartridge_picture["cartridgeId"]
+                    runset_cartridge_id = [
+                        key
+                        for key, val in runset_cartridge_ids.items()
+                        if val == cartridge_id
+                    ][0]
+                    run_number = runset_run_descriptions[runset_cartridge_id]
+                    entry["Run Number"] = run_number
+                else:
+                    entry["Run Number"] = cartridge_picture["cartridgeId"]
 
                 cartridge_picture_data.loc[idx] = entry
                 idx += 1
@@ -2291,6 +2320,82 @@ def Add_Dash(app):
                 return False
 
         return True
+
+    @app.callback(
+        Output("update-cartridge-run-button", "disabled"),
+        Input("cartridge-pictures-table", "selectionChanged"),
+    )
+    def check_cartridge_run_update_validity(selection):
+        if ctx.triggered_id == "cartridge-pictures-table":
+            if selection[0]:
+                return False
+
+        return True
+
+    @app.callback(
+        Output("update-cartridge-run-selection", "is_open"),
+        Output("update-cartridge-run-options", "options"),
+        Output("update-cartridge-run-options", "value"),
+        Input("update-cartridge-run-button", "n_clicks"),
+        Input("update-cartridge-run-submit", "n_clicks"),
+        Input("update-cartridge-run-cancel", "n_clicks"),
+        State("update-cartridge-run-selection", "is_open"),
+        State("runset-subject-descriptions", "data"),
+        State("runset-subject-ids", "data"),
+    )
+    def control_update_cartridge_run_selection_popup(
+        update_click,
+        submit_click,
+        cancel_click,
+        is_open,
+        runset_subject_descriptions,
+        runset_subject_ids,
+    ):
+        runset_cartridge_descriptions = runset_subject_descriptions["Run"]
+        runset_cartridge_ids = runset_subject_ids["Cartridge"]
+        cartridge_options = {}
+
+        for runset_cartridge_id in runset_cartridge_ids:
+            cartridge_options[
+                runset_cartridge_ids[runset_cartridge_id]
+            ] = runset_cartridge_descriptions[runset_cartridge_id]
+
+        if ctx.triggered_id:
+            return (not is_open, cartridge_options, [x for x in cartridge_options][0])
+        else:
+            return is_open, cartridge_options, [x for x in cartridge_options][0]
+
+    @app.callback(
+        Output("update-cartridge-run-confirmation", "is_open"),
+        Output("update-cartridge-run-message", "children"),
+        Input("update-cartridge-run-submit", "n_clicks"),
+        State("update-cartridge-run-options", "value"),
+        State("cartridge-pictures-table", "selectionChanged"),
+        State("update-cartridge-run-confirmation", "is_open"),
+    )
+    def update_cartridge_run(submit_button, cartridge_id, rowSelection, is_open):
+        confirmation_message = ""
+
+        if ctx.triggered_id:
+            update_cartridge_picture_run_url = os.environ[
+                "RUN_REVIEW_API_BASE"
+            ] + "CartridgePictures/{}/cartridge".format(rowSelection[0]["Id"])
+            query_params = {"cartridgeid": cartridge_id}
+            response = requests.put(
+                url=update_cartridge_picture_run_url, params=query_params, verify=False
+            )
+
+            if response.status_code == 200:
+                confirmation_message = (
+                    "Run for Cartridge Picture was successfully updated."
+                )
+            else:
+                confirmation_message = "Run for Cartridge Picture was not successful."
+
+            return (not is_open, confirmation_message)
+
+        else:
+            return is_open, confirmation_message
 
     @app.callback(
         Output("delete-cartridge-picture-confirmation", "is_open"),
@@ -3300,7 +3405,7 @@ def Add_Dash(app):
         State("delete-misc-file-confirmation", "is_open"),
         prevent_intitial_call=True,
     )
-    def control_delete_cartridge_picture_popup(
+    def delete_misc_file_confirmation_popup(
         delete_click, confirm_click, cancel_click, is_open
     ):
         if ctx.triggered_id and "delete" in ctx.triggered_id:
@@ -3313,7 +3418,7 @@ def Add_Dash(app):
         State("misc-files-table", "selectionChanged"),
         State("delete-misc-file-response", "is_open"),
     )
-    def delete_cartridge_picture(confirm_click, selection, is_open):
+    def delete_misc_file(confirm_click, selection, is_open):
         if ctx.triggered_id == "delete-misc-file-confirm":
             delete_cartridge_picture_url = os.environ[
                 "RUN_REVIEW_API_BASE"
