@@ -1,28 +1,19 @@
 from dash import Dash, html, dcc, Output, Input, State, ctx
 import dash_bootstrap_components as dbc
 import dash
-from .appbuildhelpers import apply_layout_with_auth
+
 import pandas as pd
 from flask import Flask, session
 from flask_mail import Mail, Message
 import json
-from .neumodx_objects import *
+
+from Shared.neumodx_objects import *
+from Shared.communication import *
+from Shared.appbuildhelpers import apply_layout_with_auth
+
 import os
 import requests
 
-system_qc_tech_IIs = {'Brian': 'brian.colson1@contractor.qiagen.com',
-                      'Hunter': 'hunter.rose1@contractor.qiagen.com',
-                      'Isaiah': 'isaiah.thompson1@contractor.qiagen.com',
-                      'Keller': 'keller.masing@contractor.qiagen.com',
-                      'Kyla': 'kyla.tackett1@contractor.qiagen.com',
-                      'Nathan': 'nathan.king1@contractor.qiagen.com',
-                      'Richie': 'richard.wynn1@contractor.qiagen.com'}
-system_qc_reviewers = {'Leanna': 'leanna.hoyer@qiagen.com',
-                       'Jeremias': 'jeremias.lioi@qiagen.com'}
-system_integration_reviewers = {'Catherine': 'catherine.couture@qiagen.com',
-                                'Aaron': 'aaron.ripley@qiagen.com'}
-engineering_reviewers = {'Vik': 'viktoriah.slusher@qiagen.com'}
-admin_reviewers = {'David': 'david.edwin@qiagen.com'}
 
 url_base = '/dashboard/data-explorer/'
 loader = html.Div(id='loader')

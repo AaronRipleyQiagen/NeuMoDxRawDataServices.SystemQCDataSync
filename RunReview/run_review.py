@@ -2,7 +2,7 @@ from flask import session
 from dash import Input, Output, dcc, html, no_update, ctx
 import dash_bootstrap_components as dbc
 from dash import Dash
-from .appbuildhelpers import apply_layout_with_auth
+# from ..AppBuildHelpers.appbuildhelpers import apply_layout_with_auth
 from dash import (
     html,
     callback,
@@ -30,28 +30,13 @@ import logging
 from flask_mail import Mail, Message
 import app_config
 import msal
-
+from .pages.viewresults import layout as run_review_layout
+from Shared.appbuildhelpers import *
+from Shared.communication import *
+from Shared.neumodx_objects import SampleJSONReader, getSampleDataAsync
+from .Layout import layout as run_review_layout
 warnings.filterwarnings("ignore")
 
-system_qc_tech_IIs = {
-    "Brian": "brian.colson1@contractor.qiagen.com",
-    "Hunter": "hunter.rose1@contractor.qiagen.com",
-    "Isaiah": "isaiah.thompson1@contractor.qiagen.com",
-    "Keller": "keller.masing@contractor.qiagen.com",
-    "Kyla": "kyla.tackett1@contractor.qiagen.com",
-    "Nathan": "nathan.king1@contractor.qiagen.com",
-    "Richie": "richard.wynn1@contractor.qiagen.com",
-}
-system_qc_reviewers = {
-    "Leanna": "leanna.hoyer@qiagen.com",
-    "Jeremias": "jeremias.lioi@qiagen.com",
-}
-system_integration_reviewers = {
-    "Catherine": "catherine.couture@qiagen.com",
-    "Aaron": "aaron.ripley@qiagen.com",
-}
-engineering_reviewers = {"Vik": "viktoriah.slusher@qiagen.com"}
-admin_reviewers = {"David": "david.edwin@qiagen.com"}
 
 colorDict = {
     1: "#FF0000",  # Red 1
@@ -70,179 +55,10 @@ colorDict = {
     "Right": "#00B050",  # Green Right
 }
 
-url_base = "/dashboard/"
-# the style arguments for the sidebar. We use position:fixed and a fixed width
-SIDEBAR_STYLE = {
-    "position": "fixed",
-    "top": 0,
-    "left": 0,
-    "bottom": 0,
-    "width": "16rem",
-    "padding": "2rem 1rem",
-    "background-color": "#f8f9fa",
-}
+url_base = "/dashboard/run-review/"
 
-# the styles for the main content position it to the right of the sidebar and
-# add some padding.
-CONTENT_STYLE = {
-    "margin-left": "18rem",
-    "margin-right": "2rem",
-    "padding": "2rem 1rem",
-}
 
-sidebar = html.Div(
-    [
-        html.H3("Run Review Options", className="display-6"),
-        html.Hr(),
-        dbc.Nav(
-            [
-                dbc.NavLink("Home", href="/dashboard/run-review/",
-                            active="exact"),
-                dbc.NavLink(
-                    "Run Review Queue",
-                    href="/dashboard/run-review/review-queue",
-                    active="exact",
-                ),
-                dbc.NavLink(
-                    "View Module History",
-                    href="/dashboard/run-review/module-history",
-                    active="exact",
-                ),
-            ],
-            vertical=True,
-            pills=True,
-        ),
-    ],
-    style=SIDEBAR_STYLE,
-)
-
-review_loader = html.Div(id="run-reviewer-loader")
-
-content = html.Div(
-    id="run-reviewer-page-content", style=CONTENT_STYLE, children=page_container
-)
-
-runset_selection = dcc.Store(
-    id="runset-selection-data", storage_type="session", data=""
-)
-
-runset_sample_data = dcc.Store(id="runset-sample-data", storage_type="session")
-
-runset_review = dcc.Store(id="runset-review", storage_type="session", data="")
-
-runset_channel_options = dcc.Store(
-    id="runset-channel-options", storage_type="session", data=""
-)
-
-channel_selected = dcc.Store(
-    id="channel-selected", storage_type="session", data="")
-
-spc_channel = dcc.Store(id="spc-channel", storage_type="session", data="")
-
-runset_severity_options = dcc.Store(
-    id="runset-severity-options", storage_type="session", data=""
-)
-
-severity_selected = dcc.Store(
-    id="severity-selected", storage_type="session", data="")
-
-runset_run_options = dcc.Store(
-    id="runset-run-options", storage_type="session", data="")
-
-run_option_selected = dcc.Store(
-    id="run-option-selected", storage_type="session", data=""
-)
-
-runset_xpcrmodulelane_options = dcc.Store(
-    id="runset-xpcrmodulelane-options", storage_type="session", data=""
-)
-
-xpcrmodulelane_selected = dcc.Store(
-    id="xpcrmodulelane-selected", storage_type="session", data=""
-)
-
-xpcrmodule_options = dcc.Store(
-    id="xpcrmodule-options", storage_type="session", data="")
-
-xpcrmodule_selected = dcc.Store(
-    id="xpcrmodule-selected", storage_type="session", data=""
-)
-
-runset_subject_ids = dcc.Store(
-    id="runset-subject-ids", storage_type="session", data="")
-
-runset_subject_descriptions = dcc.Store(
-    id="runset-subject-descriptions", storage_type="session"
-)
-
-pcrcurve_sample_info = dcc.Store(
-    id="pcrcurve-sample-info", storage_type="session")
-
-issue_selected = dcc.Store(id="issue-selected", storage_type="session")
-
-flat_data_download = dcc.Download(id="flat-data-download")
-
-remediation_action_selection = dcc.Store(
-    id="remediation-action-selection", storage_type="session"
-)
-
-remediation_action_loader = dcc.Interval(
-    id="remediation-action-loader", interval=60 * 1000, n_intervals=0  # in milliseconds
-)
-
-related_runsets = dcc.Store(id="related-runsets", storage_type="session")
-
-issue_remediation_url = dcc.Store(
-    id="issue-remediation-url", storage_type="session")
-
-issue_delete_url = dcc.Store(id="issue-delete-url", storage_type="session")
-
-issue_resolution_remediation_action_selection = dcc.Store(
-    id="issue-resolution-remediation-action-selection", storage_type="session"
-)
-
-issue_remediation_type = dcc.Store(
-    id="issue-remediation-type", storage_type="session")
-
-layout = html.Div(
-    [
-        review_loader,
-        dcc.Loading(
-            id="run-review-href-loader",
-            fullscreen=True,
-            type="dot",
-            children=[dcc.Location(id="run-review-url")],
-        ),
-        sidebar,
-        content,
-        runset_selection,
-        runset_sample_data,
-        runset_review,
-        runset_severity_options,
-        runset_channel_options,
-        channel_selected,
-        runset_run_options,
-        run_option_selected,
-        spc_channel,
-        runset_xpcrmodulelane_options,
-        xpcrmodulelane_selected,
-        severity_selected,
-        runset_subject_ids,
-        xpcrmodule_options,
-        xpcrmodule_selected,
-        pcrcurve_sample_info,
-        issue_selected,
-        runset_subject_descriptions,
-        flat_data_download,
-        remediation_action_selection,
-        related_runsets,
-        issue_remediation_url,
-        issue_resolution_remediation_action_selection,
-        issue_remediation_type,
-        remediation_action_loader,
-        issue_delete_url,
-    ]
-)
+layout = run_review_layout
 
 
 def Add_Dash(app):
@@ -264,154 +80,42 @@ def Add_Dash(app):
     mail = Mail(app.server)
     apply_layout_with_auth(app, layout)
 
-    @app.callback(
-        Output("review-assignment-selections", "options"),
-        Output("review-assignment-selections", "value"),
-        Input("refresh-review-queue", "n_clicks"),
-    )
-    def get_review_group_options(n):
-        review_groups_url = os.environ["RUN_REVIEW_API_BASE"] + "ReviewGroups"
-        review_groups = requests.get(review_groups_url, verify=False).json()
-        review_group_options = {}
-        for review_group in review_groups:
-            review_group_options[review_group["id"]
-                                 ] = review_group["description"]
-        return review_group_options, session["user"].group_id
+    @app.callback(Output("runset-id", "data"),
+                  Input('url', 'href'))
+    def get_runset_id(url):
+        guid = url.split("/")[-1]
+        return guid
 
     @app.callback(
-        Output("review-queue-table", "rowData"),
-        Output("review-queue-table", "columnDefs"),
-        Input("refresh-review-queue", "n_clicks"),
-        Input("runset-status-selections", "value"),
-        Input("review-assignment-selections", "value"),
-        Input("review-group-completed-filter", "value"),
-        Input("delete-runset-response", "is_open"),
+        Output("runset-selection-data", "data"),
+        [Input("runset-id", "data")],
+        prevent_intial_call=True
     )
-    def refresh_review_queue(
-        n,
-        runset_status_selections,
-        review_assignment_selections,
-        review_group_completed_filter,
-        delete_response_is_open,
-    ):
-        """
-        Convert Runset Status Selections & review assisgnment selections to list in the event only one selection is made.
-        """
-        if ctx.triggered_id != "delete-runset-response" or (
-            ctx.triggered_id == "delete-runset-response" and not delete_response_is_open
-        ):
-            initial_columnDefs = [
-                {
-                    "headerName": "Status",
-                    "field": "Status",
-                    "rowGroup": True,
-                    "filter": True,
-                },
-                {"headerName": "XPCR Module", "field": "XPCR Module", "filter": True},
-                {"headerName": "Description", "field": "Description", "filter": True},
-                {"headerName": "Start Date", "field": "Start Date", "filter": True},
-                {"headerName": "Sample Count",
-                    "field": "Sample Count", "filter": True},
-                {"headerName": "Id", "field": "Id", "filter": True, "hide": True},
-                {
-                    "headerName": "UserId",
-                    "field": "UserId",
-                    "filter": True,
-                    "hide": True,
-                },
-            ]
+    def get_runset_selection_data(runsetid):
+        if runsetid:
 
-            if isinstance(runset_status_selections, str):
-                runset_status_selections = [runset_status_selections]
-
-            if isinstance(review_assignment_selections, str):
-                review_assignment_selections = [review_assignment_selections]
-
-            if True in review_group_completed_filter:
-                review_group_filter = session["user"].group_id
-            else:
-                review_group_filter = None
-
-            rowData, columnDefs = populate_review_queue(
-                session["user"].id,
-                session["user"].group_display,
-                review_group_ids=review_assignment_selections,
-                runset_statuses=runset_status_selections,
-                reviewer_group_id=review_group_filter,
-            )
-
-            if rowData:
-                return rowData, columnDefs
-            else:
-                return [], initial_columnDefs
-
-    @app.callback(
-        Output("delete-runset-button", "disabled"),
-        Input("review-queue-table", "selectionChanged"),
-    )
-    def check_cartridge_delete_validity(selection):
-        if ctx.triggered_id == "review-queue-table":
-            if selection[0]["UserId"] == session["user"].id:
-                return False
-
-        return True
-
-    @app.callback(
-        Output("delete-runset-confirmation", "is_open"),
-        Input("delete-runset-button", "n_clicks"),
-        Input("delete-runset-confirm-button", "n_clicks"),
-        Input("delete-runset-cancel-button", "n_clicks"),
-        State("delete-runset-confirmation", "is_open"),
-        prevent_intitial_call=True,
-    )
-    def control_delete_cartridge_picture_popup(
-        delete_click, confirm_click, cancel_click, is_open
-    ):
-        if ctx.triggered_id and "delete" in ctx.triggered_id:
-            return not is_open
-        return is_open
-
-    @app.callback(
-        Output("delete-runset-response", "is_open"),
-        Output("delete-runset-result-message", "children"),
-        Input("delete-runset-confirm-button", "n_clicks"),
-        State("review-queue-table", "selectionChanged"),
-        State("delete-runset-response", "is_open"),
-    )
-    def delete_runset(confirm_click, selection, is_open):
-        if ctx.triggered_id == "delete-runset-confirm-button":
-            delete_cartridge_picture_url = os.environ[
+            runsetsample_url = os.environ[
                 "RUN_REVIEW_API_BASE"
-            ] + "Runsets/{}".format(selection[0]["Id"])
-            print(delete_cartridge_picture_url)
-            response = requests.delete(
-                url=delete_cartridge_picture_url, verify=False)
-            print("Runset Delete Status Code: ", response.status_code)
-            if response.status_code == 200:
-                message = "Runset was deleted successfully"
-            else:
-                message = "Runset was not deleted successfully"
-            return not is_open, message
+            ] + "RunSets/{}/Samples".format(runsetid)
+            _runset_samples = requests.get(
+                runsetsample_url, verify=False).json()
+            return _runset_samples
+        else:
+            return no_update
+
+    @app.callback(Output('run-review-url', 'href'),
+                  Input("get-runset-data", "n_clicks"),
+                  State("review-queue-table", 'selectionChanged'),
+                  prevent_intial_call=True)
+    def get_runset_url(view_runset_click, rowSelection):
+        if ctx.triggered_id:
+            return "/dashboard/run-review/view-results/{}".format(rowSelection[0]["Id"])
         else:
             return no_update
 
     @app.callback(
-        Output("runset-selection-data", "data"),
-        [Input("review-queue-table", "selectionChanged")],
-    )
-    def get_runset_selection_data(selected):
-        if selected == None:
-            return no_update
-        runsetsample_url = os.environ[
-            "RUN_REVIEW_API_BASE"
-        ] + "RunSets/{}/Samples".format(selected[0]["Id"])
-        _runset_samples = requests.get(runsetsample_url, verify=False).json()
-        return _runset_samples
-
-    @app.callback(
         [
             Output("runset-sample-data", "data"),
-            Output("run-review-url", "href"),
             Output("runset-review", "data"),
             Output("runset-severity-options", "data"),
             Output("runset-channel-options", "data"),
@@ -422,15 +126,11 @@ def Add_Dash(app):
             Output("xpcrmodule-options", "data"),
             Output("runset-subject-descriptions", "data"),
         ],
-        [Input("get-runset-data", "n_clicks"),
-         State("runset-selection-data", "data")],
-        prevent_inital_call=True,
+        Input("runset-selection-data", "data"),
+        prevent_intial_call=True
     )
-    def initialize_runset_data(n, runset_data):
+    def initialize_runset_data(runset_data):
         logging.info("initializing runset_data")
-        if n == 0:
-            logging.info("Button not pressed.")
-            return no_update
         """
         Get Data associated with Runset.
         """
@@ -715,7 +415,6 @@ def Add_Dash(app):
 
         return (
             dataframe.to_dict("records"),
-            "/dashboard/run-review/view-results",
             resp,
             severity_options,
             channel_options,
@@ -736,6 +435,7 @@ def Add_Dash(app):
             Output("tadm-issue-options", "options"),
         ],
         Input("submit-sample-issue", "children"),
+        prevent_intial_call=True
     )
     def getIssueTypes(_):
         async def getIssueTypeOptions(session, url):
@@ -1553,7 +1253,7 @@ def Add_Dash(app):
             Input("run-review-xpcrmodule-selector", "options"),
             Input("tadm-issue-module-options", "value"),
         ],
-        prevent_initial_call=True,
+        prevent_intial_call=True
     )
     def update_module_selections(
         module_issue_mod_selection,
@@ -1565,38 +1265,42 @@ def Add_Dash(app):
         tadm_issue_mod_selection,
     ):
         trigger = ctx.triggered_id
-        print(run_review_mod_options)
-        if trigger == "module-issue-module-options":
-            if module_issue_mod_selection == None:
-                return "NoFilter"
-            return module_issue_mod_selection
-        elif trigger == "run-issue-module-options":
-            if run_issue_mod_selection == None:
-                return "NoFilter"
-            return run_issue_mod_selection
-        elif trigger == "lane-issue-module-options":
-            if lane_issue_mod_selection == None:
-                return "NoFilter"
-            return lane_issue_mod_selection
-        elif trigger == "sample-issue-module-options":
-            if sample_issue_mod_selection == None:
-                return "NoFilter"
-            return sample_issue_mod_selection
-        elif trigger == "tadm-issue-module-options":
-            if tadm_issue_mod_selection == None:
-                return "NoFilter"
-            return tadm_issue_mod_selection
-        elif (
-            trigger == "run-review-xpcrmodule-selector"
-            and run_review_mod_selection != None
-        ):
-            return run_review_mod_selection
-        elif (
-            trigger == "run-review-xpcrmodule-selector"
-            and run_review_mod_selection == None
-        ):
-            for module_id in run_review_mod_options:
-                return module_id
+        if run_review_mod_options:
+            print(run_review_mod_options)
+            if trigger == "module-issue-module-options":
+                if module_issue_mod_selection == None:
+                    return [x for x in run_review_mod_options][0]
+                return module_issue_mod_selection
+            elif trigger == "run-issue-module-options":
+                if run_issue_mod_selection == None:
+                    return [x for x in run_review_mod_options][0]
+                return run_issue_mod_selection
+            elif trigger == "lane-issue-module-options":
+                if lane_issue_mod_selection == None:
+                    return [x for x in run_review_mod_options][0]
+                return lane_issue_mod_selection
+            elif trigger == "sample-issue-module-options":
+                if sample_issue_mod_selection == None:
+                    return [x for x in run_review_mod_options][0]
+                return sample_issue_mod_selection
+            elif trigger == "tadm-issue-module-options":
+                if tadm_issue_mod_selection == None:
+                    return [x for x in run_review_mod_options][0]
+                return tadm_issue_mod_selection
+            elif (
+                trigger == "run-review-xpcrmodule-selector"
+                and run_review_mod_selection != None
+            ):
+                return run_review_mod_selection
+            elif (
+                trigger == "run-review-xpcrmodule-selector"
+                and run_review_mod_selection == None
+            ):
+                for module_id in run_review_mod_options:
+                    if module_id != 'NoFilter':
+                        return module_id
+        else:
+            return no_update
 
     @app.callback(
         [
@@ -1667,84 +1371,87 @@ def Add_Dash(app):
         samples_selected,
         tadm_issue_id,
     ):
-        print("attempting post.")
+        if runset_review:
+            print("attempting post.")
 
-        issue = {}
-        issue["userId"] = session["user"].id
-        issue["runSetReviewReferrerId"] = runset_review["id"]
-        issue["runSetReviewResolverId"] = "00000000-0000-0000-0000-000000000000"
-        issue["severityRatingId"] = severity_id
-        issue["assayChannelId"] = channel_id
+            issue = {}
+            issue["userId"] = session["user"].id
+            issue["runSetReviewReferrerId"] = runset_review["id"]
+            issue["runSetReviewResolverId"] = "00000000-0000-0000-0000-000000000000"
+            issue["severityRatingId"] = severity_id
+            issue["assayChannelId"] = channel_id
 
-        try:
-            if mod_issue:
-                """
-                Post information to XPCR Module Issue Endpoint
-                """
-                issue["issueTypeId"] = module_issue_id
-                issue["subjectId"] = runset_subject_ids["XPCRModule"][
-                    xpcrmodule_selected
-                ]
-                issue["runSetSubjectReferrerId"] = xpcrmodule_selected
-                issue_url = os.environ["RUN_REVIEW_API_BASE"] + \
-                    "XPCRModuleIssues"
+            try:
+                if mod_issue:
+                    """
+                    Post information to XPCR Module Issue Endpoint
+                    """
+                    issue["issueTypeId"] = module_issue_id
+                    issue["subjectId"] = runset_subject_ids["XPCRModule"][
+                        xpcrmodule_selected
+                    ]
+                    issue["runSetSubjectReferrerId"] = xpcrmodule_selected
+                    issue_url = os.environ["RUN_REVIEW_API_BASE"] + \
+                        "XPCRModuleIssues"
 
-            if run_issue:
-                """
-                Post information to XPCR Module Issue Endpoint
-                """
-                issue["issueTypeId"] = run_issue_id
-                issue["subjectId"] = runset_subject_ids["Cartridge"][run_selected]
-                issue["runSetSubjectReferrerId"] = run_selected
-                issue_url = os.environ["RUN_REVIEW_API_BASE"] + \
-                    "CartridgeIssues"
+                if run_issue:
+                    """
+                    Post information to XPCR Module Issue Endpoint
+                    """
+                    issue["issueTypeId"] = run_issue_id
+                    issue["subjectId"] = runset_subject_ids["Cartridge"][run_selected]
+                    issue["runSetSubjectReferrerId"] = run_selected
+                    issue_url = os.environ["RUN_REVIEW_API_BASE"] + \
+                        "CartridgeIssues"
 
-            if lane_issue:
-                """
-                Post information to XPCR Module Issue Endpoint
-                """
-                issue["issueTypeId"] = lane_issue_id
-                issue["subjectId"] = runset_subject_ids["XPCRModuleLane"][lane_selected]
-                issue["runSetSubjectReferrerId"] = lane_selected
-                issue_url = os.environ["RUN_REVIEW_API_BASE"] + \
-                    "XPCRModuleLaneIssues"
+                if lane_issue:
+                    """
+                    Post information to XPCR Module Issue Endpoint
+                    """
+                    issue["issueTypeId"] = lane_issue_id
+                    issue["subjectId"] = runset_subject_ids["XPCRModuleLane"][lane_selected]
+                    issue["runSetSubjectReferrerId"] = lane_selected
+                    issue_url = os.environ["RUN_REVIEW_API_BASE"] + \
+                        "XPCRModuleLaneIssues"
 
-            if sample_issue:
-                """
-                Post information to XPCR Module Issue Endpoint
-                """
-                issue["issueTypeId"] = sample_issue_id
-                issue["subjectId"] = samples_selected[0]["SampleId"]
-                issue["runSetSubjectReferrerId"] = samples_selected[0]["RunSetSampleId"]
-                issue_url = os.environ["RUN_REVIEW_API_BASE"] + "SampleIssues"
+                if sample_issue:
+                    """
+                    Post information to XPCR Module Issue Endpoint
+                    """
+                    issue["issueTypeId"] = sample_issue_id
+                    issue["subjectId"] = samples_selected[0]["SampleId"]
+                    issue["runSetSubjectReferrerId"] = samples_selected[0]["RunSetSampleId"]
+                    issue_url = os.environ["RUN_REVIEW_API_BASE"] + \
+                        "SampleIssues"
 
-            if tadm_issue:
-                """
-                Post information to XPCR Module TADM Issue Endpoint
-                """
-                issue["assayChannelId"] = "00000000-0000-0000-0000-000000000000"
-                issue["issueTypeId"] = tadm_issue_id
-                issue["subjectId"] = runset_subject_ids["XPCRModule"][
-                    xpcrmodule_selected
-                ]
-                issue["runSetSubjectReferrerId"] = xpcrmodule_selected
-                print(issue)
-                issue_url = os.environ["RUN_REVIEW_API_BASE"] + \
-                    "XPCRModuleTADMIssues"
+                if tadm_issue:
+                    """
+                    Post information to XPCR Module TADM Issue Endpoint
+                    """
+                    issue["assayChannelId"] = "00000000-0000-0000-0000-000000000000"
+                    issue["issueTypeId"] = tadm_issue_id
+                    issue["subjectId"] = runset_subject_ids["XPCRModule"][
+                        xpcrmodule_selected
+                    ]
+                    issue["runSetSubjectReferrerId"] = xpcrmodule_selected
+                    print(issue)
+                    issue_url = os.environ["RUN_REVIEW_API_BASE"] + \
+                        "XPCRModuleTADMIssues"
 
-            response = requests.post(url=issue_url, json=issue, verify=False)
+                response = requests.post(
+                    url=issue_url, json=issue, verify=False)
 
-            status_code = response.status_code
+                status_code = response.status_code
 
-            if status_code == 200:
-                response_message = "Issue was created successfully."
-            else:
+                if status_code == 200:
+                    response_message = "Issue was created successfully."
+                else:
+                    response_message = "Issue creation was unsuccessful."
+            except:
                 response_message = "Issue creation was unsuccessful."
-        except:
-            response_message = "Issue creation was unsuccessful."
 
-        if mod_issue or run_issue or lane_issue or sample_issue or tadm_issue:
-            return not is_open, response_message, None, None, None, None, None
+            if mod_issue or run_issue or lane_issue or sample_issue or tadm_issue:
+                return not is_open, response_message, None, None, None, None, None
 
         return no_update
 
@@ -2176,7 +1883,7 @@ def Add_Dash(app):
         Input("cartridge-pictures-table", "rowData"),
     )
     def get_cartridge_pictures(selection, data):
-        if ctx.triggered_id == "cartridge-pictures-table" and data:
+        if ctx.triggered_id == "cartridge-pictures-table" and selection:
             items = []
             item = add_item_to_carousel(
                 title="Some ID",
@@ -3452,6 +3159,7 @@ def Add_Dash(app):
         State("runset-selection-data", "data"),
         State("runset-review", "data"),
         State("file-upload-response", "is_open"),
+        prevent_intial_call=True
     )
     def upload_misc_file_to_blob_storage(
         list_of_contents,
@@ -3866,7 +3574,5 @@ if __name__ == "__main__":
         url_base_pathname=url_base,
         external_stylesheets=[dbc.themes.COSMO],
     )
-    app.layout = html.Div(
-        [review_loader, dcc.Location(id="run-review-url"), sidebar, content]
-    )
+    app.layout = layout
     app.run_server(debug=True)

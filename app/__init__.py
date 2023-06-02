@@ -4,6 +4,7 @@ from flask import Flask, render_template, session, request, redirect, url_for
 from flask.helpers import get_root_path
 from DataExplorer import data_explorer
 from RunReview import run_review
+from RunReviewQueue import run_review_queue
 from flask_session import Session
 import msal
 import app_config
@@ -21,8 +22,8 @@ def create_app():
     register_blueprints(server)
 
     server = data_explorer.Add_Dash(server)
-
     server = run_review.Add_Dash(server)
+    server = run_review_queue.Add_Dash(server)
     return server
 
 
@@ -38,7 +39,7 @@ def register_blueprints(server):
     from app.webapp import server_bp
 
     server.register_blueprint(server_bp)
-    for module_name in (['DataExplorerTemplates', 'RunReviewTemplates']):
+    for module_name in (['DataExplorerTemplates', 'RunReviewTemplates', 'RunReviewQueueTemplates']):
         print(module_name)
         module = import_module('app.{}.routes'.format(module_name))
 
