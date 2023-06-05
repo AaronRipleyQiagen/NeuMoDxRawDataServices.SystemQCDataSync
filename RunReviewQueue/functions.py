@@ -10,7 +10,6 @@ import dash_bootstrap_components as dbc
 from dash import Input, Output, dcc, html, no_update, ctx
 import base64
 
-
 def populate_review_queue(
     user_id, user_group, review_group_ids=[], runset_statuses=[], reviewer_group_id=None
 ):
@@ -69,8 +68,7 @@ def populate_review_queue(
             columnDef = {"headerName": column, "field": column, "filter": True}
             if "Date" in column:
                 df[column] = (
-                    df[column].astype("datetime64").dt.strftime(
-                        "%d %B %Y %H:%M:%S")
+                    df[column].astype("datetime64").dt.strftime("%d %B %Y %H:%M:%S")
                 )
             if column in groupable_columns:
                 columnDef["rowGroup"] = True
