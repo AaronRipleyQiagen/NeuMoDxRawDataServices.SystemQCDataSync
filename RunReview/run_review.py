@@ -2,6 +2,7 @@ from flask import session
 from dash import Input, Output, dcc, html, no_update, ctx
 import dash_bootstrap_components as dbc
 from dash import Dash
+
 # from ..AppBuildHelpers.appbuildhelpers import apply_layout_with_auth
 from dash import (
     html,
@@ -35,6 +36,8 @@ from Shared.appbuildhelpers import *
 from Shared.communication import *
 from Shared.neumodx_objects import SampleJSONReader, getSampleDataAsync
 from .Layout import layout as run_review_layout
+from .Callbacks import *
+
 warnings.filterwarnings("ignore")
 
 
@@ -79,34 +82,29 @@ def Add_Dash(app):
     server.config["MAIL_USE_SSL"] = True
     mail = Mail(app.server)
     apply_layout_with_auth(app, layout)
-
-    @app.callback(Output("runset-id", "data"),
-                  Input('url', 'href'))
-    def get_runset_id(url):
-        guid = url.split("/")[-1]
-        return guid
+    get_callbacks(app)
 
     @app.callback(
         Output("runset-selection-data", "data"),
         [Input("runset-id", "data")],
-        prevent_intial_call=True
+        prevent_intial_call=True,
     )
     def get_runset_selection_data(runsetid):
         if runsetid:
-
             runsetsample_url = os.environ[
                 "RUN_REVIEW_API_BASE"
             ] + "RunSets/{}/Samples".format(runsetid)
-            _runset_samples = requests.get(
-                runsetsample_url, verify=False).json()
+            _runset_samples = requests.get(runsetsample_url, verify=False).json()
             return _runset_samples
         else:
             return no_update
 
-    @app.callback(Output('run-review-url', 'href'),
-                  Input("get-runset-data", "n_clicks"),
-                  State("review-queue-table", 'selectionChanged'),
-                  prevent_intial_call=True)
+    @app.callback(
+        Output("run-review-url", "href"),
+        Input("get-runset-data", "n_clicks"),
+        State("review-queue-table", "selectionChanged"),
+        prevent_intial_call=True,
+    )
     def get_runset_url(view_runset_click, rowSelection):
         if ctx.triggered_id:
             return "/dashboard/run-review/view-results/{}".format(rowSelection[0]["Id"])
@@ -127,7 +125,7 @@ def Add_Dash(app):
             Output("runset-subject-descriptions", "data"),
         ],
         Input("runset-selection-data", "data"),
-        prevent_intial_call=True
+        prevent_intial_call=True,
     )
     def initialize_runset_data(runset_data):
         logging.info("initializing runset_data")
@@ -154,8 +152,7 @@ def Add_Dash(app):
         )
         idx = 0
         for runsetsample in runset_data["runSetSamples"]:
-            runset_sample_ids.append(
-                runsetsample["sample"]["rawDataDatabaseId"])
+            runset_sample_ids.append(runsetsample["sample"]["rawDataDatabaseId"])
 
             runset_map = [
                 runsetsample["sample"]["rawDataDatabaseId"],
@@ -192,14 +189,12 @@ def Add_Dash(app):
         jsonReader.standardDecode()
         dataframe = jsonReader.DataFrame
         dataframe["RawDataDatabaseId"] = dataframe.reset_index()["id"].values
-        dataframe["Channel"] = dataframe["Channel"].replace(
-            "Far_Red", "Far Red")
+        dataframe["Channel"] = dataframe["Channel"].replace("Far_Red", "Far Red")
         dataframe["XPCR Module Side"] = np.where(
             dataframe["XPCR Module Lane"] < 7, "Right", "Left"
         )
         dataframe = (
-            dataframe.set_index("RawDataDatabaseId").join(
-                runset_map_df).reset_index()
+            dataframe.set_index("RawDataDatabaseId").join(runset_map_df).reset_index()
         )
 
         """
@@ -221,10 +216,8 @@ def Add_Dash(app):
         runset_update_url = os.environ[
             "RUN_REVIEW_API_BASE"
         ] + "RunSets/{}/status".format(resp["runSetId"])
-        runset_update_response = requests.put(
-            url=runset_update_url, verify=False)
-        print("Runset Update Response: " +
-              str(runset_update_response.status_code))
+        runset_update_response = requests.put(url=runset_update_url, verify=False)
+        print("Runset Update Response: " + str(runset_update_response.status_code))
         """
         Get Severity Options
         """
@@ -435,7 +428,7 @@ def Add_Dash(app):
             Output("tadm-issue-options", "options"),
         ],
         Input("submit-sample-issue", "children"),
-        prevent_intial_call=True
+        prevent_intial_call=True,
     )
     def getIssueTypes(_):
         async def getIssueTypeOptions(session, url):
@@ -459,8 +452,7 @@ def Add_Dash(app):
                 for issueType in issueTypeEndpoints:
                     url = os.environ["RUN_REVIEW_API_BASE"] + issueType
                     tasks.append(
-                        asyncio.ensure_future(
-                            getIssueTypeOptions(session, url))
+                        asyncio.ensure_future(getIssueTypeOptions(session, url))
                     )
 
                 responses = await asyncio.gather(*tasks)
@@ -587,8 +579,7 @@ def Add_Dash(app):
         if ctx.triggered_id == "issue-selected":
             channel = issue_selected["Channel"]
             dataframe = pd.DataFrame.from_dict(data)
-            dataframe["Channel"] = dataframe["Channel"].replace(
-                "Far_Red", "Far Red")
+            dataframe["Channel"] = dataframe["Channel"].replace("Far_Red", "Far Red")
             fig = go.Figure()
             df = dataframe.reset_index().set_index(
                 ["Channel", "Processing Step", "XPCR Module Serial"]
@@ -638,8 +629,7 @@ def Add_Dash(app):
                 channel = channel_options[channel_selected]
 
             dataframe = pd.DataFrame.from_dict(data)
-            dataframe["Channel"] = dataframe["Channel"].replace(
-                "Far_Red", "Far Red")
+            dataframe["Channel"] = dataframe["Channel"].replace("Far_Red", "Far Red")
             # Start making graph...
             fig = go.Figure()
             df = dataframe.reset_index().set_index(
@@ -700,14 +690,12 @@ def Add_Dash(app):
                     mode="lines",
                     name=_name,
                     line=dict(
-                        color=colorDict[df_Channel_Step.loc[idx,
-                                                            color_option_selected]]
+                        color=colorDict[df_Channel_Step.loc[idx, color_option_selected]]
                     ),
                 )
             )
             sample_info = {}
-            sample_info["RunSetSampleId"] = df_Channel_Step.loc[idx,
-                                                                "RunSetSampleId"]
+            sample_info["RunSetSampleId"] = df_Channel_Step.loc[idx, "RunSetSampleId"]
             sample_info["SampleId"] = df_Channel_Step.loc[idx, "SampleId"]
             samples_selected.append(sample_info)
 
@@ -820,8 +808,7 @@ def Add_Dash(app):
                     .max(axis=1)
                 )
                 run_summary_df["Baseline %CV"] = (
-                    run_summary_df["Baseline Std"] /
-                    run_summary_df["Baseline Mean"]
+                    run_summary_df["Baseline Std"] / run_summary_df["Baseline Mean"]
                 )
 
                 initial_selection = [
@@ -864,8 +851,7 @@ def Add_Dash(app):
                     ["N500 Serial Number", "XPCR Module Serial"]
                 ).agg(agg_types)
                 run_summary_df_overall["Run"] = "Overall"
-                run_summary_df_overall.set_index(
-                    "Run", append=True, inplace=True)
+                run_summary_df_overall.set_index("Run", append=True, inplace=True)
                 run_summary_df = run_summary_df.groupby(
                     ["N500 Serial Number", "XPCR Module Serial", "Run"]
                 ).agg(agg_types)
@@ -1253,7 +1239,7 @@ def Add_Dash(app):
             Input("run-review-xpcrmodule-selector", "options"),
             Input("tadm-issue-module-options", "value"),
         ],
-        prevent_intial_call=True
+        prevent_intial_call=True,
     )
     def update_module_selections(
         module_issue_mod_selection,
@@ -1297,7 +1283,7 @@ def Add_Dash(app):
                 and run_review_mod_selection == None
             ):
                 for module_id in run_review_mod_options:
-                    if module_id != 'NoFilter':
+                    if module_id != "NoFilter":
                         return module_id
         else:
             return no_update
@@ -1391,8 +1377,7 @@ def Add_Dash(app):
                         xpcrmodule_selected
                     ]
                     issue["runSetSubjectReferrerId"] = xpcrmodule_selected
-                    issue_url = os.environ["RUN_REVIEW_API_BASE"] + \
-                        "XPCRModuleIssues"
+                    issue_url = os.environ["RUN_REVIEW_API_BASE"] + "XPCRModuleIssues"
 
                 if run_issue:
                     """
@@ -1401,18 +1386,20 @@ def Add_Dash(app):
                     issue["issueTypeId"] = run_issue_id
                     issue["subjectId"] = runset_subject_ids["Cartridge"][run_selected]
                     issue["runSetSubjectReferrerId"] = run_selected
-                    issue_url = os.environ["RUN_REVIEW_API_BASE"] + \
-                        "CartridgeIssues"
+                    issue_url = os.environ["RUN_REVIEW_API_BASE"] + "CartridgeIssues"
 
                 if lane_issue:
                     """
                     Post information to XPCR Module Issue Endpoint
                     """
                     issue["issueTypeId"] = lane_issue_id
-                    issue["subjectId"] = runset_subject_ids["XPCRModuleLane"][lane_selected]
+                    issue["subjectId"] = runset_subject_ids["XPCRModuleLane"][
+                        lane_selected
+                    ]
                     issue["runSetSubjectReferrerId"] = lane_selected
-                    issue_url = os.environ["RUN_REVIEW_API_BASE"] + \
-                        "XPCRModuleLaneIssues"
+                    issue_url = (
+                        os.environ["RUN_REVIEW_API_BASE"] + "XPCRModuleLaneIssues"
+                    )
 
                 if sample_issue:
                     """
@@ -1420,9 +1407,10 @@ def Add_Dash(app):
                     """
                     issue["issueTypeId"] = sample_issue_id
                     issue["subjectId"] = samples_selected[0]["SampleId"]
-                    issue["runSetSubjectReferrerId"] = samples_selected[0]["RunSetSampleId"]
-                    issue_url = os.environ["RUN_REVIEW_API_BASE"] + \
-                        "SampleIssues"
+                    issue["runSetSubjectReferrerId"] = samples_selected[0][
+                        "RunSetSampleId"
+                    ]
+                    issue_url = os.environ["RUN_REVIEW_API_BASE"] + "SampleIssues"
 
                 if tadm_issue:
                     """
@@ -1435,11 +1423,11 @@ def Add_Dash(app):
                     ]
                     issue["runSetSubjectReferrerId"] = xpcrmodule_selected
                     print(issue)
-                    issue_url = os.environ["RUN_REVIEW_API_BASE"] + \
-                        "XPCRModuleTADMIssues"
+                    issue_url = (
+                        os.environ["RUN_REVIEW_API_BASE"] + "XPCRModuleTADMIssues"
+                    )
 
-                response = requests.post(
-                    url=issue_url, json=issue, verify=False)
+                response = requests.post(url=issue_url, json=issue, verify=False)
 
                 status_code = response.status_code
 
@@ -1456,8 +1444,7 @@ def Add_Dash(app):
         return no_update
 
     @app.callback(
-        [Output("issues-table", "rowData"),
-         Output("issues-table", "columnDefs")],
+        [Output("issues-table", "rowData"), Output("issues-table", "columnDefs")],
         [
             Input("review-tabs", "active_tab"),
             Input("issue-delete-response", "is_open"),
@@ -1505,8 +1492,7 @@ def Add_Dash(app):
                     "RUN_REVIEW_API_BASE"
                 ] + "RunSets/{}/issues".format(runset_id)
 
-                runset_data = requests.get(
-                    url=runset_issues_url, verify=False).json()
+                runset_data = requests.get(url=runset_issues_url, verify=False).json()
 
                 for runset_review in runset_data["runSetReviews"]:
                     reviewer_name = runset_review["reviewerName"]
@@ -1645,10 +1631,8 @@ def Add_Dash(app):
             runset_update_url = os.environ[
                 "RUN_REVIEW_API_BASE"
             ] + "RunSets/{}/status".format(runsetreview_update["runSetId"])
-            runset_update_response = requests.put(
-                url=runset_update_url, verify=False)
-            print("Runset Update Response: " +
-                  str(runset_update_response.status_code))
+            runset_update_response = requests.put(url=runset_update_url, verify=False)
+            print("Runset Update Response: " + str(runset_update_response.status_code))
             return not is_open
 
         return is_open
@@ -2141,7 +2125,9 @@ def Add_Dash(app):
                     "Run for Cartridge Picture was successfully updated."
                 )
             else:
-                confirmation_message = "Run for Cartridge Picture was not successful updated."
+                confirmation_message = (
+                    "Run for Cartridge Picture was not successful updated."
+                )
 
             return (not is_open, confirmation_message)
 
@@ -2175,8 +2161,7 @@ def Add_Dash(app):
                 "RUN_REVIEW_API_BASE"
             ] + "cartridgepictures/{}".format(selection[0]["Id"])
             print(delete_cartridge_picture_url)
-            response = requests.delete(
-                url=delete_cartridge_picture_url, verify=False)
+            response = requests.delete(url=delete_cartridge_picture_url, verify=False)
             print("Cartridge Picture Delete Status Code: ", response.status_code)
 
             return not is_open
@@ -2241,9 +2226,7 @@ def Add_Dash(app):
                     "name": file,
                     "fileid": file_id,
                 }
-                tadm_picture_url = (
-                    os.environ["RUN_REVIEW_API_BASE"] + "TADMPictures"
-                )
+                tadm_picture_url = os.environ["RUN_REVIEW_API_BASE"] + "TADMPictures"
                 resp = requests.post(
                     url=tadm_picture_url, json=file_payload, verify=False
                 )
@@ -2324,9 +2307,7 @@ def Add_Dash(app):
                 if tadm_picture["cartridgeId"]:
                     tadm_id = tadm_picture["cartridgeId"]
                     runset_tadm_id = [
-                        key
-                        for key, val in runset_tadm_ids.items()
-                        if val == tadm_id
+                        key for key, val in runset_tadm_ids.items() if val == tadm_id
                     ][0]
                     run_number = runset_run_descriptions[runset_tadm_id]
                     entry["Run Number"] = run_number
@@ -2341,9 +2322,7 @@ def Add_Dash(app):
             """
 
             column_definitions = []
-            initial_selection = [
-                x for x in tadm_picture_data.columns if "Id" not in x
-            ]
+            initial_selection = [x for x in tadm_picture_data.columns if "Id" not in x]
 
             for column in tadm_picture_data.columns:
                 column_definition = {
@@ -2413,9 +2392,9 @@ def Add_Dash(app):
         run_options = {}
 
         for runset_tadm_id in runset_tadm_ids:
-            run_options[
-                runset_tadm_ids[runset_tadm_id]
-            ] = runset_tadm_descriptions[runset_tadm_id]
+            run_options[runset_tadm_ids[runset_tadm_id]] = runset_tadm_descriptions[
+                runset_tadm_id
+            ]
 
         if ctx.triggered_id:
             return (not is_open, run_options, [x for x in run_options][0])
@@ -2443,11 +2422,11 @@ def Add_Dash(app):
             )
 
             if response.status_code == 200:
-                confirmation_message = (
-                    "Run for TADM Picture was successfully updated."
-                )
+                confirmation_message = "Run for TADM Picture was successfully updated."
             else:
-                confirmation_message = "Run for TADM Picture was not successful updated."
+                confirmation_message = (
+                    "Run for TADM Picture was not successful updated."
+                )
 
             return (not is_open, confirmation_message)
 
@@ -2481,8 +2460,7 @@ def Add_Dash(app):
                 "RUN_REVIEW_API_BASE"
             ] + "tadmpictures/{}".format(selection[0]["Id"])
             print(delete_tadm_picture_url)
-            response = requests.delete(
-                url=delete_tadm_picture_url, verify=False)
+            response = requests.delete(url=delete_tadm_picture_url, verify=False)
             print("TADM Picture Delete Status Code: ", response.status_code)
 
             return not is_open
@@ -2490,8 +2468,7 @@ def Add_Dash(app):
             return is_open
 
     @app.callback(
-        [Output("runset-description", "children"),
-         Output("related-runsets", "data")],
+        [Output("runset-description", "children"), Output("related-runsets", "data")],
         Input("runset-selection-data", "data"),
     )
     def update_runset_description(runset_selection):
@@ -2515,8 +2492,7 @@ def Add_Dash(app):
             ] + "XPCRModules/{}/runsets".format(
                 runset_xpcrmodules[0]["xpcrModule"]["id"]
             )
-            xpcrmodule = requests.get(
-                url=xpcrmodule_runsets_url, verify=False).json()
+            xpcrmodule = requests.get(url=xpcrmodule_runsets_url, verify=False).json()
 
             """
             Get Related runset basic info (by xpcr module & runset type match)
@@ -2943,8 +2919,7 @@ def Add_Dash(app):
                 else:
                     print(f"Error: {response.status_code} - {response.text}")
             else:
-                print(
-                    f"Access Token Error: {response.status_code} - {response.text}")
+                print(f"Access Token Error: {response.status_code} - {response.text}")
             return f"Runset created by: {first_name} {last_name}"
         else:
             return no_update
@@ -3036,16 +3011,13 @@ def Add_Dash(app):
             Get Review Groups
             """
             reviewgroup_options = {}
-            reviewgroups_url = os.environ["RUN_REVIEW_API_BASE"] + \
-                "ReviewGroups"
+            reviewgroups_url = os.environ["RUN_REVIEW_API_BASE"] + "ReviewGroups"
 
-            reviewgroups_response = requests.get(
-                reviewgroups_url, verify=False).json()
+            reviewgroups_response = requests.get(reviewgroups_url, verify=False).json()
 
             for reviewgroup in reviewgroups_response:
                 if reviewgroup["description"] != "System QC Tech I":
-                    reviewgroup_options[reviewgroup["id"]
-                                        ] = reviewgroup["description"]
+                    reviewgroup_options[reviewgroup["id"]] = reviewgroup["description"]
             return not is_open, reviewgroup_options
 
         return is_open, {}
@@ -3071,8 +3043,7 @@ def Add_Dash(app):
             review_group_subscribers = {}
             for review_group_id in review_groups_selected:
                 runsetreviewassignmenturl = (
-                    os.environ["RUN_REVIEW_API_BASE"] +
-                    "RunSetReviewAssignments"
+                    os.environ["RUN_REVIEW_API_BASE"] + "RunSetReviewAssignments"
                 )
                 queryParams = {}
                 queryParams["runsetid"] = runset_data["id"]
@@ -3110,10 +3081,8 @@ def Add_Dash(app):
             runset_update_url = os.environ[
                 "RUN_REVIEW_API_BASE"
             ] + "RunSets/{}/status".format(runset_data["id"])
-            runset_update_response = requests.put(
-                url=runset_update_url, verify=False)
-            print("Runset Update Response: " +
-                  str(runset_update_response.status_code))
+            runset_update_response = requests.put(url=runset_update_url, verify=False)
+            print("Runset Update Response: " + str(runset_update_response.status_code))
 
             if os.environ["SEND_EMAILS"] == "Yes":
                 """
@@ -3159,7 +3128,7 @@ def Add_Dash(app):
         State("runset-selection-data", "data"),
         State("runset-review", "data"),
         State("file-upload-response", "is_open"),
-        prevent_intial_call=True
+        prevent_intial_call=True,
     )
     def upload_misc_file_to_blob_storage(
         list_of_contents,
@@ -3182,7 +3151,7 @@ def Add_Dash(app):
                 """
                 content_type, content_string = files[file].split(",")
                 file_content = base64.b64decode(content_string)
-                file_id = str(uuid.uuid4()) + file[file.rfind("."):]
+                file_id = str(uuid.uuid4()) + file[file.rfind(".") :]
                 file_url = save_uploaded_file_to_blob_storage(
                     file_content, file_id, "neumodxsystemqc-miscellaneousfiles"
                 )
@@ -3199,11 +3168,9 @@ def Add_Dash(app):
                     "fileid": file_id,
                 }
 
-                misc_file_url = os.environ["RUN_REVIEW_API_BASE"] + \
-                    "MiscellaneousFiles"
+                misc_file_url = os.environ["RUN_REVIEW_API_BASE"] + "MiscellaneousFiles"
                 print(file_payload)
-                resp = requests.post(
-                    url=misc_file_url, json=file_payload, verify=False)
+                resp = requests.post(url=misc_file_url, json=file_payload, verify=False)
                 print(resp.status_code)
 
             # Return a message with the URL of the uploaded file
@@ -3277,8 +3244,7 @@ def Add_Dash(app):
             """
 
             column_definitions = []
-            initial_selection = [
-                x for x in misc_file_data.columns if "Id" not in x]
+            initial_selection = [x for x in misc_file_data.columns if "Id" not in x]
 
             for column in misc_file_data.columns:
                 column_definition = {
@@ -3360,8 +3326,7 @@ def Add_Dash(app):
                 "RUN_REVIEW_API_BASE"
             ] + "miscellaneousfiles/{}".format(selection[0]["Id"])
             print(delete_cartridge_picture_url)
-            response = requests.delete(
-                url=delete_cartridge_picture_url, verify=False)
+            response = requests.delete(url=delete_cartridge_picture_url, verify=False)
             print("Cartridge Picture Delete Status Code: ", response.status_code)
 
             return not is_open
@@ -3471,8 +3436,7 @@ def Add_Dash(app):
             """
 
             column_definitions = []
-            initial_selection = [
-                x for x in comment_data.columns if "Id" not in x]
+            initial_selection = [x for x in comment_data.columns if "Id" not in x]
 
             for column in comment_data.columns:
                 column_definition = {
