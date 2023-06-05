@@ -9,7 +9,6 @@ import dash_ag_grid as dag
 
 register_page(__name__, path="/")
 
-
 def update_modules():
     modules_update = {}
     module_results = requests.get(
@@ -100,8 +99,6 @@ layout = html.Div([
     html.Div([
         dbc.Button('Get Data', id='view-run-data'),
     ])
-
-
 ])
 
 @callback(Output("xpcr-module-options", "options"), [Input("load-interval", "children")])
