@@ -16,7 +16,7 @@ system_qc_reviewers = {
     "Jeremias": "jeremias.lioi@qiagen.com",
 }
 system_integration_reviewers = {
-    # "Catherine": "catherine.couture@qiagen.com",
+    "Catherine": "catherine.couture@qiagen.com",
     "Aaron": "aaron.ripley@qiagen.com",
 }
 engineering_reviewers = {"Vik": "viktoriah.slusher@qiagen.com"}
