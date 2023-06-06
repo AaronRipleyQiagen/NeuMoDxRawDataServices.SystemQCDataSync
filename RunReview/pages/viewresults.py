@@ -8,8 +8,6 @@ import os
 from azure.storage.blob import BlobServiceClient
 import base64
 
-register_page(__name__, path="/run-review/view-results/")
-
 fig = go.Figure()
 
 halfstyle = {
@@ -1659,7 +1657,7 @@ add_review_group_button = dbc.Button(
     "Add Reviewer for Dataset", id="add-review-group-button"
 )
 
-layout = [
+layout = html.Div([
     run_review_description,
     issue_post_response,
     run_review_update_response,
@@ -1736,4 +1734,4 @@ layout = [
     dcc.Loading(id="run-review-loading", type="graph",
                 children=[run_review_curves]),
     review_tabs,
-]  # , run_review_channel_selector,
+])
