@@ -38,6 +38,8 @@ issue_delete_confirmation = dbc.Modal(
                 ),
             ]
         ),
+        html.Br(),
+        dbc.ModalFooter(),
     ],
     id="issue-delete-confirmation",
     is_open=False,
@@ -72,10 +74,8 @@ remediation_action_update_response = dbc.Modal(
 
 remediation_action_delete_confirmation = dbc.Modal(
     [
-        dbc.ModalHeader(dbc.ModalTitle(
-            "Remediation Action Deletion Confirmation")),
-        dbc.ModalBody(
-            "Are you sure you want to delete this remediation action?"),
+        dbc.ModalHeader(dbc.ModalTitle("Remediation Action Deletion Confirmation")),
+        dbc.ModalBody("Are you sure you want to delete this remediation action?"),
         html.Div(
             [
                 dbc.Button(
@@ -107,6 +107,7 @@ remediation_action_delete_response = dbc.Modal(
     [
         dbc.ModalHeader(dbc.ModalTitle("Remediation Action Deletion Result")),
         dbc.ModalBody("Remediation Action was deleted successfully"),
+        dbc.ModalFooter(),
     ],
     id="remediation-action-delete-response",
     is_open=False,
@@ -145,8 +146,7 @@ issue_resolution_remediation_action_response = dbc.Modal(
 
 run_review_update_response = dbc.Modal(
     [
-        dbc.ModalHeader(dbc.ModalTitle(
-            "Run Review Status Updated Successfully")),
+        dbc.ModalHeader(dbc.ModalTitle("Run Review Status Updated Successfully")),
         dbc.ModalBody("Run Review Status Changed to Completed."),
     ],
     id="run-review-status-update-post-response",
@@ -155,7 +155,7 @@ run_review_update_response = dbc.Modal(
 
 reviewgroup_selector_modal = dbc.Modal(
     [
-        dbc.ModalHeader(dbc.ModalTitle("Add Runset Review Assignemnts")),
+        dbc.ModalHeader(dbc.ModalTitle("Add Runset Review Assignments")),
         dbc.ModalBody(
             children=[
                 html.Label("Select Groups required to review this runset."),
@@ -183,6 +183,15 @@ reviewgroup_selector_modal = dbc.Modal(
     is_open=False,
 )
 
+add_review_assignment_response = dbc.Modal(
+    [
+        dbc.ModalHeader(dbc.ModalTitle("Run Review Assignment result")),
+        dbc.ModalBody("Run Review Assignment was added successfully"),
+    ],
+    id="add-review-assignment-response",
+    is_open=False,
+)
+
 add_comment_button = dbc.Button(
     "Add Comment",
     id="add-comment-button",
@@ -207,7 +216,10 @@ comments_modal = dbc.Modal(
     [
         dbc.ModalHeader(dbc.ModalTitle("Add Comment to Runset")),
         dbc.ModalBody(comments_text),
+        html.Br(),
         html.Div([add_comment_button, cancel_comment_button]),
+        html.Br(),
+        dbc.ModalFooter(),
     ],
     id="comments-modal",
     is_open=False,
@@ -219,6 +231,7 @@ comments_view_modal = dbc.Modal(
     [
         dbc.ModalHeader(dbc.ModalTitle("Comment Text")),
         dbc.ModalBody(comments_view_text),
+        dbc.ModalFooter(),
     ],
     id="comments-view-modal",
     is_open=False,
@@ -246,8 +259,10 @@ comments_delete_confirmation = dbc.Modal(
     [
         dbc.ModalHeader(dbc.ModalTitle("Confirm Comment Deletion")),
         dbc.ModalBody("Are You Sure you want to delete this comment?"),
-        html.Div([confirm_comment_delete_button,
-                 cancel_comment_delete_button]),
+        html.Br(),
+        html.Div([confirm_comment_delete_button, cancel_comment_delete_button]),
+        html.Br(),
+        dbc.ModalFooter(),
     ],
     id="comments-delete-confirmation",
     is_open=False,
@@ -259,22 +274,24 @@ comments_delete_response = dbc.Modal(
     is_open=False,
 )
 
-
-message_objects = html.Div([
-    issue_post_response,
-    issue_delete_confirmation,
-    issue_delete_response,
-    remediation_action_post_response,
-    remediation_action_update_response,
-    remediation_action_delete_confirmation,
-    remediation_action_delete_response,
-    issue_resolution_remediation_action_selection,
-    issue_resolution_remediation_action_response,
-    run_review_update_response,
-    reviewgroup_selector_modal,
-    comments_modal,
-    comments_view_modal,
-    comments_post_response,
-    comments_delete_confirmation,
-    comments_delete_response,
-])
+message_objects = html.Div(
+    [
+        issue_post_response,
+        issue_delete_confirmation,
+        issue_delete_response,
+        remediation_action_post_response,
+        remediation_action_update_response,
+        remediation_action_delete_confirmation,
+        remediation_action_delete_response,
+        issue_resolution_remediation_action_selection,
+        issue_resolution_remediation_action_response,
+        run_review_update_response,
+        reviewgroup_selector_modal,
+        add_review_assignment_response,
+        comments_modal,
+        comments_view_modal,
+        comments_post_response,
+        comments_delete_confirmation,
+        comments_delete_response,
+    ]
+)
