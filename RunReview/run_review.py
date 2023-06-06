@@ -23,14 +23,6 @@ def Add_Dash(app):
         pages_folder="pages",
         external_stylesheets=[dbc.themes.COSMO],
     )
-    server = app.server
-    server.config["MAIL_SERVER"] = "smtp.gmail.com"
-    server.config["MAIL_PORT"] = 465
-    server.config["MAIL_USERNAME"] = "neumodxsystemqcdatasync@gmail.com"
-    server.config["MAIL_PASSWORD"] = os.environ["EMAIL_PASSWORD"]
-    server.config["MAIL_USE_TLS"] = False
-    server.config["MAIL_USE_SSL"] = True
-    mail = Mail(app.server)
     apply_layout_with_auth(app, layout)
     get_run_review_callbacks(app)
 

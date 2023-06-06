@@ -1,4 +1,5 @@
 from .dependencies import *
+from flask_mail import Mail, Message
 
 
 def get_runset_review_callbacks(app):
@@ -197,6 +198,7 @@ def get_runset_review_callbacks(app):
         State("review-group-options", "options"),
         State("runset-selection-data", "data"),
         State("add-review-assignment-response", "is_open"),
+        State("url", "href"),
         prevent_initial_call=True,
     )
     def add_runsetreviewassignments(
@@ -205,6 +207,7 @@ def get_runset_review_callbacks(app):
         review_groups_dictionary,
         runset_data,
         post_response_is_open,
+        url,
     ):
         if ctx.triggered_id == "submit-reviewgroup-selection-button":
             review_groups = []
@@ -228,15 +231,12 @@ def get_runset_review_callbacks(app):
             if "System QC Reviewer" in review_groups:
                 for user in system_qc_reviewers:
                     review_group_subscribers[user] = system_qc_reviewers[user]
-
             if "System Integration Lead" in review_groups:
                 for user in system_integration_reviewers:
                     review_group_subscribers[user] = system_integration_reviewers[user]
-
             if "Engineering" in review_groups:
                 for user in engineering_reviewers:
                     review_group_subscribers[user] = engineering_reviewers[user]
-
             if "Admin" in review_groups:
                 for user in admin_reviewers:
                     review_group_subscribers[user] = admin_reviewers[user]
@@ -253,37 +253,8 @@ def get_runset_review_callbacks(app):
             print("Runset Update Response: " + str(runset_update_response.status_code))
 
             if os.environ["SEND_EMAILS"] == "Yes":
-                """
-                Get reviewers to send email too
-                """
-                runset_url = os.environ["RUN_REVIEW_API_BASE"] + "RunSets/{}".format(
-                    runset_data["id"]
+                send_review_ready_messages(
+                    app, runset_data["id"], url, review_group_subscribers
                 )
-                runset = requests.get(url=runset_url, verify=False).json()
-                # if 'XPCR Module Qualification' in runset_type_selection_options[runset_type_selection_id]:
-                msg = Message(
-                    runset["name"] + " Ready for review",
-                    sender="neumodxsystemqcdatasync@gmail.com",
-                    recipients=["aripley2008@gmail.com"],
-                )
-
-                with mail.connect() as conn:
-                    for user in review_group_subscribers:
-                        message = (
-                            "Hello "
-                            + user
-                            + ", this message is sent to inform you that "
-                            + runset["name"]
-                            + " is now ready for your review."
-                        )
-                        subject = runset["name"] + " Ready for review"
-                        msg = Message(
-                            recipients=[review_group_subscribers[user]],
-                            body=message,
-                            subject=subject,
-                            sender="neumodxsystemqcdatasync@gmail.com",
-                        )
-
-                        conn.send(msg)
             return not post_response_is_open
         return post_response_is_open

@@ -31,7 +31,8 @@ def _protect_dashviews(dashapp):
     for view_func in dashapp.server.view_functions:
         if view_func.startswith(dashapp.config.url_base_pathname):
             dashapp.server.view_functions[view_func] = login_required(
-                dashapp.server.view_functions[view_func])
+                dashapp.server.view_functions[view_func]
+            )
 
 
 def register_blueprints(server):
@@ -39,8 +40,12 @@ def register_blueprints(server):
     from app.webapp import server_bp
 
     server.register_blueprint(server_bp)
-    for module_name in (['DataExplorerTemplates', 'RunReviewTemplates', 'RunReviewQueueTemplates']):
+    for module_name in [
+        "DataExplorerTemplates",
+        "RunReviewTemplates",
+        "RunReviewQueueTemplates",
+    ]:
         print(module_name)
-        module = import_module('app.{}.routes'.format(module_name))
+        module = import_module("app.{}.routes".format(module_name))
 
         server.register_blueprint(module.blueprint)
