@@ -11,6 +11,7 @@ warnings.filterwarnings("ignore")
 url_base = "/dashboard/run-review/"
 
 layout = run_review_layout
+# layout = dbc.Progress(children=run_review_layout)
 
 
 def Add_Dash(app):
