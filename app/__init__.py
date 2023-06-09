@@ -5,11 +5,10 @@ from flask.helpers import get_root_path
 from DataExplorer import data_explorer
 from RunReview import run_review
 from RunReviewQueue import run_review_queue
+from RunReviewKPIDashboard import run_review_kpi_dashboard
 from flask_session import Session
 import msal
 import app_config
-
-# Some random comment
 
 
 def create_app():
@@ -24,6 +23,7 @@ def create_app():
     server = data_explorer.Add_Dash(server)
     server = run_review.Add_Dash(server)
     server = run_review_queue.Add_Dash(server)
+    server = run_review_kpi_dashboard.Add_Dash(server)
     return server
 
 
@@ -44,8 +44,9 @@ def register_blueprints(server):
         "DataExplorerTemplates",
         "RunReviewTemplates",
         "RunReviewQueueTemplates",
+        "RunReviewKPIDashboardTemplates",
     ]:
-        print(module_name)
+        print("Registering Blueprints for: ", module_name)
         module = import_module("app.{}.routes".format(module_name))
 
         server.register_blueprint(module.blueprint)

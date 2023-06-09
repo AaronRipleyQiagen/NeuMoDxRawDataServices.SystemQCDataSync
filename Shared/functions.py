@@ -77,3 +77,30 @@ def download_file(filename, container_name):
     base64_blob = base64.b64encode(stream.getvalue()).decode()
 
     return base64_blob
+
+
+def HttpGetAsync(urls):
+    """
+    Used to perform async requests to retreive data from a list of urls data.
+    Parameters
+    ----------
+    urls (List[urls]):  list of urls to request data from
+    """
+
+    async def HttpGet(session, url):
+        async with session.get(url) as resp:
+            data = await resp.json()
+            return data
+
+    async def main():
+        async with aiohttp.ClientSession(
+            connector=aiohttp.TCPConnector(verify_ssl=False)
+        ) as session:
+            tasks = []
+            for url in urls:
+                tasks.append(asyncio.ensure_future(HttpGet(session, url)))
+
+            return await asyncio.gather(*tasks)
+
+    responses = asyncio.run(main())
+    return responses

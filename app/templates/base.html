@@ -43,6 +43,11 @@
               >Review Data</a
             >
           </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('runreviewkpidashboard.runreview')}}"
+              >Run Review KPIs</a
+            >
+          </li>
           {% if not session.get("user") %}
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('main.login') }}">Login</a>
