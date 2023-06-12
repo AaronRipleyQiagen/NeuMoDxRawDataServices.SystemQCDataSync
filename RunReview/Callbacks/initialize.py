@@ -1,4 +1,5 @@
 from .dependencies import *
+import app_config
 
 
 def get_initialization_callbacks(app):
@@ -280,15 +281,19 @@ def get_initialization_callbacks(app):
         runset_subject_descriptions["XPCR Module"] = runset_xpcrmodule_descriptions
 
         runset_neumodx_subject_ids_dict = {}
+        runset_neumodx_descriptions = {}
         for idx in dataframe.drop_duplicates(
             subset=["RunSetNeuMoDxSystemId", "NeuMoDxSystemId"]
         ).index:
             runset_neumodx_subject_ids_dict[
                 dataframe.loc[idx, "RunSetNeuMoDxSystemId"]
             ] = dataframe.loc[idx, "NeuMoDxSystemId"]
+            runset_neumodx_descriptions[
+                dataframe.loc[idx, "RunSetNeuMoDxSystemId"]
+            ] = dataframe.loc[idx, "N500 Serial Number"]
 
         runset_subject_ids["NeuMoDxSystem"] = runset_neumodx_subject_ids_dict
-
+        runset_subject_descriptions["NeuMoDxSystem"] = runset_neumodx_descriptions
         dataframe.drop(
             [
                 "Cartridge Id",
@@ -326,8 +331,6 @@ def get_initialization_callbacks(app):
             axis=1,
             inplace=True,
         )
-        # with open('output.json', 'w') as f:
-        # json.dump(dataframe.to_dict('records'), f)
 
         return (
             dataframe.to_dict("records"),
@@ -420,3 +423,81 @@ def get_initialization_callbacks(app):
 
         else:
             return no_update
+
+    @app.callback(
+        Output("runset-creator-name", "children"),
+        Input("runset-selection-data", "data"),
+    )
+    def get_runset_creator_details(runset_data):
+        if ctx.triggered_id == "runset-selection-data":
+            tenant_id = app_config.TENANT_ID
+            client_id = app_config.CLIENT_ID
+            client_secret = app_config.CLIENT_SECRET
+            user_id = runset_data["validFromUser"]
+            token_url = (
+                f"https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"
+            )
+
+            # Set the token request parameters
+            token_data = {
+                "grant_type": "client_credentials",
+                "client_id": client_id,
+                "client_secret": client_secret,
+                "scope": "https://graph.microsoft.com/.default",
+            }
+
+            # Request the access token
+            response = requests.post(token_url, data=token_data)
+
+            # Check if the request was successful
+            if response.status_code == 200:
+                access_token = response.json().get("access_token")
+
+                # Construct the endpoint URL
+                endpoint = f"https://graph.microsoft.com/v1.0/users/{user_id}"
+
+                # Set the headers with the access token
+                headers = {
+                    "Authorization": f"Bearer {access_token}",
+                    "Content-Type": "application/json",
+                }
+
+                # Send the request to retrieve user details
+                response = requests.get(endpoint, headers=headers)
+
+                # Check if the request was successful
+                if response.status_code == 200:
+                    user_data = response.json()
+                    print(user_data)
+                    first_name = user_data.get("displayName")
+                    last_name = user_data.get("surname")
+                else:
+                    print(f"Error: {response.status_code} - {response.text}")
+            else:
+                print(f"Access Token Error: {response.status_code} - {response.text}")
+            return f"Runset created by: {first_name} {last_name}"
+        else:
+            return no_update
+
+    @app.callback(
+        Output("runset-system-description", "children"),
+        Input("runset-subject-descriptions", "data"),
+    )
+    def get_runset_neumodx_system_details(runset_subject_descriptions):
+        neumodx_system_list = [
+            runset_subject_descriptions["NeuMoDxSystem"][x]
+            for x in runset_subject_descriptions["NeuMoDxSystem"]
+        ]
+        print("SYSTEM_LIST:", neumodx_system_list)
+        neumodx_system_details_string = "Processed on: "
+
+        ## Append each system in neumodx system list to details string.
+        for neumodx_system in neumodx_system_list:
+            neumodx_system_details_string = (
+                neumodx_system_details_string + neumodx_system + ", "
+            )
+
+        ## Remove trailing ", "
+        neumodx_system_details_string = neumodx_system_details_string[:-2]
+
+        return neumodx_system_details_string
