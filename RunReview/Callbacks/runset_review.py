@@ -1,5 +1,6 @@
 from .dependencies import *
 from flask_mail import Mail, Message
+import app_config
 
 
 def get_runset_review_callbacks(app):
@@ -36,62 +37,6 @@ def get_runset_review_callbacks(app):
             return not is_open
 
         return is_open
-
-    @app.callback(
-        Output("runset-creator-name", "children"),
-        Input("review-tabs", "active_tab"),
-        State("runset-selection-data", "data"),
-    )
-    def get_runset_creator_details(active_tab, runset_data):
-        if ctx.triggered_id == "review-tabs" and active_tab == "runset-reviews":
-            tenant_id = app_config.TENANT_ID
-            client_id = app_config.CLIENT_ID
-            client_secret = app_config.CLIENT_SECRET
-            user_id = runset_data["validFromUser"]
-            token_url = (
-                f"https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"
-            )
-
-            # Set the token request parameters
-            token_data = {
-                "grant_type": "client_credentials",
-                "client_id": client_id,
-                "client_secret": client_secret,
-                "scope": "https://graph.microsoft.com/.default",
-            }
-
-            # Request the access token
-            response = requests.post(token_url, data=token_data)
-
-            # Check if the request was successful
-            if response.status_code == 200:
-                access_token = response.json().get("access_token")
-
-                # Construct the endpoint URL
-                endpoint = f"https://graph.microsoft.com/v1.0/users/{user_id}"
-
-                # Set the headers with the access token
-                headers = {
-                    "Authorization": f"Bearer {access_token}",
-                    "Content-Type": "application/json",
-                }
-
-                # Send the request to retrieve user details
-                response = requests.get(endpoint, headers=headers)
-
-                # Check if the request was successful
-                if response.status_code == 200:
-                    user_data = response.json()
-                    print(user_data)
-                    first_name = user_data.get("displayName")
-                    last_name = user_data.get("surname")
-                else:
-                    print(f"Error: {response.status_code} - {response.text}")
-            else:
-                print(f"Access Token Error: {response.status_code} - {response.text}")
-            return f"Runset created by: {first_name} {last_name}"
-        else:
-            return no_update
 
     @app.callback(
         Output("runset-reviews-table", "rowData"),
