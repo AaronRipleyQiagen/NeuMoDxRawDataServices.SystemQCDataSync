@@ -105,11 +105,20 @@ runset_status_selections = dcc.Dropdown(
 
 review_group_completed_filter = dcc.Checklist(
     options=[
-        {"label": "Filter Out Runsets my Group has Completed?", "value": True},
+        {"label": "Filter Out Runsets My Group Has Completed?", "value": True},
     ],
     value=[True],
     inline=True,
     id="review-group-completed-filter",
+)
+
+my_runsets_filter = dcc.Checklist(
+    options=[
+        {"label": "Filter To Only Runsets Created By Me?", "value": True},
+    ],
+    value=[False],
+    inline=True,
+    id="my-runsets-filter",
 )
 
 review_assignment_label = html.Label(
@@ -148,6 +157,7 @@ review_assignment_group = html.Div(
         review_assignment_label,
         review_assignment_selections,
         review_group_completed_filter,
+        my_runsets_filter,
     ],
     style={
         "width": "100%",
@@ -222,23 +232,20 @@ delete_runset_response = dbc.Modal(
 )
 
 buttons = html.Div(
-    [refresh_button, get_runset_data,
-        delete_runset_button], style={"padding": "10px"}
+    [refresh_button, get_runset_data, delete_runset_button], style={"padding": "10px"}
 )
 
-runset_id_selected = dcc.Store(id='runset-id-selected', storage_type='session')
+runset_id_selected = dcc.Store(id="runset-id-selected", storage_type="session")
 
 page_container = [
     html.Div(
-        [runset_status_group, review_assignment_group], style={
-            "padding-bottom": "2.5%"}
+        [runset_status_group, review_assignment_group], style={"padding-bottom": "2.5%"}
     ),
     review_queue,
     buttons,
     delete_runset_confirmation_modal,
     delete_runset_response,
-    runset_id_selected
-
+    runset_id_selected,
 ]
 
 content = html.Div(
@@ -255,7 +262,7 @@ layout = html.Div(
             children=[dcc.Location(id="run-review-url")],
         ),
         content,
-        html.Div(id="external-link-output")
+        html.Div(id="external-link-output"),
     ]
 )
 
@@ -293,15 +300,16 @@ def Add_Dash(app):
         """,
         Output("external-link-output", "children"),
         Input("get-runset-data", "n_clicks"),
-        State("runset-id-selected", 'data')
-
+        State("runset-id-selected", "data"),
     )
 
-    @app.callback(Output('runset-id-selected', 'data'),
-                  Input('review-queue-table', 'selectionChanged'))
+    @app.callback(
+        Output("runset-id-selected", "data"),
+        Input("review-queue-table", "selectionChanged"),
+    )
     def get_runset_selected(selection):
         if ctx.triggered_id:
-            return selection[0]['Id']
+            return selection[0]["Id"]
         else:
             return no_update
 
@@ -315,8 +323,7 @@ def Add_Dash(app):
         review_groups = requests.get(review_groups_url, verify=False).json()
         review_group_options = {}
         for review_group in review_groups:
-            review_group_options[review_group["id"]
-                                 ] = review_group["description"]
+            review_group_options[review_group["id"]] = review_group["description"]
         return review_group_options, session["user"].group_id
 
     @app.callback(
@@ -326,6 +333,7 @@ def Add_Dash(app):
         Input("runset-status-selections", "value"),
         Input("review-assignment-selections", "value"),
         Input("review-group-completed-filter", "value"),
+        Input("my-runsets-filter", "value"),
         Input("delete-runset-response", "is_open"),
     )
     def refresh_review_queue(
@@ -333,6 +341,7 @@ def Add_Dash(app):
         runset_status_selections,
         review_assignment_selections,
         review_group_completed_filter,
+        my_runsets_filter,
         delete_response_is_open,
     ):
         """
@@ -351,8 +360,7 @@ def Add_Dash(app):
                 {"headerName": "XPCR Module", "field": "XPCR Module", "filter": True},
                 {"headerName": "Description", "field": "Description", "filter": True},
                 {"headerName": "Start Date", "field": "Start Date", "filter": True},
-                {"headerName": "Sample Count",
-                    "field": "Sample Count", "filter": True},
+                {"headerName": "Sample Count", "field": "Sample Count", "filter": True},
                 {"headerName": "Id", "field": "Id", "filter": True, "hide": True},
                 {
                     "headerName": "UserId",
@@ -373,12 +381,18 @@ def Add_Dash(app):
             else:
                 review_group_filter = None
 
+            if True in my_runsets_filter:
+                my_runset_filter_value = True
+            else:
+                my_runset_filter_value = False
+            print("MY RUNSETS FILTER: ", my_runset_filter_value)
             rowData, columnDefs = populate_review_queue(
                 session["user"].id,
                 session["user"].group_display,
                 review_group_ids=review_assignment_selections,
                 runset_statuses=runset_status_selections,
                 reviewer_group_id=review_group_filter,
+                my_runsets_filter=my_runset_filter_value,
             )
 
             if rowData:
@@ -424,8 +438,7 @@ def Add_Dash(app):
                 "RUN_REVIEW_API_BASE"
             ] + "Runsets/{}".format(selection[0]["Id"])
             print(delete_cartridge_picture_url)
-            response = requests.delete(
-                url=delete_cartridge_picture_url, verify=False)
+            response = requests.delete(url=delete_cartridge_picture_url, verify=False)
             print("Runset Delete Status Code: ", response.status_code)
             if response.status_code == 200:
                 message = "Runset was deleted successfully"
