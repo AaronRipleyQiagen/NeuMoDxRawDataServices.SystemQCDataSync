@@ -275,6 +275,7 @@ def get_pcr_data_callbacks(app):
                     "XPCR Module Serial",
                     "XPCR Module Lane",
                     "Run",
+                    "Baseline Mean",
                     "Baseline %CV",
                     "Baseline Std",
                     "Max Step",
