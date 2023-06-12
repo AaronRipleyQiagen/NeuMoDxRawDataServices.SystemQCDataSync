@@ -10,8 +10,14 @@ import dash_bootstrap_components as dbc
 from dash import Input, Output, dcc, html, no_update, ctx
 import base64
 
+
 def populate_review_queue(
-    user_id, user_group, review_group_ids=[], runset_statuses=[], reviewer_group_id=None
+    user_id,
+    user_group,
+    review_group_ids=[],
+    runset_statuses=[],
+    reviewer_group_id=None,
+    my_runsets_filter=False,
 ):
     runsets_url = os.environ[
         "RUN_REVIEW_API_BASE"
@@ -23,6 +29,7 @@ def populate_review_queue(
         runsets_params["runsetstatuses"] = runset_statuses
     if reviewer_group_id:
         runsets_params["reviewergroupid"] = reviewer_group_id
+    runsets_params["createdbyuserfilter"] = my_runsets_filter
     resp = requests.get(url=runsets_url, verify=False, params=runsets_params)
     runsets = resp.json()
     if len(runsets) > 0:
