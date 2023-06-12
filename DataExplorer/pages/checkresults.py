@@ -1,6 +1,7 @@
 from dash import (
     html,
     callback,
+    clientside_callback,
     Output,
     Input,
     State,
@@ -47,11 +48,12 @@ register_page(__name__, path="/results/")
 """
 Layout Components
 """
+data_explorer_external_link_redirect = html.Div(
+    id="data-explorer-external-link-redirect"
+)
 created_runset_id = dcc.Store(id="created-runset-id", storage_type="session")
 sample_results_table = dag.AgGrid(
     enableEnterpriseModules=True,
-    # licenseKey=os.environ['AGGRID_ENTERPRISE'],
-    # columnDefs=initial_columnDefs,
     rowData=[],
     columnSize="sizeToFit",
     defaultColDef=dict(
@@ -91,8 +93,14 @@ reviewgroup_selector_modal = dbc.Modal(
 )
 post_response = dbc.Modal(
     [
-        dbc.ModalHeader(dbc.ModalTitle("Run Review Creation Result")),
-        dbc.ModalBody("Run Review was successfully created"),
+        dbc.ModalHeader(dbc.ModalTitle("Runset Creation Result")),
+        dbc.ModalBody(
+            children=[
+                html.P("Runset was successfully created."),
+                dbc.Button("View Runset", id="view-runset-button"),
+            ]
+        ),
+        dbc.ModalFooter(),
     ],
     id="post-response",
     is_open=False,
@@ -150,9 +158,9 @@ layout = html.Div(
             id="pending-post",
             type="cube",
             fullscreen="true",
-            children=[reviewgroup_selector_modal,
-                      post_response, runset_selector_modal],
+            children=[reviewgroup_selector_modal, post_response, runset_selector_modal],
         ),
+        data_explorer_external_link_redirect,
     ]
 )
 
@@ -265,10 +273,8 @@ def update_pcr_curves(channel, process_step, data):
     ]
 
     for idx in df_Channel_Step.index:
-        X = np.array(
-            [read for read in df_Channel_Step.loc[idx, "Readings Array"]][0])
-        Y = np.array(
-            [read for read in df_Channel_Step.loc[idx, "Readings Array"]][1])
+        X = np.array([read for read in df_Channel_Step.loc[idx, "Readings Array"]][0])
+        Y = np.array([read for read in df_Channel_Step.loc[idx, "Readings Array"]][1])
         _name = str(df_Channel_Step.loc[idx, "XPCR Module Lane"])
         fig.add_trace(
             go.Scatter(
@@ -277,8 +283,7 @@ def update_pcr_curves(channel, process_step, data):
                 mode="lines",
                 name=_name,
                 line=dict(
-                    color=colorDict[df_Channel_Step.loc[idx,
-                                                        "XPCR Module Lane"]]
+                    color=colorDict[df_Channel_Step.loc[idx, "XPCR Module Lane"]]
                 ),
             )
         )
@@ -306,8 +311,7 @@ def update_pcr_curves(channel, process_step, data):
     floats = ["Ct", "EPR"]
     ints = ["End Point Fluorescence", "Max Peak Height"]
     for column in output_frame.columns:
-        column_definition = {"headerName": column,
-                             "field": column, "filter": True}
+        column_definition = {"headerName": column, "field": column, "filter": True}
         if column not in inital_selection:
             column_definition["hide"] = True
         if column in aggregates:
@@ -349,6 +353,30 @@ def switch_runset_selector(create_clicks, submit_clicks, cancel_clicks, is_open)
 def switch_runset_selector(
     options, submit_button, cancel_button, reviewgroup_selector_modal_is_open
 ):
-    # if (ctx.triggered_id == 'review-group-options' and len(options) > 0):
     return not reviewgroup_selector_modal_is_open
-    # return reviewgroup_selector_modal_is_open
+
+
+"""
+Following Javascript function allows for users to redirect the user to a specific run-review page.
+Note that because the way this is used (Dash App embedded inside of Flask App), it is necessary to 
+use javascript to do this redirect.
+"""
+
+clientside_callback(
+    """
+        function goToRunSetPage(n_clicks, runset_id) {
+            if (n_clicks && n_clicks > 0) {
+                var currentHref = window.top.location.href;
+                var splitString = '/data-explorer/';
+                var hrefParts = currentHref.split(splitString);
+                if (hrefParts.length > 1) {
+                    var newHref = hrefParts[0] + '/run-review/' + runset_id;
+                    window.top.location.href = newHref;
+                }
+            }
+        }
+        """,
+    Output("data-explorer-external-link-redirect", "children"),
+    Input("view-runset-button", "n_clicks"),
+    State("created-runset-id", "data"),
+)
