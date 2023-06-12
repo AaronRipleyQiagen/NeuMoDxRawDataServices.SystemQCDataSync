@@ -19,7 +19,10 @@ system_integration_reviewers = {
     "Catherine": "catherine.couture@qiagen.com",
     "Aaron": "aaron.ripley@qiagen.com",
 }
-engineering_reviewers = {"Vik": "viktoriah.slusher@qiagen.com"}
+engineering_reviewers = {
+    "Lakshmi": "lakshmi.mohanadas@qiagen.com",
+    "Ali": "ali.reda@qiagen.com",
+}
 admin_reviewers = {"David": "david.edwin@qiagen.com"}
 
 
