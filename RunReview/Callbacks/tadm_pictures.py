@@ -221,19 +221,22 @@ def get_tadm_picture_callbacks(app):
         runset_subject_descriptions,
         runset_subject_ids,
     ):
-        runset_tadm_descriptions = runset_subject_descriptions["Run"]
-        runset_tadm_ids = runset_subject_ids["Cartridge"]
-        run_options = {}
+        if runset_subject_descriptions:
+            runset_tadm_descriptions = runset_subject_descriptions["Run"]
+            runset_tadm_ids = runset_subject_ids["Cartridge"]
+            run_options = {}
 
-        for runset_tadm_id in runset_tadm_ids:
-            run_options[runset_tadm_ids[runset_tadm_id]] = runset_tadm_descriptions[
-                runset_tadm_id
-            ]
+            for runset_tadm_id in runset_tadm_ids:
+                run_options[runset_tadm_ids[runset_tadm_id]] = runset_tadm_descriptions[
+                    runset_tadm_id
+                ]
 
-        if ctx.triggered_id:
-            return (not is_open, run_options, [x for x in run_options][0])
+            if ctx.triggered_id:
+                return (not is_open, run_options, [x for x in run_options][0])
+            else:
+                return is_open, run_options, [x for x in run_options][0]
         else:
-            return is_open, run_options, [x for x in run_options][0]
+            return no_update
 
     @app.callback(
         Output("update-tadm-run-confirmation", "is_open"),
@@ -293,9 +296,7 @@ def get_tadm_picture_callbacks(app):
             delete_tadm_picture_url = os.environ[
                 "RUN_REVIEW_API_BASE"
             ] + "tadmpictures/{}".format(selection[0]["Id"])
-            print(delete_tadm_picture_url)
             response = requests.delete(url=delete_tadm_picture_url, verify=False)
-            print("TADM Picture Delete Status Code: ", response.status_code)
 
             return not is_open
         else:

@@ -227,19 +227,26 @@ def get_cartridge_picture_callbacks(app):
         runset_subject_descriptions,
         runset_subject_ids,
     ):
-        runset_cartridge_descriptions = runset_subject_descriptions["Run"]
-        runset_cartridge_ids = runset_subject_ids["Cartridge"]
-        cartridge_options = {}
+        if runset_subject_descriptions:
+            runset_cartridge_descriptions = runset_subject_descriptions["Run"]
+            runset_cartridge_ids = runset_subject_ids["Cartridge"]
+            cartridge_options = {}
 
-        for runset_cartridge_id in runset_cartridge_ids:
-            cartridge_options[
-                runset_cartridge_ids[runset_cartridge_id]
-            ] = runset_cartridge_descriptions[runset_cartridge_id]
+            for runset_cartridge_id in runset_cartridge_ids:
+                cartridge_options[
+                    runset_cartridge_ids[runset_cartridge_id]
+                ] = runset_cartridge_descriptions[runset_cartridge_id]
 
-        if ctx.triggered_id:
-            return (not is_open, cartridge_options, [x for x in cartridge_options][0])
+            if ctx.triggered_id:
+                return (
+                    not is_open,
+                    cartridge_options,
+                    [x for x in cartridge_options][0],
+                )
+            else:
+                return is_open, cartridge_options, [x for x in cartridge_options][0]
         else:
-            return is_open, cartridge_options, [x for x in cartridge_options][0]
+            return no_update
 
     @app.callback(
         Output("update-cartridge-run-confirmation", "is_open"),
@@ -301,10 +308,7 @@ def get_cartridge_picture_callbacks(app):
             delete_cartridge_picture_url = os.environ[
                 "RUN_REVIEW_API_BASE"
             ] + "cartridgepictures/{}".format(selection[0]["Id"])
-            print(delete_cartridge_picture_url)
             response = requests.delete(url=delete_cartridge_picture_url, verify=False)
-            print("Cartridge Picture Delete Status Code: ", response.status_code)
-
             return not is_open
         else:
             return is_open

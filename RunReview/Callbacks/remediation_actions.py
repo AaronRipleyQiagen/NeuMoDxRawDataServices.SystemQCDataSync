@@ -57,7 +57,6 @@ def get_remediation_action_callbacks(app):
                     "runSetReviewResolverId": "00000000-0000-0000-0000-000000000000",
                     "remediationActionTypeId": remediation_action_id,
                 }
-                # print(remediation_action_payload)
                 remediation_action_url = (
                     os.environ["RUN_REVIEW_API_BASE"] + "RemediationActions"
                 )
@@ -67,7 +66,6 @@ def get_remediation_action_callbacks(app):
                     json=remediation_action_payload,
                     verify=False,
                 ).json()
-                print(response)
                 return not is_open
 
         return is_open
@@ -95,7 +93,6 @@ def get_remediation_action_callbacks(app):
         related_runsets,
     ):
         trigger_id = ctx.triggered_id
-        print(trigger_id)
         if (
             (
                 tab_selected in ["run-review-remediation-actions"]
@@ -213,13 +210,9 @@ def get_remediation_action_callbacks(app):
                 "newStatusName": "Completed",
             }
 
-            print(query_params)
             resp = requests.put(
                 url=remediation_action_update_url, params=query_params, verify=False
             )
-
-            print(resp.status_code)
-
             return not is_open
 
         return is_open
@@ -261,11 +254,9 @@ def get_remediation_action_callbacks(app):
     ):
         trigger = ctx.triggered_id
         if trigger == "remediation-action-delete-confirmed-button":
-            print(selected_row[0]["RemediationActionId"])
             delete_url = os.environ[
                 "RUN_REVIEW_API_BASE"
             ] + "RemediationActions/{}".format(selected_row[0]["RemediationActionId"])
-            print(delete_url)
             requests.delete(delete_url, verify=False)
 
             return not is_open

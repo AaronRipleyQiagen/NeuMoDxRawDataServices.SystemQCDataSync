@@ -23,7 +23,6 @@ def get_runset_review_callbacks(app):
                 "acceptable": run_review_acceptance,
                 "newStatusName": "Completed",
             }
-            print(query_params)
             resp = requests.put(
                 url=runsetreview_update_url, params=query_params, verify=False
             )
@@ -33,7 +32,6 @@ def get_runset_review_callbacks(app):
                 "RUN_REVIEW_API_BASE"
             ] + "RunSets/{}/status".format(runsetreview_update["runSetId"])
             runset_update_response = requests.put(url=runset_update_url, verify=False)
-            print("Runset Update Response: " + str(runset_update_response.status_code))
             return not is_open
 
         return is_open
@@ -64,7 +62,6 @@ def get_runset_review_callbacks(app):
                 ]
             )
 
-            print(runset_reviews_response)
             idx = 0
             for runset_review in runset_reviews_response["runSetReviews"]:
                 runset_review_dict = {}
@@ -168,10 +165,7 @@ def get_runset_review_callbacks(app):
                 response = requests.post(
                     runsetreviewassignmenturl, params=queryParams, verify=False
                 )
-                print(response.status_code)
                 review_groups.append(review_groups_dictionary[review_group_id])
-
-            print("Review Groups Assigned: ", review_groups)
 
             if "System QC Reviewer" in review_groups:
                 for user in system_qc_reviewers:
@@ -189,13 +183,10 @@ def get_runset_review_callbacks(app):
                 for user in system_qc_tech_IIs:
                     review_group_subscribers[user] = system_qc_tech_IIs[user]
 
-            print("Subscribers: ", review_group_subscribers)
-
             runset_update_url = os.environ[
                 "RUN_REVIEW_API_BASE"
             ] + "RunSets/{}/status".format(runset_data["id"])
             runset_update_response = requests.put(url=runset_update_url, verify=False)
-            print("Runset Update Response: " + str(runset_update_response.status_code))
 
             if os.environ["SEND_EMAILS"] == "Yes":
                 send_review_ready_messages(

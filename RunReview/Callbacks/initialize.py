@@ -56,8 +56,6 @@ def get_initialization_callbacks(app):
         """
         Get Data associated with Runset.
         """
-        print("collecting runset sample ids")
-        logging.info("collecting runset sample ids")
         runset_sample_ids = []
         runset_map_df = pd.DataFrame(
             columns=[
@@ -101,11 +99,7 @@ def get_initialization_callbacks(app):
             ]
             idx += 1
             runset_map_df.loc[idx] = runset_map
-        print(
-            "collected runset sample ids, {} samples in dataset".format(
-                str(len(runset_sample_ids))
-            )
-        )
+
         runset_map_df.set_index("RawDataDatabaseId", inplace=True)
         sample_data = getSampleDataAsync(runset_sample_ids)
 
@@ -141,7 +135,7 @@ def get_initialization_callbacks(app):
             "RUN_REVIEW_API_BASE"
         ] + "RunSets/{}/status".format(resp["runSetId"])
         runset_update_response = requests.put(url=runset_update_url, verify=False)
-        print("Runset Update Response: " + str(runset_update_response.status_code))
+
         """
         Get Severity Options
         """
@@ -262,7 +256,6 @@ def get_initialization_callbacks(app):
         runset_xpcrmodule_subject_ids_dict = {}
         runset_xpcrmodule_descriptions = {}
         xpcrmodule_options = {}
-        # xpcrmodule_options['NoFilter'] = 'All'
 
         for idx in dataframe.drop_duplicates(
             subset=["RunSetXPCRModuleId", "XPCRModuleId"]
@@ -468,7 +461,6 @@ def get_initialization_callbacks(app):
                 # Check if the request was successful
                 if response.status_code == 200:
                     user_data = response.json()
-                    print(user_data)
                     first_name = user_data.get("displayName")
                     last_name = user_data.get("surname")
                 else:
@@ -488,7 +480,6 @@ def get_initialization_callbacks(app):
             runset_subject_descriptions["NeuMoDxSystem"][x]
             for x in runset_subject_descriptions["NeuMoDxSystem"]
         ]
-        print("SYSTEM_LIST:", neumodx_system_list)
         neumodx_system_details_string = "Processed on: "
 
         ## Append each system in neumodx system list to details string.
