@@ -189,56 +189,60 @@ def get_active_issue_callbacks(app):
         runset_xpcr_module_selection_id,
         runset_subject_ids,
     ):
-        issue_urls = {
-            "Sample": "SampleIssues",
-            "XPCR Module Lane": "XPCRModuleLaneIssues",
-            "Run": "CartridgeIssues",
-            "XPCR Module": "XPCRModuleIssues",
-            "TADM": "XPCRModuleTADMIssues",
-        }
+        if issue_selected:
+            issue_urls = {
+                "Sample": "SampleIssues",
+                "XPCR Module Lane": "XPCRModuleLaneIssues",
+                "Run": "CartridgeIssues",
+                "XPCR Module": "XPCRModuleIssues",
+                "TADM": "XPCRModuleTADMIssues",
+            }
 
-        issue_remediation_url = (
-            os.environ["RUN_REVIEW_API_BASE"]
-            + issue_urls[issue_selected["Level"]]
-            + "/{}/status".format(issue_selected["IssueId"])
-        )
-
-        remediation_action_options = {}
-        if (
-            session["user"].id == issue_selected["UserId"]
-            and related_runsets[runset_selection_data["id"]] > issue_selected["Attempt"]
-        ):
-            xpcrmodule_remediation_issues_url = os.environ[
-                "RUN_REVIEW_API_BASE"
-            ] + "XPCRModules/{}/remediationactions".format(
-                runset_subject_ids["XPCRModule"][runset_xpcr_module_selection_id]
+            issue_remediation_url = (
+                os.environ["RUN_REVIEW_API_BASE"]
+                + issue_urls[issue_selected["Level"]]
+                + "/{}/status".format(issue_selected["IssueId"])
             )
-            xpcrmodule = requests.get(
-                url=xpcrmodule_remediation_issues_url, verify=False
-            ).json()
 
-            for remediation_action in xpcrmodule["remediationActions"]:
-                if (
-                    remediation_action["runSetResolverId"]
-                    == runset_selection_data["id"]
-                ):
-                    remediation_action_id = remediation_action["id"]
-                    action = remediation_action["remediationActionType"]["name"]
-                    remediation_action_options[remediation_action_id] = action
+            remediation_action_options = {}
+            if (
+                session["user"].id == issue_selected["UserId"]
+                and related_runsets[runset_selection_data["id"]]
+                > issue_selected["Attempt"]
+            ):
+                xpcrmodule_remediation_issues_url = os.environ[
+                    "RUN_REVIEW_API_BASE"
+                ] + "XPCRModules/{}/remediationactions".format(
+                    runset_subject_ids["XPCRModule"][runset_xpcr_module_selection_id]
+                )
+                xpcrmodule = requests.get(
+                    url=xpcrmodule_remediation_issues_url, verify=False
+                ).json()
 
-            return (
-                False,
-                issue_remediation_url,
-                remediation_action_options,
-                issue_selected["Level"],
-            )
+                for remediation_action in xpcrmodule["remediationActions"]:
+                    if (
+                        remediation_action["runSetResolverId"]
+                        == runset_selection_data["id"]
+                    ):
+                        remediation_action_id = remediation_action["id"]
+                        action = remediation_action["remediationActionType"]["name"]
+                        remediation_action_options[remediation_action_id] = action
+
+                return (
+                    False,
+                    issue_remediation_url,
+                    remediation_action_options,
+                    issue_selected["Level"],
+                )
+            else:
+                return (
+                    True,
+                    issue_remediation_url,
+                    remediation_action_options,
+                    issue_selected["Level"],
+                )
         else:
-            return (
-                True,
-                issue_remediation_url,
-                remediation_action_options,
-                issue_selected["Level"],
-            )
+            return no_update
 
     @app.callback(
         Output("issue-resolution-remediation-action-selection-prompt", "is_open"),
@@ -266,7 +270,6 @@ def get_active_issue_callbacks(app):
         runset_review,
     ):
         trigger = ctx.triggered_id
-        print(trigger)
         if trigger == "issue-remediation-grade-button":
             return not is_open
         if trigger == "issue-resolution-submit":
@@ -305,7 +308,6 @@ def get_active_issue_callbacks(app):
             """
             if issue_remediation_attempt["success"] == True:
                 issue_update_url = issue_remediation_url
-                print(issue_update_url)
 
                 query_params = {
                     "runSetReviewId": runset_review["id"],
@@ -314,8 +316,6 @@ def get_active_issue_callbacks(app):
                 resp = requests.put(
                     url=issue_update_url, params=query_params, verify=False
                 )
-
-                print(resp.status_code)
 
             return not is_open
 
@@ -340,28 +340,31 @@ def get_active_issue_callbacks(app):
     def activate_issue_delete_button(
         issue_selected, related_runsets, runset_selection_data
     ):
-        issue_urls = {
-            "Sample": "SampleIssues",
-            "XPCR Module Lane": "XPCRModuleLaneIssues",
-            "Run": "CartridgeIssues",
-            "XPCR Module": "XPCRModuleIssues",
-            "TADM": "XPCRModuleTADMIssues",
-        }
+        if issue_selected:
+            issue_urls = {
+                "Sample": "SampleIssues",
+                "XPCR Module Lane": "XPCRModuleLaneIssues",
+                "Run": "CartridgeIssues",
+                "XPCR Module": "XPCRModuleIssues",
+                "TADM": "XPCRModuleTADMIssues",
+            }
 
-        issue_remediation_url = (
-            os.environ["RUN_REVIEW_API_BASE"]
-            + issue_urls[issue_selected["Level"]]
-            + "/{}".format(issue_selected["IssueId"])
-        )
+            issue_remediation_url = (
+                os.environ["RUN_REVIEW_API_BASE"]
+                + issue_urls[issue_selected["Level"]]
+                + "/{}".format(issue_selected["IssueId"])
+            )
 
-        if (
-            session["user"].id == issue_selected["UserId"]
-            and related_runsets[runset_selection_data["id"]]
-            == issue_selected["Attempt"]
-        ):
-            return False, issue_remediation_url
+            if (
+                session["user"].id == issue_selected["UserId"]
+                and related_runsets[runset_selection_data["id"]]
+                == issue_selected["Attempt"]
+            ):
+                return False, issue_remediation_url
+            else:
+                return True, issue_remediation_url
         else:
-            return True, issue_remediation_url
+            return no_update
 
     @app.callback(
         Output("issue-delete-confirmation", "is_open"),

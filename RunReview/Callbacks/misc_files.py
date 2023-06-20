@@ -51,9 +51,7 @@ def get_misc_file_callbacks(app):
                 }
 
                 misc_file_url = os.environ["RUN_REVIEW_API_BASE"] + "MiscellaneousFiles"
-                print(file_payload)
                 resp = requests.post(url=misc_file_url, json=file_payload, verify=False)
-                print(resp.status_code)
 
             # Return a message with the URL of the uploaded file
             return not is_open
@@ -157,12 +155,9 @@ def get_misc_file_callbacks(app):
     )
     def download_misc_file(n_clicks, misc_file_selection):
         if ctx.triggered_id == "misc-file-download-button" and n_clicks:
-            print("doing this...")
-            print(misc_file_selection)
             file_data = download_file(
                 misc_file_selection[0]["FileId"], "neumodxsystemqc-miscellaneousfiles"
             )
-            print("got file data.")
             return dict(
                 content=file_data,
                 filename=misc_file_selection[0]["File Name"],
@@ -211,9 +206,7 @@ def get_misc_file_callbacks(app):
             delete_cartridge_picture_url = os.environ[
                 "RUN_REVIEW_API_BASE"
             ] + "miscellaneousfiles/{}".format(selection[0]["Id"])
-            print(delete_cartridge_picture_url)
             response = requests.delete(url=delete_cartridge_picture_url, verify=False)
-            print("Cartridge Picture Delete Status Code: ", response.status_code)
 
             return not is_open
         else:

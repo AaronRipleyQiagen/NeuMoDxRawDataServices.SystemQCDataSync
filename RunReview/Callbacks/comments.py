@@ -1,7 +1,7 @@
 from .dependencies import *
 
+
 def get_comment_callbacks(app):
-    
     @app.callback(
         Output("comments-modal", "is_open"),
         Input("create-comment-button", "n_clicks"),
@@ -50,7 +50,6 @@ def get_comment_callbacks(app):
     def get_comments(
         active_tab, post_response_is_open, delete_response_is_open, runset_data
     ):
-        print("function found")
         if (
             (ctx.triggered_id == "review-tabs" and active_tab == "runset-comments")
             or (
@@ -63,7 +62,6 @@ def get_comment_callbacks(app):
             )
         ):
             # if True:
-            print("getting comments")
             """
             Get Comments for runset
             """
@@ -132,6 +130,7 @@ def get_comment_callbacks(app):
     """
     Callbacks related to deleting a comment.
     """
+
     @app.callback(
         Output("delete-comment-button", "disabled"),
         Input("comments-table", "selectionChanged"),
@@ -180,12 +179,12 @@ def get_comment_callbacks(app):
     """
     Callbacks related to viewing the text of a comment.
     """
+
     @app.callback(
         Output("view-comment-button", "disabled"),
         Input("comments-table", "selectionChanged"),
     )
     def check_view_comment_validity(selection):
-        print(selection)
         if ctx.triggered_id == "comments-table" and selection:
             return False
         return True

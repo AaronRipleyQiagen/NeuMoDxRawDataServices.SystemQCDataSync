@@ -110,7 +110,6 @@ def get_issue_definition_callbacks(app):
         tadm_issue_severity,
     ):
         trigger = ctx.triggered_id
-        print(trigger)
         if trigger == "sample-issue-severity-options":
             return sample_issue_severity
         elif trigger == "lane-issue-severity-options":
@@ -140,14 +139,12 @@ def get_issue_definition_callbacks(app):
     """
 
     @app.callback(
-        [
-            Output("sample-issue-channel-options", "options"),
-            Output("lane-issue-channel-options", "options"),
-            Output("run-issue-channel-options", "options"),
-            Output("module-issue-channel-options", "options"),
-            Output("run-review-channel-selector", "options"),
-            Output("run-summary-channel-selector", "options"),
-        ],
+        Output("sample-issue-channel-options", "options"),
+        Output("lane-issue-channel-options", "options"),
+        Output("run-issue-channel-options", "options"),
+        Output("module-issue-channel-options", "options"),
+        Output("run-review-channel-selector", "options"),
+        Output("run-summary-channel-selector", "options"),
         Input("runset-channel-options", "data"),
     )
     def update_channel_options(data):
@@ -155,16 +152,14 @@ def get_issue_definition_callbacks(app):
 
     @app.callback(
         Output("channel-selected", "data"),
-        [
-            Input("sample-issue-channel-options", "value"),
-            Input("lane-issue-channel-options", "value"),
-            Input("run-issue-channel-options", "value"),
-            Input("module-issue-channel-options", "value"),
-            Input("run-review-channel-selector", "value"),
-            Input("run-summary-channel-selector", "value"),
-            State("spc-channel", "data"),
-        ],
-        prevent_initial_call=True,
+        Input("sample-issue-channel-options", "value"),
+        Input("lane-issue-channel-options", "value"),
+        Input("run-issue-channel-options", "value"),
+        Input("module-issue-channel-options", "value"),
+        Input("run-review-channel-selector", "value"),
+        Input("run-summary-channel-selector", "value"),
+        Input("spc-channel", "data"),
+        prevent_inital_call=True,
     )
     def update_channel_selection(
         sample_issue_channel,
@@ -201,21 +196,23 @@ def get_issue_definition_callbacks(app):
             if run_summary_channel == None:
                 return spc_channel
             return run_summary_channel
+        elif channel_adjusted == "spc-channel":
+            return spc_channel
 
     @app.callback(
-        [
-            Output("sample-issue-channel-options", "value"),
-            Output("lane-issue-channel-options", "value"),
-            Output("run-issue-channel-options", "value"),
-            Output("module-issue-channel-options", "value"),
-            Output("run-review-channel-selector", "value"),
-            Output("run-summary-channel-selector", "value"),
-        ],
+        Output("sample-issue-channel-options", "value"),
+        Output("lane-issue-channel-options", "value"),
+        Output("run-issue-channel-options", "value"),
+        Output("module-issue-channel-options", "value"),
+        Output("run-review-channel-selector", "value"),
+        Output("run-summary-channel-selector", "value"),
         Input("channel-selected", "data"),
-        prevent_initial_call=True,
     )
     def update_channel_selection_value(channel):
-        return channel, channel, channel, channel, channel, channel
+        if channel:
+            return channel, channel, channel, channel, channel, channel
+        else:
+            return no_update
 
     """
     These functions relate to getting & setting the selected run number thoughout applicable components.
@@ -399,7 +396,6 @@ def get_issue_definition_callbacks(app):
     ):
         trigger = ctx.triggered_id
         if run_review_mod_options:
-            print(run_review_mod_options)
             if trigger == "module-issue-module-options":
                 if module_issue_mod_selection == None:
                     return [x for x in run_review_mod_options][0]
@@ -623,7 +619,6 @@ def get_issue_definition_callbacks(app):
                         xpcrmodule_selected
                     ]
                     issue["runSetSubjectReferrerId"] = xpcrmodule_selected
-                    print(issue)
                     issue_url = (
                         os.environ["RUN_REVIEW_API_BASE"] + "XPCRModuleTADMIssues"
                     )
