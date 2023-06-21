@@ -6,6 +6,7 @@ from DataExplorer import data_explorer
 from RunReview import run_review
 from RunReviewQueue import run_review_queue
 from RunReviewKPIDashboard import run_review_kpi_dashboard
+from XPCRModuleSummary import xpcrmodulesummary
 from flask_session import Session
 import msal
 import app_config
@@ -24,6 +25,8 @@ def create_app():
     server = run_review.Add_Dash(server)
     server = run_review_queue.Add_Dash(server)
     server = run_review_kpi_dashboard.Add_Dash(server)
+    server = xpcrmodulesummary.Add_Dash(server)
+
     return server
 
 
