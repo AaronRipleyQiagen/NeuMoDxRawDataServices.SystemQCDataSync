@@ -5,8 +5,8 @@ import plotly.graph_objects as go
 from datetime import datetime
 from dateutil import parser
 import pandas as pd
-from ..Functions import *
-from ..Components import *
+from Shared.functions import *
+from Shared.Components import *
 
 RUN_REVIEW_API_BASE = "https://neumodx-systemqc-runreview.azurewebsites.net/api/"
 

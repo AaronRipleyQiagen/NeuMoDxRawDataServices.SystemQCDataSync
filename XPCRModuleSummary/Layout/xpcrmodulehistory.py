@@ -1,5 +1,5 @@
 from dash import html, dcc
-from ..Components import *
+from Shared.Components import *
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 import dash_ag_grid as dag
