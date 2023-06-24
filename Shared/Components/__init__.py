@@ -59,19 +59,21 @@ class GoToRunSetButtonAIO(html.Div):
         aio_id=None,
         button_text: str = "Go To RunSet",
         button_props: dict = None,
+        main_props: dict = None,
     ):
         if not aio_id:
             aio_id = str(uuid.uuid4())
 
         button_props = button_props if button_props else {}
         button_props["children"] = button_text
-
+        main_props = main_props if main_props else {}
         super().__init__(
             [
                 dbc.Button(id=self.ids.button(aio_id), **button_props),
                 html.Div(id=self.ids.div(aio_id)),
                 dcc.Store(id=self.ids.store(aio_id), storage_type="session"),
-            ]
+            ],
+            **main_props
         )
 
     def add_callbacks(app):
@@ -143,12 +145,14 @@ class DownloadBlobFileButton(html.Div):
         aio_id=None,
         button_text: str = "Download File",
         button_props: dict = None,
+        main_props: dict = None,
     ):
         if not aio_id:
             aio_id = str(uuid.uuid4())
 
         button_props = button_props if button_props else {}
         button_props["children"] = button_text
+        main_props = main_props if main_props else {}
 
         super().__init__(
             [
@@ -156,7 +160,8 @@ class DownloadBlobFileButton(html.Div):
                 dcc.Download(id=self.ids.download(aio_id)),
                 dcc.Store(id=self.ids.fileurl(aio_id), storage_type="session"),
                 dcc.Store(id=self.ids.filename(aio_id), storage_type="session"),
-            ]
+            ],
+            **main_props
         )
 
     def add_callbacks(app):
@@ -167,12 +172,13 @@ class DownloadBlobFileButton(html.Div):
             State(DownloadBlobFileButton.ids.filename(MATCH), "data"),
         )
         def download_file(n_clicks, file_url, file_name):
-            file_data = download_file_from_url(file_url)
-            return dict(
-                content=file_data,
-                filename=file_name,
-                base64=True,
-            )
+            if n_clicks:
+                file_data = download_file_from_url(file_url)
+                return dict(
+                    content=file_data,
+                    filename=file_name,
+                    base64=True,
+                )
 
 
 def add_AIO_callbacks(app):
