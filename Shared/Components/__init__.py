@@ -55,7 +55,6 @@ class GoToRunSetButtonAIO(html.Div):
 
     def __init__(
         self,
-        app,
         aio_id=None,
         button_text: str = "Go To RunSet",
         button_props: dict = None,

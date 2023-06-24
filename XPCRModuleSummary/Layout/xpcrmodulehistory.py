@@ -39,7 +39,7 @@ def get_xpcrmodulehistory_layout(app):
         rowSelection="single",
     )
     runset_details_go_to_runset_button = GoToRunSetButtonAIO(
-        app, aio_id="runset-details-go-to-runset-button"
+        aio_id="runset-details-go-to-runset-button"
     )
     runset_details_content = dbc.Card(
         dbc.CardBody(
@@ -62,7 +62,7 @@ def get_xpcrmodulehistory_layout(app):
     )
 
     remediation_actions_go_to_runset_button = GoToRunSetButtonAIO(
-        app, aio_id="remediation-actions-go-to-runset-button"
+        aio_id="remediation-actions-go-to-runset-button"
     )
     remediation_actions_content = dbc.Card(
         dbc.CardBody(
@@ -87,7 +87,7 @@ def get_xpcrmodulehistory_layout(app):
         rowSelection="single",
     )
     issues_go_to_runset_button = GoToRunSetButtonAIO(
-        app, aio_id="issues-go-to-runset-button"
+        aio_id="issues-go-to-runset-button"
     )
     issues_content = dbc.Card(
         dbc.CardBody(children=[issues_table, issues_go_to_runset_button])
@@ -107,7 +107,7 @@ def get_xpcrmodulehistory_layout(app):
         rowSelection="single",
     )
     runset_reviews_go_to_runset_button = GoToRunSetButtonAIO(
-        app, aio_id="runset-reviews-go-to-runset-button"
+        aio_id="runset-reviews-go-to-runset-button"
     )
     runset_reviews_content = dbc.Card(
         dbc.CardBody(
@@ -129,9 +129,7 @@ def get_xpcrmodulehistory_layout(app):
         rowSelection="single",
     )
 
-    files_go_to_runset_button = GoToRunSetButtonAIO(
-        app, aio_id="files-go-to-runset-button"
-    )
+    files_go_to_runset_button = GoToRunSetButtonAIO(aio_id="files-go-to-runset-button")
     files_content = dbc.Card(
         dbc.CardBody(children=[files_table, files_go_to_runset_button])
     )
