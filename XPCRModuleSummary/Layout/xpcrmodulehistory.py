@@ -3,6 +3,7 @@ from Shared.Components import *
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 import dash_ag_grid as dag
+from Shared.styles import *
 
 
 def get_xpcrmodulehistory_layout(app):
@@ -129,15 +130,32 @@ def get_xpcrmodulehistory_layout(app):
         rowSelection="single",
     )
 
-    files_go_to_runset_button = GoToRunSetButtonAIO(aio_id="files-go-to-runset-button")
-    files_download_button = DownloadBlobFileButton(aio_id="files-download-button")
+    files_go_to_runset_button = GoToRunSetButtonAIO(
+        aio_id="files-go-to-runset-button",
+        main_props={"style": double_button},
+        button_props={"style": {"width": "100%"}},
+    )
+    files_download_button = DownloadBlobFileButton(
+        aio_id="files-download-button",
+        main_props={"style": double_button},
+        button_props={"style": {"width": "100%"}},
+    )
+
+    files_content_div = html.Div(
+        [
+            files_table,
+        ]
+    )
     files_content = dbc.Card(
-        dbc.CardBody(
-            children=[
-                files_table,
-                html.Div([files_go_to_runset_button, files_download_button]),
-            ]
-        )
+        children=[
+            dbc.CardBody(
+                children=[
+                    files_content_div,
+                    files_go_to_runset_button,
+                    files_download_button,
+                ]
+            ),
+        ]
     )
 
     """
