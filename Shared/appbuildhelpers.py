@@ -5,27 +5,28 @@ import pandas as pd
 import uuid
 import os
 import pickle
+from Shared.Components import add_AIO_callbacks
 
 
 def save_object(obj, session_id, name):
-    os.makedirs('Dir_Store', exist_ok=True)
-    file = 'Dir_Store/{}_{}'.format(session_id, name)
-    pickle.dump(obj, open(file, 'wb'))
+    os.makedirs("Dir_Store", exist_ok=True)
+    file = "Dir_Store/{}_{}".format(session_id, name)
+    pickle.dump(obj, open(file, "wb"))
 
 
 def load_object(session_id, name):
-    file = 'Dir_Store/{}_{}'.format(session_id, name)
-    obj = pickle.load(open(file, 'rb'))
+    file = "Dir_Store/{}_{}".format(session_id, name)
+    obj = pickle.load(open(file, "rb"))
     os.remove(file)
     return obj
 
 
 def clean_Dir_Store():
-    if os.path.isdir('Dir_Store'):
-        file_list = pd.Series(
-            'Dir_Store/' + i for i in os.listdir('Dir_Store'))
-        mt = file_list.apply(lambda x: datetime.fromtimestamp(
-            os.path.getmtime(x))).astype(str)
+    if os.path.isdir("Dir_Store"):
+        file_list = pd.Series("Dir_Store/" + i for i in os.listdir("Dir_Store"))
+        mt = file_list.apply(
+            lambda x: datetime.fromtimestamp(os.path.getmtime(x))
+        ).astype(str)
         for i in file_list[mt < str(datetime.now() - timedelta(hours=3))]:
             os.remove(i)
 
@@ -34,18 +35,11 @@ def apply_layout_with_auth(app, layout):
     def serve_layout():
         if session.get("user"):
             return layout
-        return html.Div('403 Access Denied')
+        return html.Div("403 Access Denied")
 
     app.config.suppress_callback_exceptions = True
-    app.layout = serve_layout
 
+    ## Add Callbacks for All-In-One Components to App.
+    add_AIO_callbacks(app)
 
-def apply_layout_with_auth2(app, layout):
-    def serve_layout():
-        if current_user and current_user.is_authenticated:
-            clean_Dir_Store()
-            return layout
-        return html.Div('403 Access Denied')
-
-    app.config.suppress_callback_exceptions = True
     app.layout = serve_layout
