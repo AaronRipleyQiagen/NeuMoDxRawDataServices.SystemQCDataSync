@@ -179,6 +179,21 @@ def add_callbacks(app: Dash) -> None:
         )
         return fig
 
+    @app.callback(
+        Output(DownloadBlobFileButton.ids.fileurl("files-download-button"), "data"),
+        Output(DownloadBlobFileButton.ids.filename("files-download-button"), "data"),
+        Input("files-table", "selectionChanged"),
+    )
+    def get_file_download_info(selection):
+        """
+        A server-side callback used to retrieve the fileurl and filename of the row selected for the files table.
+        """
+
+        if selection:
+            return selection[0]["uri"], selection[0]["Name"]
+        else:
+            return no_update
+
     add_runset_id_callbacks(app)
     add_xpcrmodule_history_tables_callbacks(app)
 

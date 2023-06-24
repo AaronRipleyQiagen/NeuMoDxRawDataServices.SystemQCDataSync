@@ -11,6 +11,7 @@ from dash import (
 )
 import dash_bootstrap_components as dbc
 import uuid
+from Shared.functions import *
 
 ## For Information related to All-In-One Component (AIO) Pattern please see https://dash.plotly.com/all-in-one-components
 
@@ -105,8 +106,8 @@ class DownloadBlobFileButton(html.Div):
 
     Subcomponents:
         button (dbc.button): The button to be displayed.
-        div (html.Div): An empty div that acts as a target for the callback for redirect.
-        store (dcc.Store): Storage component that stores the uri of BlobFile off Interest to target for redirect.
+        download (dcc.Download): An empty div that acts as a target for the callback for redirect.
+        fileurl (dcc.Store): Storage component that stores the uri of BlobFile off Interest to target for redirect.
 
     """
 
@@ -123,12 +124,57 @@ class DownloadBlobFileButton(html.Div):
             "aio_id": aio_id,
         }
 
-        store = lambda aio_id: {
+        fileurl = lambda aio_id: {
             "component": "DownloadBlobFileButton",
-            "subcomponent": "store",
+            "subcomponent": "fileurl",
             "aio_id": aio_id,
         }
+
+        filename = lambda aio_id: {
+            "component": "DownloadBlobFileButton",
+            "subcomponent": "filename",
+            "aio_id": aio_id,
+        }
+
+    ids = ids
+
+    def __init__(
+        self,
+        aio_id=None,
+        button_text: str = "Download File",
+        button_props: dict = None,
+    ):
+        if not aio_id:
+            aio_id = str(uuid.uuid4())
+
+        button_props = button_props if button_props else {}
+        button_props["children"] = button_text
+
+        super().__init__(
+            [
+                dbc.Button(id=self.ids.button(aio_id), **button_props),
+                dcc.Download(id=self.ids.download(aio_id)),
+                dcc.Store(id=self.ids.fileurl(aio_id), storage_type="session"),
+                dcc.Store(id=self.ids.filename(aio_id), storage_type="session"),
+            ]
+        )
+
+    def add_callbacks(app):
+        @app.callback(
+            Output(DownloadBlobFileButton.ids.download(MATCH), "data"),
+            Input(DownloadBlobFileButton.ids.button(MATCH), "n_clicks"),
+            State(DownloadBlobFileButton.ids.fileurl(MATCH), "data"),
+            State(DownloadBlobFileButton.ids.filename(MATCH), "data"),
+        )
+        def download_file(n_clicks, file_url, file_name):
+            file_data = download_file_from_url(file_url)
+            return dict(
+                content=file_data,
+                filename=file_name,
+                base64=True,
+            )
 
 
 def add_AIO_callbacks(app):
     GoToRunSetButtonAIO.add_callbacks(app)
+    DownloadBlobFileButton.add_callbacks(app)

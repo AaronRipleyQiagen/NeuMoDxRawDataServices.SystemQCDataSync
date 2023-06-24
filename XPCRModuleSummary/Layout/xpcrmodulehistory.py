@@ -130,8 +130,14 @@ def get_xpcrmodulehistory_layout(app):
     )
 
     files_go_to_runset_button = GoToRunSetButtonAIO(aio_id="files-go-to-runset-button")
+    files_download_button = DownloadBlobFileButton(aio_id="files-download-button")
     files_content = dbc.Card(
-        dbc.CardBody(children=[files_table, files_go_to_runset_button])
+        dbc.CardBody(
+            children=[
+                files_table,
+                html.Div([files_go_to_runset_button, files_download_button]),
+            ]
+        )
     )
 
     """
