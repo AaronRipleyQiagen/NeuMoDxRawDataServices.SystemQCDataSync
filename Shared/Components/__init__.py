@@ -55,17 +55,17 @@ class GoToRunSetButtonAIO(html.Div):
 
     def __init__(
         self,
-        app: Dash,
+        app,
         aio_id=None,
         button_text: str = "Go To RunSet",
         button_props: dict = None,
     ):
         if not aio_id:
             aio_id = str(uuid.uuid4())
-        if not app:
-            self.app = app
+
         button_props = button_props if button_props else {}
         button_props["children"] = button_text
+
         super().__init__(
             [
                 dbc.Button(id=self.ids.button(aio_id), **button_props),
@@ -74,8 +74,9 @@ class GoToRunSetButtonAIO(html.Div):
             ]
         )
 
-    app.clientside_callback(
-        """
+    def add_callbacks(app):
+        app.clientside_callback(
+            """
         function navigateToRunReview(n_clicks, runset_id) {
             if (n_clicks && n_clicks > 0) {
                 var currentHref = window.top.location.href;
@@ -89,10 +90,10 @@ class GoToRunSetButtonAIO(html.Div):
             }
         }
         """,
-        Output(ids.div(MATCH), "children"),
-        Input(ids.button(MATCH), "n_clicks"),
-        State(ids.store(MATCH), "data"),
-    )
+            Output(GoToRunSetButtonAIO.ids.div(MATCH), "children"),
+            Input(GoToRunSetButtonAIO.ids.button(MATCH), "n_clicks"),
+            State(GoToRunSetButtonAIO.ids.store(MATCH), "data"),
+        )
 
 
 class DownloadBlobFileButton(html.Div):
@@ -117,7 +118,7 @@ class DownloadBlobFileButton(html.Div):
             "aio_id": aio_id,
         }
 
-        div = lambda aio_id: {
+        download = lambda aio_id: {
             "component": "DownloadBlobFileButton",
             "subcomponent": "div",
             "aio_id": aio_id,
@@ -128,3 +129,7 @@ class DownloadBlobFileButton(html.Div):
             "subcomponent": "store",
             "aio_id": aio_id,
         }
+
+
+def add_AIO_callbacks(app):
+    GoToRunSetButtonAIO.add_callbacks(app)

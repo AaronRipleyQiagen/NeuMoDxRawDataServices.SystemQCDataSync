@@ -5,6 +5,7 @@ import pandas as pd
 import uuid
 import os
 import pickle
+from Shared.Components import add_AIO_callbacks
 
 
 def save_object(obj, session_id, name):
@@ -37,4 +38,8 @@ def apply_layout_with_auth(app, layout):
         return html.Div("403 Access Denied")
 
     app.config.suppress_callback_exceptions = True
+
+    ## Add Callbacks for All-In-One Components to App.
+    add_AIO_callbacks(app)
+
     app.layout = serve_layout
