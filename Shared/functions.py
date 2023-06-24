@@ -79,6 +79,41 @@ def download_file(filename, container_name):
     return base64_blob
 
 
+def download_file_from_url(file_url):
+    # Extract the account URL from the file URL
+    account_url = file_url[
+        : file_url.index("/", 8)
+    ]  # Find the second "/" after "https://"
+
+    # Create a BlobServiceClient using the account URL
+    blob_service_client = BlobServiceClient(
+        account_url=account_url,
+        credential=os.environ["NEUMODXSYSTEMQC_RAWDATAFILES_KEY"],
+    )
+
+    # Extract the container name and blob name from the file URL
+    container_name = file_url[
+        file_url.index("/", 8) + 1 : file_url.index("/", file_url.index("/", 8) + 1)
+    ]
+    blob_name = file_url[file_url.rindex("/") + 1 :]
+
+    # Create a BlobClient using the BlobServiceClient, container name, and blob name
+    blob_client = blob_service_client.get_blob_client(
+        container=container_name, blob=blob_name
+    )
+
+    # download the blob to a bytes buffer
+    stream_downloader = blob_client.download_blob(connection_verify=False)
+
+    stream = io.BytesIO()
+    stream.write(stream_downloader.readall())
+
+    # encode the bytes buffer as base64 for the download link
+    base64_blob = base64.b64encode(stream.getvalue()).decode()
+
+    return base64_blob
+
+
 def HttpGetAsync(urls):
     """
     Used to perform async requests to retreive data from a list of urls data.
