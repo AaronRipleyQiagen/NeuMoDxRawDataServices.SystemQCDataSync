@@ -18,6 +18,13 @@ def get_xpcrmodulehistory_layout(app):
         fullscreen=True,
     )
 
+    runset_stats_data_by_cartridge = dcc.Store(
+        id="runset-stats-data-by-cartridge", storage_type="session"
+    )
+    runset_stats_data_by_runset = dcc.Store(
+        id="runset-stats-data-by-runsets", storage_type="session"
+    )
+
     runset_id_selected = dcc.Store(id="runset-id-selected", storage_type="session")
 
     """
@@ -185,6 +192,8 @@ def get_xpcrmodulehistory_layout(app):
         children=[
             url,
             xpcrmodule_history_data,
+            runset_stats_data_by_cartridge,
+            runset_stats_data_by_runset,
             runset_id_selected,
             xpcrmodule_history_gantt,
             html.Br(),
