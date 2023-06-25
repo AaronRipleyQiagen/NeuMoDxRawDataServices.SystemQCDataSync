@@ -141,6 +141,34 @@ def HttpGetAsync(urls):
     return responses
 
 
+def HttpGetWithQueryParametersAsync(request_arguments_list: list[dict]):
+    """
+    Used to perform async requests to retreive data from a list of urls data while including query parameters for each request made.
+
+    Args:
+        request_arguments_list: A List of request_arguements (dictionary with url & parameter keys).
+    """
+
+    async def HttpGet(session, request_arguments):
+        async with session.get(
+            request_arguments["url"], params=request_arguments["params"]
+        ) as resp:
+            data = await resp.json()
+            return data
+
+    async def main():
+        async with aiohttp.ClientSession(
+            connector=aiohttp.TCPConnector(verify_ssl=False)
+        ) as session:
+            tasks = []
+            for request_arguments in request_arguments_list:
+                tasks.append(asyncio.ensure_future(HttpGet(session, request_arguments)))
+            return await asyncio.gather(*tasks)
+
+    responses = asyncio.run(main())
+    return responses
+
+
 def get_dataframe_from_records(records: list[dict], column_map: dict) -> pd.DataFrame:
     """
     A function used to populate a dataframe from records (i.e. as stored in a dcc.Store component).
