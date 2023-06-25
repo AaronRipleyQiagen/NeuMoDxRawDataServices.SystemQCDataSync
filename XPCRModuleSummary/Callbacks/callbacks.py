@@ -58,6 +58,38 @@ def add_callbacks(app: Dash) -> None:
         return xpcrmodule_history_data
 
     @app.callback(
+        Output("runset-stats-data-by-cartridge", "data"),
+        Input("xpcrmodule-history-data", "data"),
+    )
+    def get_runset_stats_data_by_cartridge(xpcrmodule_history_data: dict) -> dict:
+        """
+        A server-side callback used to retrieve summary stats that describe run performance on a per cartridge basis for cartridges associated with XPCR Module of Interest.
+        """
+
+        cartridges = []
+
+        for runsetDetail in xpcrmodule_history_data["runSetDetails"]:
+            cartridges = cartridges + [
+                x for x in runsetDetail["cartridgeRawDataBaseIds"]
+            ]
+
+        request_arguments_list = []
+
+        for cartridge in cartridges:
+            request_arguments_list.append(
+                {
+                    "url": os.environ["API_HOST"]
+                    + "/api/Reports/cartridges/datasetchannelsummaries",
+                    "params": {"cartridgeIds": [cartridge]},
+                }
+            )
+
+        print("Started")
+        test = HttpGetWithQueryParametersAsync(request_arguments_list)
+        print("Completed")
+        return test
+
+    @app.callback(
         Output("xpcrmodule-history-gantt", "figure"),
         Input("xpcrmodule-history-data", "data"),
     )
@@ -65,7 +97,7 @@ def add_callbacks(app: Dash) -> None:
         xpcrmodule_history_data: dict,
     ) -> go.Figure:
         """
-        A server-side callback used to retrieve plot key details related to the XPCR Module's history in DataSync on a Gantt chart.
+        A server-side callback used to plot key details related to the XPCR Module's history in DataSync on a Gantt chart.
 
         Args:
             xpcrmodule_history_data: Data related to the history of the XPCR Module in DataSync.
