@@ -58,6 +58,36 @@ def add_callbacks(app: Dash) -> None:
         return xpcrmodule_history_data
 
     @app.callback(
+        Output("runset-stats-data-by-runset", "data"),
+        Input("xpcrmodule-history-data", "data"),
+    )
+    def get_runset_stats_data_by_cartridge(xpcrmodule_history_data: dict) -> dict:
+        """
+        A server-side callback used to retrieve summary stats that describe run performance on a per cartridge basis for cartridges associated with XPCR Module of Interest.
+        """
+
+        cartridges_groups = []
+
+        for runsetDetail in xpcrmodule_history_data["runSetDetails"]:
+            cartridges_groups.append(
+                [x for x in runsetDetail["cartridgeRawDataBaseIds"]]
+            )
+
+        request_arguments_list = []
+
+        for cartridge_group in cartridges_groups:
+            request_arguments_list.append(
+                {
+                    "url": os.environ["API_HOST"]
+                    + "/api/Reports/cartridges/datasetchannelsummaries",
+                    "params": {"cartridgeIds": cartridge_group},
+                }
+            )
+        runset_stats = HttpGetWithQueryParametersAsync(request_arguments_list)
+        print(pd.DataFrame.from_dict(runset_stats))
+        return runset_stats
+
+    @app.callback(
         Output("runset-stats-data-by-cartridge", "data"),
         Input("xpcrmodule-history-data", "data"),
     )
@@ -83,11 +113,8 @@ def add_callbacks(app: Dash) -> None:
                     "params": {"cartridgeIds": [cartridge]},
                 }
             )
-
-        print("Started")
-        test = HttpGetWithQueryParametersAsync(request_arguments_list)
-        print("Completed")
-        return test
+        cartridge_stats = HttpGetWithQueryParametersAsync(request_arguments_list)
+        return cartridge_stats
 
     @app.callback(
         Output("xpcrmodule-history-gantt", "figure"),

@@ -22,7 +22,7 @@ def get_xpcrmodulehistory_layout(app):
         id="runset-stats-data-by-cartridge", storage_type="session"
     )
     runset_stats_data_by_runset = dcc.Store(
-        id="runset-stats-data-by-runsets", storage_type="session"
+        id="runset-stats-data-by-runset", storage_type="session"
     )
 
     runset_id_selected = dcc.Store(id="runset-id-selected", storage_type="session")
