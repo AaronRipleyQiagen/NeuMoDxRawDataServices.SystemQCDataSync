@@ -25,6 +25,7 @@ def add_callbacks(app: Dash) -> None:
         Input("url", "href"),
         prevent_inital_call=True,
     )
+    @timer_decorator
     def getXPCRModuleHistoryData(url: str) -> dict:
         """
         A server-side callback function used to retrieve the data regarding the History of an XPCR Module in DataSync.
