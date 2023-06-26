@@ -141,7 +141,29 @@ def HttpGetAsync(urls):
     return responses
 
 
-def HttpGetWithQueryParametersAsync(request_arguments_list: list[dict]):
+class GetRequestArguments:
+    """
+    A class used to represent request objects to be passed into HttpGetWithQueryParametersAsync.
+
+    Properities:
+        url: Url to send the request to.
+        params: Query Parameters to pass into the request.
+        label: What to label the response.
+    """
+
+    url: str
+    params: dict
+    label: str
+
+    def __init__(self, url: str, params: dict, label: str):
+        self.url = url
+        self.params = params
+        self.label = label
+
+
+def HttpGetWithQueryParametersAsync(
+    get_request_arguments_list: list[GetRequestArguments],
+) -> list[dict]:
     """
     Used to perform async requests to retreive data from a list of urls data while including query parameters for each request made.
 
