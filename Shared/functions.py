@@ -360,3 +360,21 @@ def unpack_multi_level_dictionary(
 
         primary_dictionary.pop(sub_dictionary_field)
     return primary_dictionary
+
+
+def timer_decorator(func):
+    """
+    A Decorator to time the execution of a function.
+    """
+
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        end_time = time.time()
+        execution_time = end_time - start_time
+        print(
+            f"Function '{func.__name__}' took {execution_time:.6f} seconds to execute."
+        )
+        return result
+
+    return wrapper
