@@ -8,7 +8,8 @@ import pandas as pd
 from Shared.functions import *
 from Shared.Components import *
 
-RUN_REVIEW_API_BASE = "https://neumodx-systemqc-runreview.azurewebsites.net/api/"
+
+RUN_REVIEW_API_BASE = os.environ["RUN_REVIEW_API_BASE"]
 
 
 def add_callbacks(app: Dash) -> None:
