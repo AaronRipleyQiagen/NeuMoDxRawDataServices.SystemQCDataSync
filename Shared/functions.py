@@ -334,3 +334,29 @@ def save_json_response(response: dict, filepath: str) -> None:
     # Save the JSON data to a file
     with open(filepath, "w") as file:
         file.write(json_data)
+
+
+def unpack_multi_level_dictionary(
+    primary_dictionary: dict, sub_dictionary_fields: list[str], valueFields: list[str]
+) -> dict:
+    """
+    A function used to unpack sub dictonary to values contained within the primary dictionary.
+    Args:
+        primary_dictionary: The primary dictionary to unpack values from.
+        sub_dictionary_fields:  Keys within the primary dictionary that correspond to dictionaries that should be unpacked.
+        valueFields: Fields in the the sub_dictionary_field that are targets for unpacking.
+    Returns
+        The primary_dictionary with additional keys that correspond to the values unpacked from the sub_dictionary_fields. The original sub_dictionary_fields are removed from the primary dictionary.
+    """
+    for sub_dictionary_field in sub_dictionary_fields:
+        for valueField in valueFields:
+            primary_dictionary.update(
+                {
+                    sub_dictionary_field
+                    + "_"
+                    + valueField: primary_dictionary[sub_dictionary_field][valueField]
+                }
+            )
+
+        primary_dictionary.pop(sub_dictionary_field)
+    return primary_dictionary
