@@ -61,31 +61,41 @@ def add_callbacks(app: Dash) -> None:
         Output("runset-stats-data-by-runset", "data"),
         Input("xpcrmodule-history-data", "data"),
     )
-    def get_runset_stats_data_by_cartridge(xpcrmodule_history_data: dict) -> dict:
+    @timer_decorator
+    def get_runset_stats_data_by_runset(xpcrmodule_history_data: dict) -> dict:
         """
         A server-side callback used to retrieve summary stats that describe run performance on a per cartridge basis for cartridges associated with XPCR Module of Interest.
         """
 
-        cartridges_groups = []
+        cartridges_groups = {}
 
         for runsetDetail in xpcrmodule_history_data["runSetDetails"]:
-            cartridges_groups.append(
-                [x for x in runsetDetail["cartridgeRawDataBaseIds"]]
-            )
+            cartridges_groups[runsetDetail["id"]] = [
+                x for x in runsetDetail["cartridgeRawDataBaseIds"]
+            ]
 
         request_arguments_list = []
 
-        for cartridge_group in cartridges_groups:
+        for runset_id in cartridges_groups:
             request_arguments_list.append(
-                {
-                    "url": os.environ["API_HOST"]
+                GetRequestArguments(
+                    url=os.environ["API_HOST"]
                     + "/api/Reports/cartridges/datasetchannelsummaries",
-                    "params": {"cartridgeIds": cartridge_group},
-                }
+                    params={"cartridgeIds": cartridges_groups[runset_id]},
+                    label=runset_id,
+                )
             )
+
         runset_stats = HttpGetWithQueryParametersAsync(request_arguments_list)
-        print(pd.DataFrame.from_dict(runset_stats))
-        return runset_stats
+        unpacked_stats = [
+            unpack_multi_level_dictionary(
+                record,
+                ["ct", "endPointFluorescence", "maxPeakHeight", "epr"],
+                ["mean", "std", "cv", "min", "max"],
+            )
+            for record in runset_stats
+        ]
+        return unpacked_stats
 
     @app.callback(
         Output("runset-stats-data-by-cartridge", "data"),
