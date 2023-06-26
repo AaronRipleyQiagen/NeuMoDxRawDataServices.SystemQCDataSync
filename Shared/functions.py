@@ -317,3 +317,20 @@ def get_dash_ag_grid_from_records(
     columnDefs = get_column_defs(dataframe, hide_columns=hide_columns)
 
     return dataframe.to_dict("records"), columnDefs
+
+
+def save_json_response(response: dict, filepath: str) -> None:
+    """
+    A function that is used to save a json file to a given filepath
+
+    Args:
+        response: The response to be saved.
+        filepath:  Where the response should be save to.
+
+    """
+    # Serialize the JSON response
+    json_data = json.dumps(response)
+
+    # Save the JSON data to a file
+    with open(filepath, "w") as file:
+        file.write(json_data)
