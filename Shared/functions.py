@@ -9,6 +9,8 @@ import io
 import dash_bootstrap_components as dbc
 from dash import Input, Output, dcc, html, no_update, ctx
 import base64
+import json
+import time
 
 
 def save_uploaded_file_to_blob_storage(file_content, filename, container_name):
@@ -168,27 +170,39 @@ def HttpGetWithQueryParametersAsync(
     Used to perform async requests to retreive data from a list of urls data while including query parameters for each request made.
 
     Args:
-        request_arguments_list: A List of request_arguements (dictionary with url & parameter keys).
+        request_arguments_list: A List of request_arguments (dictionary with url & parameter keys).
     """
 
-    async def HttpGet(session, request_arguments):
+    async def HttpGet(session, get_request_arguments: GetRequestArguments):
         async with session.get(
-            request_arguments["url"], params=request_arguments["params"]
+            get_request_arguments.url, params=get_request_arguments.params
         ) as resp:
             data = await resp.json()
-            return data
+            return {get_request_arguments.label: data}
 
     async def main():
         async with aiohttp.ClientSession(
             connector=aiohttp.TCPConnector(verify_ssl=False)
         ) as session:
             tasks = []
-            for request_arguments in request_arguments_list:
-                tasks.append(asyncio.ensure_future(HttpGet(session, request_arguments)))
+            for get_request_arguments in get_request_arguments_list:
+                tasks.append(
+                    asyncio.ensure_future(HttpGet(session, get_request_arguments))
+                )
             return await asyncio.gather(*tasks)
 
     responses = asyncio.run(main())
-    return responses
+
+    labeled_responses = []
+
+    for response in responses:
+        for record in [
+            [{**record, "label": key} for record in values]
+            for key, values in response.items()
+        ][0]:
+            labeled_responses.append(record)
+
+    return labeled_responses
 
 
 def get_dataframe_from_records(records: list[dict], column_map: dict) -> pd.DataFrame:
