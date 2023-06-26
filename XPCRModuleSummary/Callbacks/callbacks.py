@@ -91,6 +91,7 @@ def add_callbacks(app: Dash) -> None:
         Output("runset-stats-data-by-cartridge", "data"),
         Input("xpcrmodule-history-data", "data"),
     )
+    @timer_decorator
     def get_runset_stats_data_by_cartridge(xpcrmodule_history_data: dict) -> dict:
         """
         A server-side callback used to retrieve summary stats that describe run performance on a per cartridge basis for cartridges associated with XPCR Module of Interest.
@@ -107,14 +108,24 @@ def add_callbacks(app: Dash) -> None:
 
         for cartridge in cartridges:
             request_arguments_list.append(
-                {
-                    "url": os.environ["API_HOST"]
+                GetRequestArguments(
+                    url=os.environ["API_HOST"]
                     + "/api/Reports/cartridges/datasetchannelsummaries",
-                    "params": {"cartridgeIds": [cartridge]},
-                }
+                    params={"cartridgeIds": [cartridge]},
+                    label=cartridge,
+                )
             )
         cartridge_stats = HttpGetWithQueryParametersAsync(request_arguments_list)
-        return cartridge_stats
+        unpacked_stats = [
+            unpack_multi_level_dictionary(
+                record,
+                ["ct", "endPointFluorescence", "maxPeakHeight", "epr"],
+                ["mean", "std", "cv", "min", "max"],
+            )
+            for record in cartridge_stats
+        ]
+
+        return unpacked_stats
 
     @app.callback(
         Output("xpcrmodule-history-gantt", "figure"),
