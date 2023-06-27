@@ -288,33 +288,47 @@ def add_callbacks(app: Dash) -> None:
 
     @app.callback(
         Output("xpcrmodule-history-gantt", "figure", allow_duplicate=True),
-        Input("run-performance-aggregate-type", "value"),
         Input("xpcrmodule-history-tabs", "active_tab"),
-        State("runset-stats-data-by-cartridge", "data"),
-        State("runset-stats-data-by-runset", "data"),
+        Input("run-performance-table", "rowData"),
+        State("run-performance-aggregate-type", "value"),
+        State("run-performance-statistic-type", "value"),
         prevent_initial_call=True,
     )
     def plotRunPerformanceTrends(
-        aggregationType: str,
+        agg_type: str,
+        run_performance_data: list[dict],
+        statistic_type: str,
         active_tab: str,
-        cartridgeStats: list[dict],
-        runsetStatus: list[dict],
     ) -> go.Figure:
         """
-        A server-side callback used to plot key details related to the XPCR Module's history in DataSync on a Gantt chart.
-
-        Args:
-            xpcrmodule_history_data: Data related to the history of the XPCR Module in DataSync.
-
-        Returns:
-            A Figure containing a Gantt Chart summarizing an XPCR Module's history.
+        A server-side callback used to plot key details related to the XPCR Module's Run Performance History in DataSync on a Line chart.
         """
-        print("ACTIVE TAB", active_tab)
-        if ctx.triggered_id == "run-performance-aggregate-type" or (
-            ctx.triggered_id == "xpcrmodule-history-tabs"
-            and active_tab == "run-performance-tab"
+
+        if (
+            ctx.triggered_id
+            == "run-performance-table"  ## Logic to catch situations where the run performance table is updated.
+            or (
+                ctx.triggered_id
+                == "xpcrmodule-history-tabs"  ## Logic to determine if the active_tab is run performance.
+                and active_tab == "run-performance-tab"
+            )
+            and statistic_type  ## Make sure there is a statistic_type selected in dropdown.
+            and agg_type  ## Make sure there is a agg_type selected in dropdown.
         ):
+            data = pd.DataFrame.from_dict(run_performance_data)
             fig = go.Figure()
+
+            X = data["Start Date Time"].values
+            Y = data[statistic_type].values
+
+            fig.add_trace(
+                go.Scatter(
+                    x=X,
+                    y=Y,
+                    mode="lines",
+                    name=statistic_type,
+                )
+            )
             return fig
         else:
             return no_update
