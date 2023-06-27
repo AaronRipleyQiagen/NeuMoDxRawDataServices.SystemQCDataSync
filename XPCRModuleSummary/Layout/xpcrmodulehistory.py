@@ -136,7 +136,6 @@ def get_xpcrmodulehistory_layout(app):
         ),
         rowSelection="single",
     )
-
     files_go_to_runset_button = GoToRunSetButtonAIO(
         aio_id="files-go-to-runset-button",
         main_props={"style": double_button},
@@ -148,16 +147,11 @@ def get_xpcrmodulehistory_layout(app):
         button_props={"style": {"width": "100%"}},
     )
 
-    files_content_div = html.Div(
-        [
-            files_table,
-        ]
-    )
     files_content = dbc.Card(
         children=[
             dbc.CardBody(
                 children=[
-                    files_content_div,
+                    files_table,
                     files_go_to_runset_button,
                     files_download_button,
                 ]
@@ -169,27 +163,13 @@ def get_xpcrmodulehistory_layout(app):
     Components related to run performance details for XPCR Module of Interest.
     """
 
+    run_performance_aggregate_label = html.P(
+        "Select Performance Aggregation Type: ", style=halfstyle
+    )
     run_performance_aggregate_options = dcc.Dropdown(
         id="run-performance-aggregate-type",
         options=["RunSet", "Run"],
         value="RunSet",
-        style=halfstyle,
-    )
-
-    run_performance_aggregate_label = html.P(
-        "Select Performance Aggregation Type: ", style=halfstyle
-    )
-
-    run_performance_statistic_label = html.P(
-        "Select Performance Statistic: ", style=halfstyle
-    )
-
-    run_performance_statistic_options = dcc.Dropdown(
-        id="run-performance-statistic-type", style=halfstyle
-    )
-
-    run_performance_statistic_types = html.Div(
-        [run_performance_statistic_label, run_performance_statistic_options],
         style=halfstyle,
     )
     run_performance_aggregate_type = html.Div(
@@ -199,6 +179,40 @@ def get_xpcrmodulehistory_layout(app):
         ],
         style=halfstyle,
     )
+
+    run_performance_statistic_label = html.P(
+        "Select Performance Statistic: ", style=halfstyle
+    )
+    run_performance_statistic_options = dcc.Dropdown(
+        id="run-performance-statistic-type", style=halfstyle
+    )
+    run_performance_statistic_types = html.Div(
+        [run_performance_statistic_label, run_performance_statistic_options],
+        style=halfstyle,
+    )
+
+    run_performance_channel_label = html.P(
+        "Select Channel of Interest", style=halfstyle
+    )
+    run_performance_channel_options = dcc.Dropdown(
+        id="run-performance-channel-type", style=halfstyle
+    )
+    run_performance_channel_types = html.Div(
+        [run_performance_channel_label, run_performance_channel_options],
+        style=halfstyle,
+    )
+
+    run_performance_assay_label = html.P(
+        "Select Result Code of Interest", style=halfstyle
+    )
+    run_performance_assay_options = dcc.Dropdown(
+        id="run-performance-assay-type", style=halfstyle
+    )
+    run_performance_assay_types = html.Div(
+        [run_performance_assay_label, run_performance_assay_options],
+        style=halfstyle,
+    )
+
     run_performance_table = dag.AgGrid(
         id="run-performance-table",
         enableEnterpriseModules=True,
@@ -215,6 +229,8 @@ def get_xpcrmodulehistory_layout(app):
                 children=[
                     run_performance_aggregate_type,
                     run_performance_statistic_types,
+                    run_performance_channel_types,
+                    run_performance_assay_types,
                     run_performance_table,
                 ]
             ),
