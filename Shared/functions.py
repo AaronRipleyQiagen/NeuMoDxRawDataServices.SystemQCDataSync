@@ -254,6 +254,8 @@ def get_column_defs(
         }
         if column in hide_columns:
             column_definition["hide"] = True
+        else:
+            column_definition["hide"] = False
 
         column_definitions.append(column_definition)
 
