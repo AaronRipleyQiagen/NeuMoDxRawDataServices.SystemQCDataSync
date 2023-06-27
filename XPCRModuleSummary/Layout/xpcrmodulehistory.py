@@ -166,6 +166,62 @@ def get_xpcrmodulehistory_layout(app):
     )
 
     """
+    Components related to run performance details for XPCR Module of Interest.
+    """
+
+    run_performance_aggregate_options = dcc.Dropdown(
+        id="run-performance-aggregate-type",
+        options=["RunSet", "Run"],
+        value="RunSet",
+        style=halfstyle,
+    )
+
+    run_performance_aggregate_label = html.P(
+        "Select Performance Aggregation Type: ", style=halfstyle
+    )
+
+    run_performance_statistic_label = html.P(
+        "Select Performance Statistic: ", style=halfstyle
+    )
+
+    run_performance_statistic_options = dcc.Dropdown(
+        id="run-performance-statistic-type", style=halfstyle
+    )
+
+    run_performance_statistic_types = html.Div(
+        [run_performance_statistic_label, run_performance_statistic_options],
+        style=halfstyle,
+    )
+    run_performance_aggregate_type = html.Div(
+        [
+            run_performance_aggregate_label,
+            run_performance_aggregate_options,
+        ],
+        style=halfstyle,
+    )
+    run_performance_table = dag.AgGrid(
+        id="run-performance-table",
+        enableEnterpriseModules=True,
+        columnSize="sizeToFit",
+        defaultColDef=dict(
+            resizable=True,
+        ),
+        rowSelection="single",
+    )
+
+    run_performance_content = dbc.Card(
+        children=[
+            dbc.CardBody(
+                children=[
+                    run_performance_aggregate_type,
+                    run_performance_statistic_types,
+                    run_performance_table,
+                ]
+            ),
+        ]
+    )
+
+    """
     Components related to building the Tabs for XPCR Module Related History.
     """
     xpcrmodule_history_tabs = dbc.Tabs(
