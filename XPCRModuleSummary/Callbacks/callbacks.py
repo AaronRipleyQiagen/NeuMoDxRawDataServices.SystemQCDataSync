@@ -584,3 +584,101 @@ def add_xpcrmodule_history_tables_callbacks(app: Dash) -> None:
             column_map=column_map,
             hide_columns=["FileId", "uri", "RunSetId"],
         )
+
+    @app.callback(
+        Output("run-performance-table", "rowData"),
+        Output("run-performance-table", "columnDefs"),
+        Input("run-performance-aggregate-type", "value"),
+        Input("run-performance-statistic-type", "value"),
+        State("runset-stats-data-by-runset", "data"),
+        State("runset-stats-data-by-cartridge", "data"),
+    )
+    def get_run_performance_table(
+        agg_type: str,
+        statistic_type: str,
+        runset_stats_data_by_runset: list[dict],
+        runset_stats_data_by_cartridge: list[dict],
+    ) -> tuple[list[dict], list[dict]]:
+        """
+        A server-side callback used populate the details of Run Performance associated with an XPCR Module and return these to a Dash AG Grid component.
+        Args:
+            runset_stats_data_by_runset: The data corresponding to run performance aggregated by runset.
+            runset_stats_data_by_cartridge: The data corresponding to run performance aggregated by cartridge.
+            statistic_type: The statistic type to trend.
+        """
+
+        if agg_type == "RunSet":
+            # Extract the data for run performance from the runset_stats_data_by_runset.
+            records: list[dict] = runset_stats_data_by_runset
+            label_map = "RunSetId"
+        elif agg_type == "Run":
+            # Extract the data for run performance from the runset_stats_data_by_cartridge.
+            records: list[dict] = runset_stats_data_by_cartridge
+            label_map = "CartridgeId"
+
+        # save_json_response(records, "runset_performance_details.json")
+        # Provide a map that will deterimine which columns to retrieve from the runset_details_data as well as what they will be called in the end dataframe.
+        column_map = {
+            "assayChannelId": "AssayChannelId",
+            "targetName": "Target Name",
+            "channel": "Channel",
+            "assayName": "Assay Name",
+            "assayVersion": "Assay Version",
+            "rpVersion": "Rp Version",
+            "resultCode": "Result Code",
+            "sampleSpecimenType": "Sample Specimen Type",
+            "testSpecimenType": "Test Specimen Type",
+            "runType": "Normal",
+            "startDateTime": "Start Date Time",
+            "endDateTime": "End Date Time",
+            "sampleCount": "Sample Count",
+            "ampCount": "Detected Count",
+            "notAmpCount": "Not Detected Count",
+            "indeterminateCount": "Indeterminate Count",
+            "unresolvedCount": "Unresolved Count",
+            "noResultCount": "No Result Count",
+            "abortedCount": "Aborted Count",
+            "label": label_map,
+            "ct_mean": "Ct Mean",
+            "ct_std": "Ct Std",
+            "ct_cv": "Ct %CV",
+            "ct_min": "Ct Min",
+            "ct_max": "Ct Max",
+            "endPointFluorescence_mean": "EP Mean",
+            "endPointFluorescence_std": "EP Std",
+            "endPointFluorescence_cv": "EP %CV",
+            "endPointFluorescence_min": "EP Min",
+            "endPointFluorescence_max": "EP Max",
+            "maxPeakHeight_mean": "MPH Mean",
+            "maxPeakHeight_std": "MPH Std",
+            "maxPeakHeight_cv": "MPH %CV",
+            "maxPeakHeight_min": "MPH Min",
+            "maxPeakHeight_max": "MPH Max",
+            "epr_mean": "EPR Mean",
+            "epr_std": "EPR Std",
+            "epr_cv": "EPR %CV",
+            "epr_min": "EPR Min",
+            "epr_max": "EPR Max",
+        }
+        _hide_columns = [
+            value
+            for key, value in column_map.items()
+            if (
+                (
+                    "Ct" in value
+                    or "EP" in value
+                    or "EPR" in value
+                    or "MPH" in value
+                    or "Count" in value
+                    or "Id" in value
+                )
+            )
+        ]
+
+        if statistic_type:
+            _hide_columns.remove(statistic_type)
+        print("STATTYPE:", statistic_type)
+        print("Hide Columns: ", _hide_columns)
+        return get_dash_ag_grid_from_records(
+            records=records, column_map=column_map, hide_columns=_hide_columns
+        )
