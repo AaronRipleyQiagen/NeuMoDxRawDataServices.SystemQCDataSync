@@ -155,6 +155,46 @@ def add_callbacks(app: Dash) -> None:
         ]
 
     @app.callback(
+        Output("run-performance-assay-type", "options"),
+        Output("run-performance-assay-type", "value"),
+        Input("run-performance-table", "rowData"),
+        State("run-performance-assay-type", "options"),
+    )
+    def get_run_performance_assay_options(rowData, options):
+        """
+        A severside-callback to get available assay options from run performance table.
+        """
+        if options:
+            return no_update
+        else:
+            df = pd.DataFrame.from_dict(rowData)  ## Create a DataFrame from row Data.
+            options = [
+                x for x in df["Result Code"].unique()
+            ]  ## Get unique Result Codes from DataFrame.
+
+            return options, options[0]
+
+    @app.callback(
+        Output("run-performance-channel-type", "options"),
+        Output("run-performance-channel-type", "value"),
+        Input("run-performance-table", "rowData"),
+        State("run-performance-assay-type", "options"),
+    )
+    def get_run_performance_assay_options(rowData, options):
+        """
+        A severside-callback to get available Channel options from run performance table.
+        """
+        if options:
+            return no_update
+        else:
+            df = pd.DataFrame.from_dict(rowData)  ## Create a DataFrame from row Data.
+            options = [
+                x
+                for x in df["Channel"].unique()  ## Get unique Channels from DataFrame.
+            ]
+            return options, options[0]
+
+    @app.callback(
         Output("xpcrmodule-history-gantt", "figure"),
         Input("xpcrmodule-history-data", "data"),
         Input("xpcrmodule-history-tabs", "active_tab"),
