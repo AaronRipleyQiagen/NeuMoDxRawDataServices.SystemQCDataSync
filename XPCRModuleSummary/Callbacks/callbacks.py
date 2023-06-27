@@ -26,7 +26,6 @@ def add_callbacks(app: Dash) -> None:
         Input("url", "href"),
         prevent_inital_call=True,
     )
-    @timer_decorator
     def getXPCRModuleHistoryData(url: str) -> dict:
         """
         A server-side callback function used to retrieve the data regarding the History of an XPCR Module in DataSync.
@@ -63,7 +62,6 @@ def add_callbacks(app: Dash) -> None:
         Output("runset-stats-data-by-runset", "data"),
         Input("xpcrmodule-history-data", "data"),
     )
-    @timer_decorator
     def get_runset_stats_data_by_runset(xpcrmodule_history_data: dict) -> dict:
         """
         A server-side callback used to retrieve summary stats that describe run performance on a per cartridge basis for cartridges associated with XPCR Module of Interest.
@@ -103,7 +101,6 @@ def add_callbacks(app: Dash) -> None:
         Output("runset-stats-data-by-cartridge", "data"),
         Input("xpcrmodule-history-data", "data"),
     )
-    @timer_decorator
     def get_runset_stats_data_by_cartridge(xpcrmodule_history_data: dict) -> dict:
         """
         A server-side callback used to retrieve summary stats that describe run performance on a per cartridge basis for cartridges associated with XPCR Module of Interest.
