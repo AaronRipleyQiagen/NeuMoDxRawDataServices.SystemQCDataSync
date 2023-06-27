@@ -24,9 +24,21 @@ def get_xpcrmodulehistory_layout(app):
     runset_stats_data_by_runset = dcc.Store(
         id="runset-stats-data-by-runset", storage_type="session"
     )
-
+    channel_options = dcc.Store(id="channel-options", storage_type="session", data=None)
+    assay_options = dcc.Store(id="assay-options", storage_type="session", data=None)
     runset_id_selected = dcc.Store(id="runset-id-selected", storage_type="session")
-
+    spc_channel = dcc.Store(id="spc-channel", storage_type="session")
+    storage_div = html.Div(
+        [
+            xpcrmodule_history_data,
+            runset_stats_data_by_cartridge,
+            runset_stats_data_by_runset,
+            channel_options,
+            assay_options,
+            runset_id_selected,
+            spc_channel,
+        ]
+    )
     """
     Components related to Gantt chart for XPCR Module History
     """
@@ -272,10 +284,7 @@ def get_xpcrmodulehistory_layout(app):
     xpcrmodulehistory = html.Div(
         children=[
             url,
-            xpcrmodule_history_data,
-            runset_stats_data_by_cartridge,
-            runset_stats_data_by_runset,
-            runset_id_selected,
+            storage_div,
             xpcrmodule_history_gantt,
             html.Br(),
             xpcrmodule_history_tabs,
