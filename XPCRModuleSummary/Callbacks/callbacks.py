@@ -641,12 +641,16 @@ def add_xpcrmodule_history_tables_callbacks(app: Dash) -> None:
         Output("run-performance-table", "columnDefs"),
         Input("run-performance-aggregate-type", "value"),
         Input("run-performance-statistic-type", "value"),
+        Input("run-performance-assay-type", "value"),
+        Input("run-performance-channel-type", "value"),
         State("runset-stats-data-by-runset", "data"),
         State("runset-stats-data-by-cartridge", "data"),
     )
     def get_run_performance_table(
         agg_type: str,
         statistic_type: str,
+        assay_type: str,
+        channel: str,
         runset_stats_data_by_runset: list[dict],
         runset_stats_data_by_cartridge: list[dict],
     ) -> tuple[list[dict], list[dict]]:
@@ -663,6 +667,10 @@ def add_xpcrmodule_history_tables_callbacks(app: Dash) -> None:
             records: list[dict] = runset_stats_data_by_cartridge
             label_map = "CartridgeId"
 
+        if assay_type:
+            records = [x for x in records if x["resultCode"] == assay_type]
+        if channel:
+            records = [x for x in records if x["channel"] == channel]
         # Provide a map that will determine which columns to retrieve from the runset_details_data as well as what they will be called in the end dataframe.
         column_map = {
             "assayChannelId": "AssayChannelId",
