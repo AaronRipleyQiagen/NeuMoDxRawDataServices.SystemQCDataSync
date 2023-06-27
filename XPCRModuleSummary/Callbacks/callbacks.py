@@ -140,6 +140,24 @@ def add_callbacks(app: Dash) -> None:
         return unpacked_stats
 
     @app.callback(
+        Output("run-performance-statistic-type", "options"),
+        Input("run-performance-table", "rowData"),
+    )
+    def get_run_performance_statistics_options(rowData):
+        """
+        A clientside-callback to get available run performance options.
+        """
+        return [
+            key
+            for key, value in rowData[0].items()
+            if "Ct" in key
+            or "EP" in key
+            or "EPR" in key
+            or "MPH" in key
+            or "Count" in key
+        ]
+
+    @app.callback(
         Output("xpcrmodule-history-gantt", "figure"),
         Input("xpcrmodule-history-data", "data"),
     )
