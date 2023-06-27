@@ -160,9 +160,10 @@ def add_callbacks(app: Dash) -> None:
     @app.callback(
         Output("xpcrmodule-history-gantt", "figure"),
         Input("xpcrmodule-history-data", "data"),
+        Input("xpcrmodule-history-tabs", "active_tab"),
     )
     def plotXPCRModuleHistoryGantt(
-        xpcrmodule_history_data: dict,
+        xpcrmodule_history_data: dict, active_tab: str
     ) -> go.Figure:
         """
         A server-side callback used to plot key details related to the XPCR Module's history in DataSync on a Gantt chart.
@@ -174,110 +175,119 @@ def add_callbacks(app: Dash) -> None:
             A Figure containing a Gantt Chart summarizing an XPCR Module's history.
         """
 
-        # Extract runsets, remediationactions, issues and runsetreviewassignements from xpcr_module_history.
-        runsets = xpcrmodule_history_data["runSetDetails"]
-        remedationactions = xpcrmodule_history_data["remediationActionsDetails"]
-        issues = xpcrmodule_history_data["issueDetails"]
-        runsetreviewassignments = xpcrmodule_history_data[
-            "runSetReviewAssignmentDetails"
-        ]
+        if (
+            ctx.triggered_id == "xpcrmodule-history-data"
+            or ctx.triggered_id == "xpcrmodule-history-tabs"
+            and active_tab != "run-performance-tab"
+        ):
+            # Extract runsets, remediationactions, issues and runsetreviewassignements from xpcr_module_history.
+            runsets = xpcrmodule_history_data["runSetDetails"]
+            remedationactions = xpcrmodule_history_data["remediationActionsDetails"]
+            issues = xpcrmodule_history_data["issueDetails"]
+            runsetreviewassignments = xpcrmodule_history_data[
+                "runSetReviewAssignmentDetails"
+            ]
 
-        # create a list used to capture the lines of the gantt chart.
-        gantt_lines = []
+            # create a list used to capture the lines of the gantt chart.
+            gantt_lines = []
 
-        # Add runset entries to gantt lines.
-        for runset in runsets:
-            runset_data = dict(
-                Task=runset["qualificationProtocol"],
-                Start=datetime.strptime(runset["startDate"], "%Y-%m-%dT%H:%M:%S.%f"),
-                Finish=datetime.strptime(runset["endDate"], "%Y-%m-%dT%H:%M:%S.%f"),
-                Resource="Run Execution",
-            )
-            gantt_lines.append(runset_data)
-
-        # Add remediation entries to gantt lines.
-        for remediationaction in remedationactions:
-            if remediationaction["closedDate"]:
-                finish = datetime.strptime(
-                    remediationaction["closedDate"][:-1], "%Y-%m-%dT%H:%M:%S.%f"
+            # Add runset entries to gantt lines.
+            for runset in runsets:
+                runset_data = dict(
+                    Task=runset["qualificationProtocol"],
+                    Start=datetime.strptime(
+                        runset["startDate"], "%Y-%m-%dT%H:%M:%S.%f"
+                    ),
+                    Finish=datetime.strptime(runset["endDate"], "%Y-%m-%dT%H:%M:%S.%f"),
+                    Resource="Run Execution",
                 )
-            else:
-                finish = datetime.now()
+                gantt_lines.append(runset_data)
 
-            remediationaction_data = dict(
-                Task=remediationaction["type"],
-                Start=datetime.strptime(
-                    remediationaction["assignedDate"][:-1], "%Y-%m-%dT%H:%M:%S.%f"
-                ),
-                Finish=finish,
-                Resource="Remediation Action",
-            )
-            gantt_lines.append(remediationaction_data)
+            # Add remediation entries to gantt lines.
+            for remediationaction in remedationactions:
+                if remediationaction["closedDate"]:
+                    finish = datetime.strptime(
+                        remediationaction["closedDate"][:-1], "%Y-%m-%dT%H:%M:%S.%f"
+                    )
+                else:
+                    finish = datetime.now()
 
-        # Add issue entries to gantt lines.
-        for issue in issues:
-            if issue["closedDate"]:
-                finish = datetime.strptime(
-                    issue["closedDate"][:-1], "%Y-%m-%dT%H:%M:%S.%f"
+                remediationaction_data = dict(
+                    Task=remediationaction["type"],
+                    Start=datetime.strptime(
+                        remediationaction["assignedDate"][:-1], "%Y-%m-%dT%H:%M:%S.%f"
+                    ),
+                    Finish=finish,
+                    Resource="Remediation Action",
                 )
-            else:
-                finish = datetime.now()
+                gantt_lines.append(remediationaction_data)
 
-            issue_data = dict(
-                Task=issue["type"],
-                Start=datetime.strptime(
-                    issue["assignedDate"][:-1], "%Y-%m-%dT%H:%M:%S.%f"
-                ),
-                Finish=finish,
-                Resource=issue["level"],
-            )
+            # Add issue entries to gantt lines.
+            for issue in issues:
+                if issue["closedDate"]:
+                    finish = datetime.strptime(
+                        issue["closedDate"][:-1], "%Y-%m-%dT%H:%M:%S.%f"
+                    )
+                else:
+                    finish = datetime.now()
 
-            gantt_lines.append(issue_data)
+                issue_data = dict(
+                    Task=issue["type"],
+                    Start=datetime.strptime(
+                        issue["assignedDate"][:-1], "%Y-%m-%dT%H:%M:%S.%f"
+                    ),
+                    Finish=finish,
+                    Resource=issue["level"],
+                )
 
-        # Add runsetreviewassignment entries to gantt lines.
-        for runsetreviewassignment in runsetreviewassignments:
-            if runsetreviewassignment["completedDate"]:
-                finish = (
-                    datetime.strptime(
-                        runsetreviewassignment["completedDate"][:-1],
+                gantt_lines.append(issue_data)
+
+            # Add runsetreviewassignment entries to gantt lines.
+            for runsetreviewassignment in runsetreviewassignments:
+                if runsetreviewassignment["completedDate"]:
+                    finish = (
+                        datetime.strptime(
+                            runsetreviewassignment["completedDate"][:-1],
+                            "%Y-%m-%dT%H:%M:%S.%f",
+                        ),
+                    )
+                else:
+                    finish = datetime.now()
+
+                runsetreviewassignment_data = dict(
+                    Task=runsetreviewassignment["qualificationProtocol"],
+                    Start=datetime.strptime(
+                        runsetreviewassignment["assignedDate"][:-1],
                         "%Y-%m-%dT%H:%M:%S.%f",
                     ),
+                    Finish=finish,
+                    Resource="Review Assignment",
                 )
-            else:
-                finish = datetime.now()
 
-            runsetreviewassignment_data = dict(
-                Task=runsetreviewassignment["qualificationProtocol"],
-                Start=datetime.strptime(
-                    runsetreviewassignment["assignedDate"][:-1],
-                    "%Y-%m-%dT%H:%M:%S.%f",
-                ),
-                Finish=finish,
-                Resource="Review Assignment",
+                gantt_lines.append(runsetreviewassignment_data)
+
+            # Define colors to use on Gantt Chart.
+            colors = {
+                "Sample Issue": "#8152BD",
+                "Lane Issue": "#8152BD",
+                "Run Issue": "#8152BD",
+                "Module Issue": "#8152BD",
+                "Remediation Action": "#FF8DAB",
+                "Run Execution": "#2C92FF",
+                "Review Assignment": "#5F7092",
+            }
+
+            # Create the Gantt chart.
+            fig = ff.create_gantt(
+                gantt_lines,
+                colors=colors,
+                index_col="Resource",
+                show_colorbar=True,
+                group_tasks=True,
             )
-
-            gantt_lines.append(runsetreviewassignment_data)
-
-        # Define colors to use on Gantt Chart.
-        colors = {
-            "Sample Issue": "#8152BD",
-            "Lane Issue": "#8152BD",
-            "Run Issue": "#8152BD",
-            "Module Issue": "#8152BD",
-            "Remediation Action": "#FF8DAB",
-            "Run Execution": "#2C92FF",
-            "Review Assignment": "#5F7092",
-        }
-
-        # Create the Gantt chart.
-        fig = ff.create_gantt(
-            gantt_lines,
-            colors=colors,
-            index_col="Resource",
-            show_colorbar=True,
-            group_tasks=True,
-        )
-        return fig
+            return fig
+        else:
+            return no_update
 
     @app.callback(
         Output(DownloadBlobFileButton.ids.fileurl("files-download-button"), "data"),
