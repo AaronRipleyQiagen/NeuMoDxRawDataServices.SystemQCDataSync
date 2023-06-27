@@ -2,7 +2,6 @@ import dash_bootstrap_components as dbc
 from dash import Dash
 import os
 import warnings
-from flask_mail import Mail, Message
 from .Layout import *
 from .Callbacks import *
 from Shared.appbuildhelpers import *
