@@ -335,10 +335,10 @@ def add_callbacks(app: Dash) -> None:
         prevent_initial_call=True,
     )
     def plotRunPerformanceTrends(
-        agg_type: str,
-        run_performance_data: list[dict],
-        statistic_type: str,
         active_tab: str,
+        run_performance_data: list[dict],
+        agg_type: str,
+        statistic_type: str,
     ) -> go.Figure:
         """
         A server-side callback used to plot key details related to the XPCR Module's Run Performance History in DataSync on a Line chart.
