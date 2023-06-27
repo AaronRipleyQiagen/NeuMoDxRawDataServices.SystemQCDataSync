@@ -180,7 +180,7 @@ def add_callbacks(app: Dash) -> None:
         Input("run-performance-table", "rowData"),
         State("run-performance-assay-type", "options"),
     )
-    def get_run_performance_assay_options(rowData, options):
+    def get_run_performance_channel_options(rowData, options):
         """
         A severside-callback to get available Channel options from run performance table.
         """
@@ -192,7 +192,14 @@ def add_callbacks(app: Dash) -> None:
                 x
                 for x in df["Channel"].unique()  ## Get unique Channels from DataFrame.
             ]
-            return options, options[0]
+
+            spc_channel = [
+                x
+                for x in df.loc[df["Target Name"].str[0:3] == "SPC", "Channel"].unique()
+            ][
+                0
+            ]  ## Get first channel that is associated with a "SPC" like Target Name.
+            return options, spc_channel
 
     @app.callback(
         Output("xpcrmodule-history-gantt", "figure"),
