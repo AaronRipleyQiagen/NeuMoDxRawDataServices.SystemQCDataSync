@@ -226,17 +226,26 @@ def get_xpcrmodulehistory_layout(app):
     """
     xpcrmodule_history_tabs = dbc.Tabs(
         children=[
-            dbc.Tab(runset_details_content, id="runset-details-tab", label="RunSets"),
             dbc.Tab(
-                runset_reviews_content, id="runset-reviews-tab", label="RunSet Reviews"
+                runset_details_content, tab_id="runset-details-tab", label="RunSets"
             ),
-            dbc.Tab(issues_content, id="issues-tab", label="Issues"),
+            dbc.Tab(
+                runset_reviews_content,
+                tab_id="runset-reviews-tab",
+                label="RunSet Reviews",
+            ),
+            dbc.Tab(issues_content, tab_id="issues-tab", label="Issues"),
             dbc.Tab(
                 remediation_actions_content,
-                id="remediation-actions-tab",
+                tab_id="remediation-actions-tab",
                 label="Remediation Actions",
             ),
-            dbc.Tab(files_content, id="files-tab", label="Files"),
+            dbc.Tab(files_content, tab_id="files-tab", label="Files"),
+            dbc.Tab(
+                run_performance_content,
+                tab_id="run-performance-tab",
+                label="Run Performance",
+            ),
         ],
         id="xpcrmodule-history-tabs",
     )
