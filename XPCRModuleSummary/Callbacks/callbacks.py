@@ -357,7 +357,7 @@ def add_callbacks(app: Dash) -> None:
         ):
             data = pd.DataFrame.from_dict(run_performance_data)
             fig = go.Figure()
-
+            data.sort_values("Start Date Time", ascending=True, inplace=True)
             X = data["Start Date Time"].values
             Y = data[statistic_type].values
 
