@@ -59,149 +59,6 @@ def add_callbacks(app: Dash) -> None:
         return xpcrmodule_history_data
 
     @app.callback(
-        Output("runset-stats-data-by-runset", "data"),
-        Input("xpcrmodule-history-data", "data"),
-    )
-    def get_runset_stats_data_by_runset(xpcrmodule_history_data: dict) -> dict:
-        """
-        A server-side callback used to retrieve summary stats that describe run performance on a per cartridge basis for cartridges associated with XPCR Module of Interest.
-        """
-
-        cartridges_groups = {}
-
-        for runsetDetail in xpcrmodule_history_data["runSetDetails"]:
-            cartridges_groups[runsetDetail["id"]] = [
-                x for x in runsetDetail["cartridgeRawDataBaseIds"]
-            ]
-
-        request_arguments_list = []
-
-        for runset_id in cartridges_groups:
-            request_arguments_list.append(
-                GetRequestArguments(
-                    url=os.environ["API_HOST"]
-                    + "/api/Reports/cartridges/datasetchannelsummaries",
-                    params={"cartridgeIds": cartridges_groups[runset_id]},
-                    label=runset_id,
-                )
-            )
-
-        runset_stats = HttpGetWithQueryParametersAsync(request_arguments_list)
-        unpacked_stats = [
-            unpack_multi_level_dictionary(
-                record,
-                ["ct", "endPointFluorescence", "maxPeakHeight", "epr"],
-                ["mean", "std", "cv", "min", "max"],
-            )
-            for record in runset_stats
-        ]
-        return unpacked_stats
-
-    @app.callback(
-        Output("runset-stats-data-by-cartridge", "data"),
-        Input("xpcrmodule-history-data", "data"),
-    )
-    def get_runset_stats_data_by_cartridge(xpcrmodule_history_data: dict) -> dict:
-        """
-        A server-side callback used to retrieve summary stats that describe run performance on a per cartridge basis for cartridges associated with XPCR Module of Interest.
-        """
-
-        cartridges = []
-
-        for runsetDetail in xpcrmodule_history_data["runSetDetails"]:
-            cartridges = cartridges + [
-                x for x in runsetDetail["cartridgeRawDataBaseIds"]
-            ]
-
-        request_arguments_list = []
-
-        for cartridge in cartridges:
-            request_arguments_list.append(
-                GetRequestArguments(
-                    url=os.environ["API_HOST"]
-                    + "/api/Reports/cartridges/datasetchannelsummaries",
-                    params={"cartridgeIds": [cartridge]},
-                    label=cartridge,
-                )
-            )
-        cartridge_stats = HttpGetWithQueryParametersAsync(request_arguments_list)
-        unpacked_stats = [
-            unpack_multi_level_dictionary(
-                record,
-                ["ct", "endPointFluorescence", "maxPeakHeight", "epr"],
-                ["mean", "std", "cv", "min", "max"],
-            )
-            for record in cartridge_stats
-        ]
-
-        return unpacked_stats
-
-    @app.callback(
-        Output("run-performance-statistic-type", "options"),
-        Input("run-performance-table", "rowData"),
-    )
-    def get_run_performance_statistics_options(rowData):
-        """
-        A clientside-callback to get available run performance options.
-        """
-        return [
-            key
-            for key, value in rowData[0].items()
-            if "Ct" in key
-            or "EP" in key
-            or "EPR" in key
-            or "MPH" in key
-            or "Count" in key
-        ]
-
-    @app.callback(
-        Output("run-performance-assay-type", "options"),
-        Output("run-performance-assay-type", "value"),
-        Input("run-performance-table", "rowData"),
-        State("run-performance-assay-type", "options"),
-    )
-    def get_run_performance_assay_options(rowData, options):
-        """
-        A severside-callback to get available assay options from run performance table.
-        """
-        if options:
-            return no_update
-        else:
-            df = pd.DataFrame.from_dict(rowData)  ## Create a DataFrame from row Data.
-            options = [
-                x for x in df["Result Code"].unique()
-            ]  ## Get unique Result Codes from DataFrame.
-
-            return options, options[0]
-
-    @app.callback(
-        Output("run-performance-channel-type", "options"),
-        Output("run-performance-channel-type", "value"),
-        Input("run-performance-table", "rowData"),
-        State("run-performance-assay-type", "options"),
-    )
-    def get_run_performance_channel_options(rowData, options):
-        """
-        A severside-callback to get available Channel options from run performance table.
-        """
-        if options:
-            return no_update
-        else:
-            df = pd.DataFrame.from_dict(rowData)  ## Create a DataFrame from row Data.
-            options = [
-                x
-                for x in df["Channel"].unique()  ## Get unique Channels from DataFrame.
-            ]
-
-            spc_channel = [
-                x
-                for x in df.loc[df["Target Name"].str[0:3] == "SPC", "Channel"].unique()
-            ][
-                0
-            ]  ## Get first channel that is associated with a "SPC" like Target Name.
-            return options, spc_channel
-
-    @app.callback(
         Output("xpcrmodule-history-gantt", "figure"),
         Input("xpcrmodule-history-data", "data"),
         Input("xpcrmodule-history-tabs", "active_tab"),
@@ -352,12 +209,14 @@ def add_callbacks(app: Dash) -> None:
         """
 
         if (
-            ctx.triggered_id
-            == "run-performance-table"  ## Logic to catch situations where the run performance table is updated.
-            or (
+            (
                 ctx.triggered_id
-                == "xpcrmodule-history-tabs"  ## Logic to determine if the active_tab is run performance.
-                and active_tab == "run-performance-tab"
+                == "run-performance-table"  ## Logic to catch situations where the run performance table is updated.
+                or (
+                    ctx.triggered_id
+                    == "xpcrmodule-history-tabs"  ## Logic to determine if the active_tab is run performance.
+                    and active_tab == "run-performance-tab"
+                )
             )
             and statistic_type  ## Make sure there is a statistic_type selected in dropdown.
             and agg_type  ## Make sure there is a agg_type selected in dropdown.
@@ -397,6 +256,7 @@ def add_callbacks(app: Dash) -> None:
 
     add_runset_id_callbacks(app)
     add_xpcrmodule_history_tables_callbacks(app)
+    add_run_performance_callbacks(app)
 
 
 def add_runset_id_callbacks(app: Dash) -> None:
@@ -643,6 +503,93 @@ def add_xpcrmodule_history_tables_callbacks(app: Dash) -> None:
             hide_columns=["FileId", "uri", "RunSetId"],
         )
 
+
+def add_run_performance_callbacks(app: Dash) -> None:
+    """
+    Adds callbacks related to Run Performance Objects.
+
+    Args:
+        app: Dash Application to add callbacks to.
+    """
+
+    @app.callback(
+        Output("runset-stats-data-by-runset", "data"),
+        Input("xpcrmodule-history-data", "data"),
+    )
+    def get_runset_stats_data_by_runset(xpcrmodule_history_data: dict) -> dict:
+        """
+        A server-side callback used to retrieve summary stats that describe run performance on a per cartridge basis for cartridges associated with XPCR Module of Interest.
+        """
+
+        cartridges_groups = {}
+
+        for runsetDetail in xpcrmodule_history_data["runSetDetails"]:
+            cartridges_groups[runsetDetail["id"]] = [
+                x for x in runsetDetail["cartridgeRawDataBaseIds"]
+            ]
+
+        request_arguments_list = []
+
+        for runset_id in cartridges_groups:
+            request_arguments_list.append(
+                GetRequestArguments(
+                    url=os.environ["API_HOST"]
+                    + "/api/Reports/cartridges/datasetchannelsummaries",
+                    params={"cartridgeIds": cartridges_groups[runset_id]},
+                    label=runset_id,
+                )
+            )
+
+        runset_stats = HttpGetWithQueryParametersAsync(request_arguments_list)
+        unpacked_stats = [
+            unpack_multi_level_dictionary(
+                record,
+                ["ct", "endPointFluorescence", "maxPeakHeight", "epr"],
+                ["mean", "std", "cv", "min", "max"],
+            )
+            for record in runset_stats
+        ]
+        return unpacked_stats
+
+    @app.callback(
+        Output("runset-stats-data-by-cartridge", "data"),
+        Input("xpcrmodule-history-data", "data"),
+    )
+    def get_runset_stats_data_by_cartridge(xpcrmodule_history_data: dict) -> dict:
+        """
+        A server-side callback used to retrieve summary stats that describe run performance on a per cartridge basis for cartridges associated with XPCR Module of Interest.
+        """
+
+        cartridges = []
+
+        for runsetDetail in xpcrmodule_history_data["runSetDetails"]:
+            cartridges = cartridges + [
+                x for x in runsetDetail["cartridgeRawDataBaseIds"]
+            ]
+
+        request_arguments_list = []
+
+        for cartridge in cartridges:
+            request_arguments_list.append(
+                GetRequestArguments(
+                    url=os.environ["API_HOST"]
+                    + "/api/Reports/cartridges/datasetchannelsummaries",
+                    params={"cartridgeIds": [cartridge]},
+                    label=cartridge,
+                )
+            )
+        cartridge_stats = HttpGetWithQueryParametersAsync(request_arguments_list)
+        unpacked_stats = [
+            unpack_multi_level_dictionary(
+                record,
+                ["ct", "endPointFluorescence", "maxPeakHeight", "epr"],
+                ["mean", "std", "cv", "min", "max"],
+            )
+            for record in cartridge_stats
+        ]
+
+        return unpacked_stats
+
     @app.callback(
         Output("run-performance-table", "rowData"),
         Output("run-performance-table", "columnDefs"),
@@ -722,22 +669,90 @@ def add_xpcrmodule_history_tables_callbacks(app: Dash) -> None:
             "epr_max": "EPR Max",
         }
 
+        _hide_columns = [
+            value
+            for key, value in column_map.items()
+            if (
+                "Ct" in value
+                or "EP" in value
+                or "EPR" in value
+                or "MPH" in value
+                or "Count" in value
+                or "Id" in value
+            )
+        ]
+
+        if statistic_type:
+            _hide_columns.remove(statistic_type)
+
         return get_dash_ag_grid_from_records(
-            records=records,
-            column_map=column_map,
-            hide_columns=[
-                value
-                for key, value in column_map.items()
-                if (
-                    (
-                        "Ct" in value
-                        or "EP" in value
-                        or "EPR" in value
-                        or "MPH" in value
-                        or "Count" in value
-                        or "Id" in value
-                    )
-                    and value != statistic_type
-                )
-            ],
+            records=records, column_map=column_map, hide_columns=_hide_columns
         )
+
+    @app.callback(
+        Output("run-performance-statistic-type", "options"),
+        Input("run-performance-table", "rowData"),
+    )
+    def get_run_performance_statistics_options(rowData):
+        """
+        A clientside-callback to get available run performance options.
+        """
+        return [
+            key
+            for key, value in rowData[0].items()
+            if "Ct" in key
+            or "EP" in key
+            or "EPR" in key
+            or "MPH" in key
+            or "Count" in key
+        ]
+
+    @app.callback(
+        Output("run-performance-channel-type", "options"),
+        Input("channel-options", "data"),
+    )
+    def populate_run_performance_channel_options(options):
+        """
+        A severside-callback to get available Channel options from run performance table.
+        """
+        return [x for x in options]
+
+    @app.callback(
+        Output("channel-options", "data"),
+        Input("runset-stats-data-by-runset", "data"),
+    )
+    def get_run_performance_channel_options(data):
+        """
+        A severside-callback to get available Channel options from run performance table.
+        """
+        df = pd.DataFrame.from_dict(data)  ## Create a DataFrame from row Data.
+        options = [
+            x for x in df["channel"].unique()  ## Get unique Channels from DataFrame.
+        ]
+
+        return options
+
+    @app.callback(
+        Output("run-performance-assay-type", "options"),
+        Input("assay-options", "data"),
+    )
+    def populate_run_performance_assay_options(options):
+        """
+        A severside-callback to get available Channel options from run performance table.
+        """
+        return [x for x in options]
+
+    @app.callback(
+        Output("assay-options", "data"),
+        Input("runset-stats-data-by-runset", "data"),
+    )
+    def get_run_performance_assay_options(data):
+        """
+        A severside-callback to get available Channel options from run performance table.
+        """
+        df = pd.DataFrame.from_dict(data)  ## Create a DataFrame from row Data.
+        options = [
+            x for x in df["resultCode"].unique()  ## Get unique Channels from DataFrame.
+        ]
+
+        return options
