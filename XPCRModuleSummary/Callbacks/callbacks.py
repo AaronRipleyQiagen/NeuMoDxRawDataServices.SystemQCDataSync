@@ -290,6 +290,39 @@ def add_callbacks(app: Dash) -> None:
             return no_update
 
     @app.callback(
+        Output("xpcrmodule-history-gantt", "figure", allow_duplicate=True),
+        Input("run-performance-aggregate-type", "value"),
+        Input("xpcrmodule-history-tabs", "active_tab"),
+        State("runset-stats-data-by-cartridge", "data"),
+        State("runset-stats-data-by-runset", "data"),
+        prevent_initial_call=True,
+    )
+    def plotRunPerformanceTrends(
+        aggregationType: str,
+        active_tab: str,
+        cartridgeStats: list[dict],
+        runsetStatus: list[dict],
+    ) -> go.Figure:
+        """
+        A server-side callback used to plot key details related to the XPCR Module's history in DataSync on a Gantt chart.
+
+        Args:
+            xpcrmodule_history_data: Data related to the history of the XPCR Module in DataSync.
+
+        Returns:
+            A Figure containing a Gantt Chart summarizing an XPCR Module's history.
+        """
+        print("ACTIVE TAB", active_tab)
+        if ctx.triggered_id == "run-performance-aggregate-type" or (
+            ctx.triggered_id == "xpcrmodule-history-tabs"
+            and active_tab == "run-performance-tab"
+        ):
+            fig = go.Figure()
+            return fig
+        else:
+            return no_update
+
+    @app.callback(
         Output(DownloadBlobFileButton.ids.fileurl("files-download-button"), "data"),
         Output(DownloadBlobFileButton.ids.filename("files-download-button"), "data"),
         Input("files-table", "selectionChanged"),
