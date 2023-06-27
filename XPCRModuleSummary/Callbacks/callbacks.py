@@ -612,10 +612,6 @@ def add_xpcrmodule_history_tables_callbacks(app: Dash) -> None:
     ) -> tuple[list[dict], list[dict]]:
         """
         A server-side callback used populate the details of Run Performance associated with an XPCR Module and return these to a Dash AG Grid component.
-        Args:
-            runset_stats_data_by_runset: The data corresponding to run performance aggregated by runset.
-            runset_stats_data_by_cartridge: The data corresponding to run performance aggregated by cartridge.
-            statistic_type: The statistic type to trend.
         """
 
         if agg_type == "RunSet":
@@ -627,8 +623,7 @@ def add_xpcrmodule_history_tables_callbacks(app: Dash) -> None:
             records: list[dict] = runset_stats_data_by_cartridge
             label_map = "CartridgeId"
 
-        # save_json_response(records, "runset_performance_details.json")
-        # Provide a map that will deterimine which columns to retrieve from the runset_details_data as well as what they will be called in the end dataframe.
+        # Provide a map that will determine which columns to retrieve from the runset_details_data as well as what they will be called in the end dataframe.
         column_map = {
             "assayChannelId": "AssayChannelId",
             "targetName": "Target Name",
@@ -671,25 +666,23 @@ def add_xpcrmodule_history_tables_callbacks(app: Dash) -> None:
             "epr_min": "EPR Min",
             "epr_max": "EPR Max",
         }
-        _hide_columns = [
-            value
-            for key, value in column_map.items()
-            if (
-                (
-                    "Ct" in value
-                    or "EP" in value
-                    or "EPR" in value
-                    or "MPH" in value
-                    or "Count" in value
-                    or "Id" in value
-                )
-            )
-        ]
 
-        if statistic_type:
-            _hide_columns.remove(statistic_type)
-        print("STATTYPE:", statistic_type)
-        print("Hide Columns: ", _hide_columns)
         return get_dash_ag_grid_from_records(
-            records=records, column_map=column_map, hide_columns=_hide_columns
+            records=records,
+            column_map=column_map,
+            hide_columns=[
+                value
+                for key, value in column_map.items()
+                if (
+                    (
+                        "Ct" in value
+                        or "EP" in value
+                        or "EPR" in value
+                        or "MPH" in value
+                        or "Count" in value
+                        or "Id" in value
+                    )
+                    and value != statistic_type
+                )
+            ],
         )
