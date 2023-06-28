@@ -127,6 +127,7 @@ runset_selector_modal = dbc.Modal(
 
 runset_attempt_prompt = UserInputModal(
     aio_id="data-explorer",
+    title_text="Define Runset Attempt Number",
     modal_body=RunSetAttemptModalBody(aio_id="data-explorer"),
 )
 
