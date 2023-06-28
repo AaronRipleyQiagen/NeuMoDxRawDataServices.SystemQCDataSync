@@ -167,6 +167,7 @@ layout = html.Div(
             children=[reviewgroup_selector_modal, post_response, runset_selector_modal],
         ),
         data_explorer_external_link_redirect,
+        runset_attempt_prompt,
     ]
 )
 
