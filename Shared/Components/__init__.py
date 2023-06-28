@@ -181,6 +181,103 @@ class DownloadBlobFileButton(html.Div):
                 )
 
 
+class UserInputModal(dbc.Modal):
+    """An All-In-One (AIO) component that generates a generic user input modal that allows the user to provide & confirm input, or cancel action.
+
+    Parameters:
+        aio_id: The id to give to the GoToRunSetButton (Defaults to a randomly generated guid).
+        submit_text: Text to label the submit button with (Defaults to "Submit").
+        cancel_text: Text to label the cancel button with (Defaults to "Cancel").
+        title_text: Text to add to the ModalTitle (Defaults to None).
+        modal_body: Variable content to add to modal to capture user input (Defaults to None).
+        submit_props: Other properties to pass to the submit button. (Defaults to None).
+        cancel_props: Other properties to pass to the cancel button. (Defaults to None).
+        title_props: Other properties to pass to the Modal Title. (Defaults to None).
+
+    Subcomponents:
+        submit (dbc.Button): The submit button that confirms an action.
+        cancel (dbc.Button): The submit button that cancels an action.
+        modal (dbc.Modal): The parent element that wrapps the input.
+
+    """
+
+    class ids:
+        submit = lambda aio_id: {
+            "component": "UserInputModal",
+            "subcomponent": "submit",
+            "aio_id": aio_id,
+        }
+
+        cancel = lambda aio_id: {
+            "component": "UserInputModal",
+            "subcomponent": "cancel",
+            "aio_id": aio_id,
+        }
+
+        modal = lambda aio_id: {
+            "component": "UserInputModal",
+            "subcomponent": "modal",
+            "aio_id": aio_id,
+        }
+
+    ids = ids
+
+    def __init__(
+        self,
+        aio_id: str = None,
+        submit_text: str = "Submit",
+        cancel_text: str = "Cancel",
+        title_text: str = None,
+        modal_body: dbc.Modal = None,
+        submit_props: dict = None,
+        cancel_props: dict = None,
+        title_props: dict = None,
+    ):
+        if not aio_id:
+            aio_id = str(uuid.uuid4())
+        submit_props = submit_props if submit_props else {}
+        cancel_props = cancel_props if submit_props else {}
+        title_props = title_props if title_props else {}
+        submit_props["children"] = submit_text
+        cancel_props["children"] = cancel_text
+        title_props["children"] = title_text
+
+        super().__init__(
+            [
+                dbc.ModalHeader(dbc.ModalTitle(**title_props)),
+                modal_body,
+                dbc.ModalFooter(
+                    [
+                        dbc.Button(
+                            id=self.ids.submit(aio_id),
+                            className="ms-auto",
+                            **submit_props,
+                        ),
+                        dbc.Button(
+                            id=self.ids.cancel(aio_id),
+                            className="ms-auto",
+                            **cancel_props,
+                        ),
+                    ]
+                ),
+            ],
+            id=self.ids.modal(aio_id),
+            is_open=False,
+        )
+
+    def add_callbacks(app):
+        @app.callback(
+            Output(UserInputModal.ids.modal(MATCH), "is_open", allow_duplicate=True),
+            Input(UserInputModal.ids.submit(MATCH), "n_clicks"),
+            Input(UserInputModal.ids.cancel(MATCH), "n_clicks"),
+            State(UserInputModal.ids.modal(MATCH), "is_open"),
+            prevent_initial_call=True,
+        )
+        def download_file(submit_click, cancel_click, is_open):
+            return not is_open
+
+
+class RunSetAttemptModalBody(dbc.ModalBody):
 def add_AIO_callbacks(app):
     GoToRunSetButtonAIO.add_callbacks(app)
     DownloadBlobFileButton.add_callbacks(app)
