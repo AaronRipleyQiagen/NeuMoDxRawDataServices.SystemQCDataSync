@@ -2,6 +2,7 @@ import dash_bootstrap_components as dbc
 from dash import dcc
 from dash import html
 from .styles import *
+from Shared.Components import *
 
 issue_post_response = dbc.Modal(
     [
@@ -274,6 +275,17 @@ comments_delete_response = dbc.Modal(
     is_open=False,
 )
 
+edit_runset_attempt_modal = UserInputModal(
+    aio_id="run-review-edit-runset-attempt",
+    title_text="Edit Runset Attempt Number",
+    modal_body=RunSetAttemptModalBody("run-review-edit-runset-attempt"),
+)
+
+update_runset_attempt_response_modal = PostResponse(
+    aio_id="edit-runset-attempt-response",
+    title_text="Edit Runset Attempt Number Response",
+)
+
 message_objects = html.Div(
     [
         issue_post_response,
@@ -293,5 +305,7 @@ message_objects = html.Div(
         comments_post_response,
         comments_delete_confirmation,
         comments_delete_response,
+        edit_runset_attempt_modal,
+        update_runset_attempt_response_modal,
     ]
 )
