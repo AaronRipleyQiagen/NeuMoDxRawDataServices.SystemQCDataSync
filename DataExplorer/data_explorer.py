@@ -10,6 +10,7 @@ import json
 from Shared.neumodx_objects import *
 from Shared.communication import *
 from Shared.appbuildhelpers import apply_layout_with_auth
+from Shared.Components import *
 
 import os
 import requests
