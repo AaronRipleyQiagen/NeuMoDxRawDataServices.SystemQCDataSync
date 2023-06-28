@@ -123,6 +123,13 @@ runset_selector_modal = dbc.Modal(
     id="runset-selector-modal",
     is_open=False,
 )
+
+
+runset_attempt_prompt = UserInputModal(
+    aio_id="data-explorer",
+    modal_body=RunSetAttemptModalBody(aio_id="data-explorer"),
+)
+
 channel_selector = dcc.Dropdown(
     ["Yellow", "Green", "Orange", "Red", "Far Red"],
     value="Yellow",
