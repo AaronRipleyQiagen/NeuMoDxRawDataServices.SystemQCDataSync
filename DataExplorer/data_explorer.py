@@ -61,6 +61,14 @@ def Add_Dash(app):
     apply_layout_with_auth(app, layout)
 
     @app.callback(
+        Output(UserInputModal.ids.modal("data-explorer"), "is_open"),
+        Input("submit-button", "n_clicks"),
+        State(UserInputModal.ids.modal("data-explorer"), "is_open"),
+        prevent_initial_call=True,
+    )
+    def control_attempt_number_modal(confirm_runset_type_click, is_open):
+        return not is_open
+    @app.callback(
         Output("review-group-options", "options"),
         Output("created-runset-id", "data"),
         [Input("submit-button", "n_clicks")],
