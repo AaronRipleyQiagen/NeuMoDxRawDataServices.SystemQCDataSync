@@ -172,13 +172,12 @@ layout = html.Div(
 
 
 @callback(
-    [
-        Output("channel-selector", "value"),
-        Output("process-step-selector", "value"),
-        Output("sample-info", "data"),
-        Output("runset-type-options", "options"),
-    ],
-    [Input("url", "href"), State("selected-cartridge-sample-ids", "data")],
+    Output("channel-selector", "value"),
+    Output("process-step-selector", "value"),
+    Output("sample-info", "data"),
+    Output("runset-type-options", "options"),
+    Input("url", "href"),
+    State("selected-cartridge-sample-ids", "data"),
 )
 def get_sample_ids_from_dcc_store(href, selected_cartridge_sample_ids):
     print("Getting Data from DCC Store")
@@ -188,20 +187,15 @@ def get_sample_ids_from_dcc_store(href, selected_cartridge_sample_ids):
         for sample_id in selected_cartridge_sample_ids[cartridge_id]:
             selected_sample_ids.append(sample_id)
     sample_data = getSampleDataAsync(selected_sample_ids)
-
-    # the json file where the output must be stored
-    # out_file = open("myfile.json", "w")
-
-    # json.dump(sample_data, out_file)
     jsonReader = SampleJSONReader(json.dumps(sample_data))
     jsonReader.standardDecode()
     dataframe = jsonReader.DataFrame
-    # dataframe.to_csv('test3.csv')
     dataframe["RawDataDatabaseId"] = dataframe.reset_index()["id"].values
     dataframe["Channel"] = dataframe["Channel"].replace("Far_Red", "Far Red")
 
-    # dataframe = dataframe.reset_index().set_index(['Channel', 'Processing Step', 'XPCR Module Serial'])
-
+    """
+    Get SPC2 Channel Based on Result Code Id
+    """
     if dataframe["Result Code"][0] in ["QUAL", "HCV", "CTNG"]:
         SPC2_channel = "Yellow"
     else:
