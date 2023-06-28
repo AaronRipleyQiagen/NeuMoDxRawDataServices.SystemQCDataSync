@@ -88,7 +88,7 @@ reviewgroup_selector_modal = dbc.Modal(
             ]
         ),
     ],
-    id="reviewgroup-selector-modal",
+    id="reviewgroup-selector-modal-data-explorer",
     is_open=False,
 )
 post_response = dbc.Modal(
@@ -343,11 +343,11 @@ def switch_runset_selector(create_clicks, submit_clicks, cancel_clicks, is_open)
 
 
 @callback(
-    Output("reviewgroup-selector-modal", "is_open"),
+    Output("reviewgroup-selector-modal-data-explorer", "is_open"),
     Input("review-group-options", "options"),
     Input("submit-reviewgroup-selection-button", "n_clicks"),
     Input("cancel-reviewgroup-selection-button", "n_clicks"),
-    State("reviewgroup-selector-modal", "is_open"),
+    State("reviewgroup-selector-modal-data-explorer", "is_open"),
     prevent_initial_call=True,
 )
 def switch_runset_selector(
