@@ -68,36 +68,38 @@ def Add_Dash(app):
     )
     def control_attempt_number_modal(confirm_runset_type_click, is_open):
         return not is_open
+
     @app.callback(
         Output("review-group-options", "options"),
         Output("created-runset-id", "data"),
-        [Input("submit-button", "n_clicks")],
-        [
-            State("sample-info", "data"),
-            State("runset-type-options", "value"),
-            State("runset-type-options", "options"),
-            State("post-response", "is_open"),
-        ],
+        Input(UserInputModal.ids.submit("data-explorer"), "n_clicks"),
+        State("sample-info", "data"),
+        State("runset-type-options", "value"),
+        State("runset-type-options", "options"),
+        State(RunSetAttemptModalBody.ids.attempt_number("data-explorer"), "value"),
+        State("post-response", "is_open"),
         prevent_initial_call=True,
     )
-    def create_run_review(
+    def create_runset(
         submit_clicks,
-        data,
-        runset_type_selection_id,
-        runset_type_selection_options,
-        is_open,
+        data: str,
+        runset_type_selection_id: str,
+        runset_type_selection_options: dict,
+        runset_attempt_number: int,
+        is_open: bool,
     ):
+        print("Runset Attempt Number: ", runset_attempt_number)
         reviewgroup_options = {}
         if submit_clicks:
             dataframe = pd.DataFrame.from_dict(data)
             dataframe.drop_duplicates(["Test Guid", "Replicate Number"], inplace=True)
             """
-                This Block creates the run review dataset.
-                """
+            This Block creates the run review dataset.
+            """
             runset = {}
             runset["userId"] = session["user"].id
             runset["description"] = ""
-            runset["number"] = 0
+            runset["number"] = runset_attempt_number
             runset["runSetStartDate"] = (
                 dataframe["Start Date Time"]
                 .astype("datetime64[ms]")
@@ -171,27 +173,7 @@ def Add_Dash(app):
 
             created_runset = resp.json()
             created_runset_id = created_runset["id"]
-            # with open('test_runset.json', 'w') as f:
-            #     # Write the dictionary to the file as JSON
-            #     json.dump(created_runset, f)
             print("got created runset id " + created_runset_id)
-
-            # if os.environ['SEND_EMAILS'] == "Yes":
-            #     if 'XPCR Module Qualification' in runset_type_selection_options[runset_type_selection_id]:
-            #         msg = Message(runset['name']+" Ready for review", sender='neumodxsystemqcdatasync@gmail.com',
-            #                       recipients=['aripley2008@gmail.com'])
-
-            #         with mail.connect() as conn:
-            #             for user in mod_qual_review_subscribers:
-            #                 message = 'Hello '+user+", this message is sent to inform you that " + \
-            #                     runset['name']+" is now ready for your review."
-            #                 subject = runset['name']+" Ready for review"
-            #                 msg = Message(recipients=[mod_qual_review_subscribers[user]],
-            #                               body=message,
-            #                               subject=subject,
-            #                               sender='neumodxsystemqcdatasync@gmail.com')
-
-            #                 conn.send(msg)
 
         """
         Get Review Groups
