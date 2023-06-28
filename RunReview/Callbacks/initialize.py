@@ -339,7 +339,15 @@ def get_initialization_callbacks(app):
         )
 
     @app.callback(
-        [Output("runset-description", "children"), Output("related-runsets", "data")],
+        Output("runset-description", "children"), Input("runset-selection-data", "data")
+    )
+    def get_runset_description(runset_selection):
+        return (
+            runset_selection["name"] + " Attempt # " + str(runset_selection["number"])
+        )
+
+    @app.callback(
+        Output("related-runsets", "data"),
         Input("runset-selection-data", "data"),
     )
     def update_runset_description(runset_selection):
@@ -407,12 +415,7 @@ def get_initialization_callbacks(app):
                 related_xpcrmodule_runsets[xpcrmodule_runsets_df.loc[idx, "id"]] = i
                 i += 1
 
-            return (
-                runset_selection["name"]
-                + " Attempt # "
-                + str(runset_selection["number"]),
-                related_xpcrmodule_runsets,
-            )
+            return related_xpcrmodule_runsets
 
         else:
             return no_update
