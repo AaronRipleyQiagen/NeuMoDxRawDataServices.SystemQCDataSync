@@ -1,5 +1,6 @@
 from .dependencies import *
 import app_config
+from Shared.Components import *
 
 
 def get_initialization_callbacks(app):
@@ -345,6 +346,51 @@ def get_initialization_callbacks(app):
         return (
             runset_selection["name"] + " Attempt # " + str(runset_selection["number"])
         )
+
+    @app.callback(
+        Output(UserInputModal.ids.modal("run-review-edit-runset-attempt"), "is_open"),
+        Input("edit-runset-attempt-number-button", "n_clicks"),
+        State(UserInputModal.ids.modal("run-review-edit-runset-attempt"), "is_open"),
+        prevent_initial_call=True,
+    )
+    def open_edit_runset_attempt_modal(open_click, is_open):
+        """
+        Attempt
+        """
+        return not is_open
+
+    @app.callback(
+        Output("runset-description", "children", allow_duplicate=True),
+        Output(PostResponse.ids.modal("edit-runset-attempt-response"), "is_open"),
+        Output(
+            PostResponse.ids.response_status_code("edit-runset-attempt-response"),
+            "data",
+        ),
+        Input(UserInputModal.ids.submit("run-review-edit-runset-attempt"), "n_clicks"),
+        State(
+            RunSetAttemptModalBody.ids.attempt_number("run-review-edit-runset-attempt"),
+            "value",
+        ),
+        State("runset-selection-data", "data"),
+        State(PostResponse.ids.modal("edit-runset-attempt-response"), "is_open"),
+        prevent_initial_call=True,
+    )
+    def update_runset_attempt(
+        submit_click, new_runset_attempt_number, runset_selection, response_is_open
+    ):
+        """
+        A clientside-callback used to update the runset attempt number associated with the runset being reviewed.
+        """
+        update_runset_attempt_url = os.environ[
+            "RUN_REVIEW_API_BASE"
+        ] + "RunSets/{}/number".format(runset_selection["id"])
+        query_params = {"number": new_runset_attempt_number}
+        response = requests.put(url=update_runset_attempt_url, params=query_params)
+        status_code = response.status_code
+        new_runset_info = response.json()
+        new_description = new_runset_info["name"] + " Attempt # " + str(new_runset_info["number"])
+
+        return new_description, status_code, not response_is_open
 
     @app.callback(
         Output("related-runsets", "data"),
