@@ -4,7 +4,7 @@ import dash
 
 import pandas as pd
 from flask import Flask, session
-from flask_mail import Mail, Message
+
 import json
 
 from Shared.neumodx_objects import *
