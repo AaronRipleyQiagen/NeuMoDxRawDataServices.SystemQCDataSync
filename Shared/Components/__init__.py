@@ -285,7 +285,7 @@ class RunSetAttemptModalBody(dbc.ModalBody):
         aio_id: The id to give to the GoToRunSetButton (Defaults to a randomly generated guid).
         title_props: Other properties to pass to the Modal Title. (Defaults to None).
         prompt_label_text: Text to pass into the input label (Defaults to "Provide Runset Attempt Number:").
-        attempt_number_default: The default value to be displayed in the input (Defaults to 1).    
+        attempt_number_default: The default value to be displayed in the input (Defaults to 1).
         prompt_label_props: Other properties to pass to the input label. (Defaults to None).
         attempt_number_props: dict = Other properties to pass to the input (Defaults to None).
     Subcomponents:
@@ -293,7 +293,7 @@ class RunSetAttemptModalBody(dbc.ModalBody):
         prompt_label (html.P): Label to provide to the input prompt.
 
     """
-    
+
     class ids:
         attempt_number = lambda aio_id: {
             "component": "RunSetAttemptModalBody",
@@ -346,7 +346,136 @@ class RunSetAttemptModalBody(dbc.ModalBody):
         )
 
 
+class PostResponse(dbc.Modal):
+
+    """An All-In-One (AIO) component that generates a Modal that can be used to process a response and dynamically return a message to the user based on the status code of the response.
+
+    Parameters:
+        aio_id: The id to give to the GoToRunSetButton (Defaults to a randomly generated guid).
+        close_text: Text to label the close button with (Defaults to "Submit").
+        title_text: Text to add to the ModalTitle (Defaults to None).
+        success_text: Message to display if response code returned is 200 (Defaults to Operation was successful).
+        failed_text: Message to display if reponse code returned is not 200 (Defaults to Operation was not successful)..
+        close_props: Other properties to pass to the close button. (Defaults to None).
+        title_props: Other properties to pass to the Modal Title. (Defaults to None).
+        success_props: Other properties to pass to the success message (Defaults to None).
+        failed_props: Other properties to pass to the failed message (Defaults to None).
+
+    Subcomponents:
+        close (dbc.Button): The button that closes the Modal.
+        response_status_code (dcc.Store) The storage of the status code returned.
+        failed (html.P): The messsage to display upon a failed response.
+        success (html.P): The messsage to display upon a success response.
+        modal (dbc.Modal): The parent Modal object.
+
+    """
+
+    class ids:
+        response_status_code = lambda aio_id: {
+            "component": "PostResponse",
+            "subcomponent": "response_status_code",
+            "aio_id": aio_id,
+        }
+
+        close = lambda aio_id: {
+            "component": "PostResponse",
+            "subcomponent": "close",
+            "aio_id": aio_id,
+        }
+
+        success = lambda aio_id: {
+            "component": "PostResponse",
+            "subcomponent": "success",
+            "aio_id": aio_id,
+        }
+
+        failed = lambda aio_id: {
+            "component": "PostResponse",
+            "subcomponent": "failed",
+            "aio_id": aio_id,
+        }
+
+        modal = lambda aio_id: {
+            "component": "PostResponse",
+            "subcomponent": "modal",
+            "aio_id": aio_id,
+        }
+
+    def __init__(
+        self,
+        aio_id: str = None,
+        close_text: str = "Close",
+        title_text: str = None,
+        success_text: str = "Operation was successful",
+        failed_text: str = "Operation was not successful",
+        close_props: dict = None,
+        title_props: dict = None,
+        success_props: dict = None,
+        failed_props: dict = None,
+    ):
+        if not aio_id:
+            aio_id = str(uuid.uuid4())
+        close_props = close_props if close_props else {}
+        title_props = title_props if title_props else {}
+        success_props = success_props if success_props else {}
+        failed_props = failed_props if failed_props else {}
+        close_props["children"] = close_text
+        title_props["children"] = title_text
+        success_props["children"] = success_text
+        failed_props["children"] = failed_text
+
+        super().__init__(
+            [
+                dbc.ModalHeader(dbc.ModalTitle(**title_props)),
+                dbc.ModalBody(
+                    children=[
+                        html.P(id=self.ids.success(aio_id), **success_props),
+                        html.P(id=self.ids.failed(aio_id), **failed_props),
+                    ]
+                ),
+                dbc.ModalFooter(
+                    [
+                        dbc.Button(
+                            id=self.ids.close(aio_id),
+                            className="ms-auto",
+                            **close_props,
+                        )
+                    ]
+                ),
+                dcc.Store(
+                    id=self.ids.response_status_code(aio_id), storage_type="session"
+                ),
+            ],
+            id=self.ids.modal(aio_id),
+            is_open=False,
+        )
+
+    def add_callbacks(app):
+        @app.callback(
+            Output(PostResponse.ids.success(MATCH), "hidden"),
+            Output(PostResponse.ids.failed(MATCH), "hidden"),
+            Input(PostResponse.ids.response_status_code(MATCH), "data"),
+        )
+        def control_message(data):
+            print("RAN CONTROL MESSAGE")
+            print(data)
+            if data == "200":
+                return False, True
+            else:
+                return False, True
+
+        @app.callback(
+            Output(PostResponse.ids.modal(MATCH), "is_open", allow_duplicate=True),
+            Input(PostResponse.ids.close(MATCH), "n_clicks"),
+            State(PostResponse.ids.modal(MATCH), "is_open"),
+            prevent_initial_call=True,
+        )
+        def open_post_response(close_click, is_open):
+            return not is_open
+
+
 def add_AIO_callbacks(app):
     GoToRunSetButtonAIO.add_callbacks(app)
     DownloadBlobFileButton.add_callbacks(app)
     UserInputModal.add_callbacks(app)
+    PostResponse.add_callbacks(app)
