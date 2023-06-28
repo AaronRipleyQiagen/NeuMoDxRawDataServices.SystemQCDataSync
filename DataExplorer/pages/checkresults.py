@@ -21,6 +21,8 @@ import requests
 
 import dash_ag_grid as dag
 from Shared.neumodx_objects import SampleJSONReader, getSampleDataAsync
+from Shared.styles import *
+from Shared.Components import *
 
 fig = go.Figure()
 
