@@ -12,6 +12,7 @@ from dash import (
 import dash_bootstrap_components as dbc
 import uuid
 from Shared.functions import *
+from Shared.styles import *
 
 ## For Information related to All-In-One Component (AIO) Pattern please see https://dash.plotly.com/all-in-one-components
 
@@ -73,7 +74,7 @@ class GoToRunSetButtonAIO(html.Div):
                 html.Div(id=self.ids.div(aio_id)),
                 dcc.Store(id=self.ids.store(aio_id), storage_type="session"),
             ],
-            **main_props
+            **main_props,
         )
 
     def add_callbacks(app):
@@ -278,6 +279,74 @@ class UserInputModal(dbc.Modal):
 
 
 class RunSetAttemptModalBody(dbc.ModalBody):
+    """An All-In-One (AIO) component that generates a ModalBody that can be used to capture a RunSetAttempt from a user.
+
+    Parameters:
+        aio_id: The id to give to the GoToRunSetButton (Defaults to a randomly generated guid).
+        title_props: Other properties to pass to the Modal Title. (Defaults to None).
+        prompt_label_text: Text to pass into the input label (Defaults to "Provide Runset Attempt Number:").
+        attempt_number_default: The default value to be displayed in the input (Defaults to 1).    
+        prompt_label_props: Other properties to pass to the input label. (Defaults to None).
+        attempt_number_props: dict = Other properties to pass to the input (Defaults to None).
+    Subcomponents:
+        attempt_number (dbc.Input): Input prompt used to capture a numeric value.
+        prompt_label (html.P): Label to provide to the input prompt.
+
+    """
+    
+    class ids:
+        attempt_number = lambda aio_id: {
+            "component": "RunSetAttemptModalBody",
+            "subcomponent": "attempt_number",
+            "aio_id": aio_id,
+        }
+
+        prompt_label = lambda aio_id: {
+            "component": "RunSetAttemptModalBody",
+            "subcomponent": "prompt_label",
+            "aio_id": aio_id,
+        }
+
+    def __init__(
+        self,
+        aio_id: str = None,
+        prompt_label_text: str = "Provide Runset Attempt Number:",
+        prompt_label_props: dict = None,
+        attempt_number_default: int = 1,
+        attempt_number_props: dict = None,
+    ):
+        if not aio_id:
+            aio_id = str(uuid.uuid4())
+
+        prompt_label_props = prompt_label_props if prompt_label_props else {}
+        prompt_label_props["children"] = prompt_label_text
+        attempt_number_props = attempt_number_props if attempt_number_props else {}
+        attempt_number_props["value"] = attempt_number_default
+        attempt_number_props["type"] = "number"
+        attempt_number_props["min"] = 1
+        super().__init__(
+            children=html.Div(
+                [
+                    html.Div(
+                        [
+                            html.P(
+                                id=self.ids.prompt_label(aio_id),
+                                style=threequarterstyle,
+                                **prompt_label_props,
+                            ),
+                            dbc.Input(
+                                id=self.ids.attempt_number(aio_id),
+                                style=quarterstyle,
+                                **attempt_number_props,
+                            ),
+                        ]
+                    ),
+                ]
+            )
+        )
+
+
 def add_AIO_callbacks(app):
     GoToRunSetButtonAIO.add_callbacks(app)
     DownloadBlobFileButton.add_callbacks(app)
+    UserInputModal.add_callbacks(app)
