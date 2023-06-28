@@ -146,17 +146,22 @@ def add_callbacks(app: Dash) -> None:
             # Add runsetreviewassignment entries to gantt lines.
             for runsetreviewassignment in runsetreviewassignments:
                 if runsetreviewassignment["completedDate"]:
-                    finish = (
-                        datetime.strptime(
-                            runsetreviewassignment["completedDate"][:-1],
-                            "%Y-%m-%dT%H:%M:%S.%f",
-                        ),
+                    finish = datetime.strptime(
+                        runsetreviewassignment["completedDate"][:-1],
+                        "%Y-%m-%dT%H:%M:%S.%f",
                     )
+                    _resource = "Review Assignment"
+                    _task = runsetreviewassignment["qualificationProtocol"]
                 else:
                     finish = datetime.now()
+                    _resource = "Review Assignment"
+                    _task = (
+                        runsetreviewassignment["qualificationProtocol"]
+                        + " Open Review Assignment"
+                    )
 
                 runsetreviewassignment_data = dict(
-                    Task=runsetreviewassignment["qualificationProtocol"],
+                    Task=_task,
                     Start=datetime.strptime(
                         runsetreviewassignment["assignedDate"][:-1],
                         "%Y-%m-%dT%H:%M:%S.%f",
@@ -185,55 +190,6 @@ def add_callbacks(app: Dash) -> None:
                 index_col="Resource",
                 show_colorbar=True,
                 group_tasks=True,
-            )
-            return fig
-        else:
-            return no_update
-
-    @app.callback(
-        Output("xpcrmodule-history-gantt", "figure", allow_duplicate=True),
-        Input("xpcrmodule-history-tabs", "active_tab"),
-        Input("run-performance-table", "rowData"),
-        State("run-performance-aggregate-type", "value"),
-        State("run-performance-statistic-type", "value"),
-        prevent_initial_call=True,
-    )
-    def plotRunPerformanceTrends(
-        active_tab: str,
-        run_performance_data: list[dict],
-        agg_type: str,
-        statistic_type: str,
-    ) -> go.Figure:
-        """
-        A server-side callback used to plot key details related to the XPCR Module's Run Performance History in DataSync on a Line chart.
-        """
-
-        if (
-            (
-                ctx.triggered_id
-                == "run-performance-table"  ## Logic to catch situations where the run performance table is updated.
-                or (
-                    ctx.triggered_id
-                    == "xpcrmodule-history-tabs"  ## Logic to determine if the active_tab is run performance.
-                    and active_tab == "run-performance-tab"
-                )
-            )
-            and statistic_type  ## Make sure there is a statistic_type selected in dropdown.
-            and agg_type  ## Make sure there is a agg_type selected in dropdown.
-        ):
-            data = pd.DataFrame.from_dict(run_performance_data)
-            fig = go.Figure()
-            data.sort_values("Start Date Time", ascending=True, inplace=True)
-            X = data["Start Date Time"].values
-            Y = data[statistic_type].values
-
-            fig.add_trace(
-                go.Scatter(
-                    x=X,
-                    y=Y,
-                    mode="lines",
-                    name=statistic_type,
-                )
             )
             return fig
         else:
@@ -756,3 +712,52 @@ def add_run_performance_callbacks(app: Dash) -> None:
         ]
 
         return options
+
+    @app.callback(
+        Output("xpcrmodule-history-gantt", "figure", allow_duplicate=True),
+        Input("xpcrmodule-history-tabs", "active_tab"),
+        Input("run-performance-table", "rowData"),
+        State("run-performance-aggregate-type", "value"),
+        State("run-performance-statistic-type", "value"),
+        prevent_initial_call=True,
+    )
+    def plotRunPerformanceTrends(
+        active_tab: str,
+        run_performance_data: list[dict],
+        agg_type: str,
+        statistic_type: str,
+    ) -> go.Figure:
+        """
+        A server-side callback used to plot key details related to the XPCR Module's Run Performance History in DataSync on a Line chart.
+        """
+
+        if (
+            (
+                ctx.triggered_id
+                == "run-performance-table"  ## Logic to catch situations where the run performance table is updated.
+                or (
+                    ctx.triggered_id
+                    == "xpcrmodule-history-tabs"  ## Logic to determine if the active_tab is run performance.
+                    and active_tab == "run-performance-tab"
+                )
+            )
+            and statistic_type  ## Make sure there is a statistic_type selected in dropdown.
+            and agg_type  ## Make sure there is a agg_type selected in dropdown.
+        ):
+            data = pd.DataFrame.from_dict(run_performance_data)
+            fig = go.Figure()
+            data.sort_values("Start Date Time", ascending=True, inplace=True)
+            X = data["Start Date Time"].values
+            Y = data[statistic_type].values
+
+            fig.add_trace(
+                go.Scatter(
+                    x=X,
+                    y=Y,
+                    mode="lines",
+                    name=statistic_type,
+                )
+            )
+            return fig
+        else:
+            return no_update
