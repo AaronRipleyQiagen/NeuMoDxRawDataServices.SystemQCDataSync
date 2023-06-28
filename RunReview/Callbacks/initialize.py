@@ -410,7 +410,7 @@ def get_initialization_callbacks(app):
             return (
                 runset_selection["name"]
                 + " Attempt # "
-                + str(xpcrmodule_runset_number),
+                + str(runset_selection["number"]),
                 related_xpcrmodule_runsets,
             )
 
