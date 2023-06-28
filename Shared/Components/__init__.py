@@ -122,7 +122,7 @@ class DownloadBlobFileButton(html.Div):
 
         download = lambda aio_id: {
             "component": "DownloadBlobFileButton",
-            "subcomponent": "div",
+            "subcomponent": "download",
             "aio_id": aio_id,
         }
 
@@ -161,7 +161,7 @@ class DownloadBlobFileButton(html.Div):
                 dcc.Store(id=self.ids.fileurl(aio_id), storage_type="session"),
                 dcc.Store(id=self.ids.filename(aio_id), storage_type="session"),
             ],
-            **main_props
+            **main_props,
         )
 
     def add_callbacks(app):
