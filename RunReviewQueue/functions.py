@@ -9,6 +9,7 @@ import io
 import dash_bootstrap_components as dbc
 from dash import Input, Output, dcc, html, no_update, ctx
 import base64
+from Shared.functions import *
 
 
 def populate_review_queue(
@@ -57,9 +58,22 @@ def populate_review_queue(
             "sampleCount",
             "validFromUser",
             "validFrom",
+            "Created By",
         ]
 
         groupable_columns = ["Status"]
+
+        """
+        Get User Names
+        """
+
+        users = get_users_info_async([x for x in df["validFromUser"].unique()])
+
+        user_info = {}
+        for user in users:
+            user_info[user] = users[user]["givenName"]
+
+        df["Created By"] = df["validFromUser"].replace(user_info)
 
         column_names = {
             "name": "Description",
