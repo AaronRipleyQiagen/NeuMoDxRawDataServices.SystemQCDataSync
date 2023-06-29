@@ -11,6 +11,7 @@ from dash import Input, Output, dcc, html, no_update, ctx
 import base64
 import json
 import time
+import app_config
 
 
 def save_uploaded_file_to_blob_storage(file_content, filename, container_name):
@@ -380,3 +381,64 @@ def timer_decorator(func):
         return result
 
     return wrapper
+
+
+def get_microsoft_graph_api_access_token():
+    """
+    A function used to get an access token that can be access microsofts graph API
+    """
+
+    tenant_id = app_config.TENANT_ID
+    client_id = app_config.CLIENT_ID
+    client_secret = app_config.CLIENT_SECRET
+    token_url = f"https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"
+
+    # Set the token request parameters
+    token_data = {
+        "grant_type": "client_credentials",
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "scope": "https://graph.microsoft.com/.default",
+    }
+
+    # Request the access token
+
+    response = requests.post(token_url, data=token_data)
+
+    if response.status_code == 200:
+        print(response.json().get("access_token"))
+        return response.json().get("access_token")
+    else:
+        print(f"Access Token Error: {response.status_code} - {response.text}")
+
+
+def get_user_info(
+    user_id: str,
+    access_token: str,
+) -> dict:
+    """
+    A function used to get the first & last name of a DataSync user based on the users Id from the Microsoft Graph API
+    Args:
+        user_id: The Id associated with the user of interest.
+        access_token: The access token obtained for microsoft graph api.
+    Returns:
+        dict: A dictionary containing details related to the user of interest.
+    """
+
+    endpoint = f"https://graph.microsoft.com/v1.0/users/{user_id}"
+
+    # Set the headers with the access token
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json",
+    }
+
+    # Send the request to retrieve user details
+    response = requests.get(endpoint, headers=headers)
+
+    # Check if the request was successful
+    if response.status_code == 200:
+        user_data = response.json()
+        return user_data
+    else:
+        print(f"Error: {response.status_code} - {response.text}")
