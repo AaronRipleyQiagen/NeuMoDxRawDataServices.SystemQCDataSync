@@ -496,7 +496,13 @@ def add_run_performance_callbacks(app: Dash) -> None:
                 )
             )
 
-        runset_stats = HttpGetWithQueryParametersAsync(request_arguments_list)
+        runset_stats_raw = HttpGetWithQueryParametersAsync(request_arguments_list)
+        runset_stats = []
+
+        for key in runset_stats_raw:
+            for record in runset_stats_raw[key]:
+                runset_stats.append({**record, "label": key})
+
         unpacked_stats = [
             unpack_multi_level_dictionary(
                 record,
@@ -534,7 +540,13 @@ def add_run_performance_callbacks(app: Dash) -> None:
                     label=cartridge,
                 )
             )
-        cartridge_stats = HttpGetWithQueryParametersAsync(request_arguments_list)
+        cartridge_stats_raw = HttpGetWithQueryParametersAsync(request_arguments_list)
+
+        cartridge_stats = []
+        for key in cartridge_stats_raw:
+            for record in cartridge_stats_raw[key]:
+                cartridge_stats.append({**record, "label": key})
+
         unpacked_stats = [
             unpack_multi_level_dictionary(
                 record,
