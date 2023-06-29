@@ -144,6 +144,7 @@ create_run_review_button = dbc.Button(
 )
 run_review_confirmation = html.H1(id="run-review-confirmation")
 fig = dcc.Graph(id="curves", figure=fig)
+
 run_attempt_validation_check_pass = dcc.Store(
     id="data-explorer-validation-check-pass", storage_type="session"
 )
