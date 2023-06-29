@@ -145,7 +145,7 @@ create_run_review_button = dbc.Button(
 run_review_confirmation = html.H1(id="run-review-confirmation")
 fig = dcc.Graph(id="curves", figure=fig)
 run_attempt_validation_check_pass = dcc.Store(
-    id="validation-check-pass", storage_type="session"
+    id="data-explorer-validation-check-pass", storage_type="session"
 )
 run_attempt_validation = UserInputModal(
     aio_id="data-explorer-run-attempt-validation",
