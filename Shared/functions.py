@@ -11,6 +11,7 @@ from dash import Input, Output, dcc, html, no_update, ctx
 import base64
 import json
 import time
+import app_config
 
 
 def save_uploaded_file_to_blob_storage(file_content, filename, container_name):
@@ -156,11 +157,15 @@ class GetRequestArguments:
     url: str
     params: dict
     label: str
+    headers: dict
 
-    def __init__(self, url: str, params: dict, label: str):
+    def __init__(
+        self, url: str, params: dict = None, label: str = None, headers: dict = None
+    ):
         self.url = url
         self.params = params
         self.label = label
+        self.headers = headers
 
 
 def HttpGetWithQueryParametersAsync(
@@ -175,7 +180,9 @@ def HttpGetWithQueryParametersAsync(
 
     async def HttpGet(session, get_request_arguments: GetRequestArguments):
         async with session.get(
-            get_request_arguments.url, params=get_request_arguments.params
+            get_request_arguments.url,
+            params=get_request_arguments.params,
+            headers=get_request_arguments.headers,
         ) as resp:
             data = await resp.json()
             return {get_request_arguments.label: data}
@@ -193,16 +200,10 @@ def HttpGetWithQueryParametersAsync(
 
     responses = asyncio.run(main())
 
-    labeled_responses = []
-
+    responses_dict = {}
     for response in responses:
-        for record in [
-            [{**record, "label": key} for record in values]
-            for key, values in response.items()
-        ][0]:
-            labeled_responses.append(record)
-
-    return labeled_responses
+        responses_dict.update(response)
+    return responses_dict
 
 
 def get_dataframe_from_records(records: list[dict], column_map: dict) -> pd.DataFrame:
@@ -380,3 +381,64 @@ def timer_decorator(func):
         return result
 
     return wrapper
+
+
+def get_microsoft_graph_api_access_token():
+    """
+    A function used to get an access token that can be access microsofts graph API
+    """
+
+    tenant_id = app_config.TENANT_ID
+    client_id = app_config.CLIENT_ID
+    client_secret = app_config.CLIENT_SECRET
+    token_url = f"https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"
+
+    # Set the token request parameters
+    token_data = {
+        "grant_type": "client_credentials",
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "scope": "https://graph.microsoft.com/.default",
+    }
+
+    # Request the access token
+
+    response = requests.post(token_url, data=token_data)
+
+    if response.status_code == 200:
+        return response.json().get("access_token")
+    else:
+        print(f"Access Token Error: {response.status_code} - {response.text}")
+
+
+def get_users_info_async(
+    user_ids: list[str],
+) -> dict:
+    """
+    A function used to get the first & last name of a DataSync user based on the users Id from the Microsoft Graph API
+    Args:
+        user_id: The Id associated with the user of interest.
+        access_token: The access token obtained for microsoft graph api.
+    Returns:
+        dict: A dictionary containing details related to the user of interest.
+    """
+
+    # Set the headers with the access token
+    headers = {
+        "Authorization": f"Bearer {get_microsoft_graph_api_access_token()}",
+        "Content-Type": "application/json",
+    }
+
+    endpoints = []
+    for user_id in user_ids:
+        endpoints.append(
+            GetRequestArguments(
+                url=f"https://graph.microsoft.com/v1.0/users/{user_id}",
+                label=user_id,
+                headers=headers,
+            )
+        )
+
+    users_info = HttpGetWithQueryParametersAsync(endpoints)
+
+    return users_info
