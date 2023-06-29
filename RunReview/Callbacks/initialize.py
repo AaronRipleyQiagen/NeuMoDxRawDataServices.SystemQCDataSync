@@ -528,12 +528,11 @@ def get_initialization_callbacks(app):
     )
     def get_runset_creator_details(runset_data):
         if ctx.triggered_id == "runset-selection-data":
-            access_token = get_microsoft_graph_api_access_token()
+            # access_token = get_microsoft_graph_api_access_token()
             # Construct the endpoint URL
-            user_info = get_user_info(
-                user_id=runset_data["validFromUser"], access_token=access_token
-            )
-            print(user_info)
+            user_info = get_users_info_async(user_ids=[runset_data["validFromUser"]])[
+                runset_data["validFromUser"]
+            ]
             return "Runset created by: {} {}".format(
                 user_info["displayName"], user_info["surname"]
             )
