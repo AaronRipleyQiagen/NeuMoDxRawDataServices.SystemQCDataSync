@@ -51,6 +51,12 @@ class GoToRunSetButtonAIO(html.Div):
             "aio_id": aio_id,
         }
 
+        split_string = lambda aio_id: {
+            "component": "GoToRunSetButtonAIO",
+            "subcomponent": "split_string",
+            "aio_id": aio_id,
+        }
+
     ## Make ids publically accessible.
     ids = ids
     app = Dash(__name__)
@@ -60,6 +66,7 @@ class GoToRunSetButtonAIO(html.Div):
         aio_id=None,
         button_text: str = "Go To RunSet",
         button_props: dict = None,
+        split_string: str = None,
         main_props: dict = None,
     ):
         if not aio_id:
@@ -73,6 +80,11 @@ class GoToRunSetButtonAIO(html.Div):
                 dbc.Button(id=self.ids.button(aio_id), **button_props),
                 html.Div(id=self.ids.div(aio_id)),
                 dcc.Store(id=self.ids.store(aio_id), storage_type="session"),
+                dcc.Store(
+                    id=self.ids.split_string(aio_id),
+                    storage_type="session",
+                    data=split_string,
+                ),
             ],
             **main_props,
         )
@@ -80,11 +92,10 @@ class GoToRunSetButtonAIO(html.Div):
     def add_callbacks(app):
         app.clientside_callback(
             """
-        function navigateToRunReview(n_clicks, runset_id) {
+        function navigateToRunReview(n_clicks, runset_id, splitString) {
             if (n_clicks && n_clicks > 0) {
                 var currentHref = window.top.location.href;
                 console.log('test')
-                var splitString = '/dashboard/XPCRModuleHistory/';
                 var hrefParts = currentHref.split(splitString);
                 if (hrefParts.length > 1) {
                     var newHref = hrefParts[0] + '/run-review/' + runset_id;
@@ -96,6 +107,7 @@ class GoToRunSetButtonAIO(html.Div):
             Output(GoToRunSetButtonAIO.ids.div(MATCH), "children"),
             Input(GoToRunSetButtonAIO.ids.button(MATCH), "n_clicks"),
             State(GoToRunSetButtonAIO.ids.store(MATCH), "data"),
+            State(GoToRunSetButtonAIO.ids.split_string(MATCH), "data"),
         )
 
 
@@ -472,6 +484,66 @@ class PostResponse(dbc.Modal):
         )
         def open_post_response(close_click, is_open):
             return not is_open
+
+
+class RunSetAttemptNumberValidation(dbc.ModalBody):
+    """An All-In-One (AIO) component that generates a ModalBody alert a user if a Particular XPCR Module has a runset matching the attempt number & runset type they have specified that already exists in the database.
+
+    Parameters:
+        aio_id: The id to give to the GoToRunSetButton (Defaults to a randomly generated guid).
+        message_text: Text to pass into the message (Defaults to "A Runset matching this description already exists.  Are you sure you want to continue?").
+        messsage_props: Other properties to pass to the message. (Defaults to None).
+    Subcomponents:
+        GoToRunSetButtonAIO (GoToRunSetButton): Button used to go to the runset found during runset attempt number validation.
+        message (html.P): Label to provide to the input prompt.
+
+    """
+
+    class ids:
+        message = lambda aio_id: {
+            "component": "RunSetValidationResponse",
+            "subcomponent": "message",
+            "aio_id": aio_id,
+        }
+
+        GoToRunSetButtonAIO = lambda aio_id: {
+            "component": "RunSetValidationResponse",
+            "subcomponent": "GoToRunSetButtonAIO",
+            "aio_id": aio_id,
+        }
+
+    def __init__(
+        self,
+        aio_id: str = None,
+        message_text: str = "A Runset matching this description already exists.  Are you sure you want to continue?",
+        message_props: dict = None,
+        split_string: str = None,
+    ):
+        if not aio_id:
+            aio_id = str(uuid.uuid4())
+
+        message_props = message_props if message_props else {}
+        message_props["children"] = message_text
+
+        super().__init__(
+            children=html.Div(
+                [
+                    html.Div(
+                        [
+                            html.P(
+                                id=self.ids.message(aio_id),
+                                **message_props,
+                            ),
+                            GoToRunSetButtonAIO(
+                                aio_id,
+                                button_text="Go To Matching Runset",
+                                split_string=split_string,
+                            ),
+                        ]
+                    ),
+                ]
+            )
+        )
 
 
 def add_AIO_callbacks(app):
