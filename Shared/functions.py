@@ -200,7 +200,10 @@ def HttpGetWithQueryParametersAsync(
 
     responses = asyncio.run(main())
 
-    return responses
+    responses_dict = {}
+    for response in responses:
+        responses_dict.update(response)
+    return responses_dict
 
 
 def get_dataframe_from_records(records: list[dict], column_map: dict) -> pd.DataFrame:
@@ -436,10 +439,6 @@ def get_users_info_async(
             )
         )
 
-    responses = HttpGetWithQueryParametersAsync(endpoints)
-
-    users_info = {}
-    for response in responses:
-        users_info.update(response)
+    users_info = HttpGetWithQueryParametersAsync(endpoints)
 
     return users_info
