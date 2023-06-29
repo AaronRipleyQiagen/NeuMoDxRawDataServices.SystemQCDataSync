@@ -56,6 +56,7 @@ def populate_review_queue(
             "runSetStartDate",
             "sampleCount",
             "validFromUser",
+            "validFrom",
         ]
 
         groupable_columns = ["Status"]
@@ -66,6 +67,7 @@ def populate_review_queue(
             "sampleCount": "Sample Count",
             "validFromUser": "UserId",
             "id": "Id",
+            "validFrom": "Created Date",
         }
 
         df = df[columns].rename(column_names, axis=1)
