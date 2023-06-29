@@ -70,9 +70,60 @@ def Add_Dash(app):
         return not is_open
 
     @app.callback(
+        Output(
+            UserInputModal.ids.modal("data-explorer-run-attempt-validation"), "is_open"
+        ),
+        Output(
+            GoToRunSetButtonAIO.ids.store("data-explorer-run-attempt-validation"),
+            "data",
+        ),
+        Output("validation-check-pass", "data"),
+        Input(UserInputModal.ids.submit("data-explorer"), "n_clicks"),
+        State("sample-info", "data"),
+        State("runset-type-options", "value"),
+        State(RunSetAttemptModalBody.ids.attempt_number("data-explorer"), "value"),
+        State(
+            UserInputModal.ids.modal("data-explorer-run-attempt-validation"), "is_open"
+        ),
+        prevent_inital_call=True,
+    )
+    def validate_runset_attempt_number(
+        attempt_number_submit: int,
+        sample_data: list[dict],
+        runset_type_id: str,
+        attempt_number: int,
+        is_open: bool,
+    ):
+        validate_runset_attempt_number_url = (
+            os.environ["RUN_REVIEW_API_BASE"] + "/RunSets/check-for-existing"
+        )
+
+        query_params = {
+            "xpcrmoduleserial": sample_data[0]["XPCR Module Serial"],
+            "runsettypeId": runset_type_id,
+            "attemptnumber": attempt_number,
+        }
+
+        print(query_params)
+
+        response = requests.get(
+            url=validate_runset_attempt_number_url, params=query_params, verify=False
+        )
+        print(response.status_code)
+
+        if response.status_code == 200:
+            return no_update, response.json()["id"], no_update
+        else:
+            return is_open, no_update, True
+
+    @app.callback(
         Output("review-group-options", "options"),
         Output("created-runset-id", "data"),
-        Input(UserInputModal.ids.submit("data-explorer"), "n_clicks"),
+        Input(
+            UserInputModal.ids.submit("data-explorer-run-attempt-validation"),
+            "n_clicks",
+        ),
+        Input("validation-check-pass", "data"),
         State("sample-info", "data"),
         State("runset-type-options", "value"),
         State("runset-type-options", "options"),
@@ -82,7 +133,8 @@ def Add_Dash(app):
     )
     def create_runset(
         submit_clicks,
-        data: str,
+        validation_check_pass,
+        data: list[dict],
         runset_type_selection_id: str,
         runset_type_selection_options: dict,
         runset_attempt_number: int,
@@ -90,7 +142,7 @@ def Add_Dash(app):
     ):
         print("Runset Attempt Number: ", runset_attempt_number)
         reviewgroup_options = {}
-        if submit_clicks:
+        if submit_clicks or validation_check_pass:
             dataframe = pd.DataFrame.from_dict(data)
             dataframe.drop_duplicates(["Test Guid", "Replicate Number"], inplace=True)
             """
@@ -175,20 +227,21 @@ def Add_Dash(app):
             created_runset_id = created_runset["id"]
             print("got created runset id " + created_runset_id)
 
-        """
-        Get Review Groups
-        """
-        reviewgroups_url = os.environ["RUN_REVIEW_API_BASE"] + "ReviewGroups"
+            """
+            Get Review Groups
+            """
+            print("GETTING REVIEW GROUPS")
+            reviewgroups_url = os.environ["RUN_REVIEW_API_BASE"] + "ReviewGroups"
 
-        reviewgroups_response = requests.get(reviewgroups_url, verify=False).json()
+            reviewgroups_response = requests.get(reviewgroups_url, verify=False).json()
 
-        for reviewgroup in reviewgroups_response:
-            if reviewgroup["description"] != "System QC Tech I":
-                reviewgroup_options[reviewgroup["id"]] = reviewgroup["description"]
+            for reviewgroup in reviewgroups_response:
+                if reviewgroup["description"] != "System QC Tech I":
+                    reviewgroup_options[reviewgroup["id"]] = reviewgroup["description"]
 
-        if submit_clicks:
             return reviewgroup_options, created_runset_id
-        return dash.no_update
+        else:
+            return dash.no_update
 
     @app.callback(
         Output("post-response", "is_open"),
