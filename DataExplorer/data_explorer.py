@@ -112,7 +112,7 @@ def Add_Dash(app):
         print(response.status_code)
 
         if response.status_code == 200:
-            return no_update, response.json()["id"], no_update
+            return not is_open, response.json()["id"], no_update
         else:
             return is_open, no_update, True
 
