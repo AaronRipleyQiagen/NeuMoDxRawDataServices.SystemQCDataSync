@@ -12,18 +12,17 @@ from dash import (
     no_update,
 )
 import dash_bootstrap_components as dbc
-import aiohttp
-import asyncio
 import json
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 import os
 import requests
-from flask import session
-from flask_mail import Message
+
 import dash_ag_grid as dag
 from Shared.neumodx_objects import SampleJSONReader, getSampleDataAsync
+from Shared.styles import *
+from Shared.Components import *
 
 fig = go.Figure()
 
@@ -124,6 +123,14 @@ runset_selector_modal = dbc.Modal(
     id="runset-selector-modal",
     is_open=False,
 )
+
+
+runset_attempt_prompt = UserInputModal(
+    aio_id="data-explorer",
+    title_text="Define Runset Attempt Number",
+    modal_body=RunSetAttemptModalBody(aio_id="data-explorer"),
+)
+
 channel_selector = dcc.Dropdown(
     ["Yellow", "Green", "Orange", "Red", "Far Red"],
     value="Yellow",
@@ -137,6 +144,19 @@ create_run_review_button = dbc.Button(
 )
 run_review_confirmation = html.H1(id="run-review-confirmation")
 fig = dcc.Graph(id="curves", figure=fig)
+
+run_attempt_validation_check_pass = dcc.Store(
+    id="data-explorer-validation-check-pass", storage_type="session"
+)
+run_attempt_validation = UserInputModal(
+    aio_id="data-explorer-run-attempt-validation",
+    title_text="Previously created Runset Matching Description Found",
+    submit_text="Continue",
+    modal_body=RunSetAttemptNumberValidation(
+        aio_id="data-explorer-run-attempt-validation", split_string="/data-explorer/"
+    ),
+)
+
 layout = html.Div(
     children=[
         created_runset_id,
@@ -161,18 +181,20 @@ layout = html.Div(
             children=[reviewgroup_selector_modal, post_response, runset_selector_modal],
         ),
         data_explorer_external_link_redirect,
+        runset_attempt_prompt,
+        run_attempt_validation,
+        run_attempt_validation_check_pass,
     ]
 )
 
 
 @callback(
-    [
-        Output("channel-selector", "value"),
-        Output("process-step-selector", "value"),
-        Output("sample-info", "data"),
-        Output("runset-type-options", "options"),
-    ],
-    [Input("url", "href"), State("selected-cartridge-sample-ids", "data")],
+    Output("channel-selector", "value"),
+    Output("process-step-selector", "value"),
+    Output("sample-info", "data"),
+    Output("runset-type-options", "options"),
+    Input("url", "href"),
+    State("selected-cartridge-sample-ids", "data"),
 )
 def get_sample_ids_from_dcc_store(href, selected_cartridge_sample_ids):
     print("Getting Data from DCC Store")
@@ -182,20 +204,15 @@ def get_sample_ids_from_dcc_store(href, selected_cartridge_sample_ids):
         for sample_id in selected_cartridge_sample_ids[cartridge_id]:
             selected_sample_ids.append(sample_id)
     sample_data = getSampleDataAsync(selected_sample_ids)
-
-    # the json file where the output must be stored
-    # out_file = open("myfile.json", "w")
-
-    # json.dump(sample_data, out_file)
     jsonReader = SampleJSONReader(json.dumps(sample_data))
     jsonReader.standardDecode()
     dataframe = jsonReader.DataFrame
-    # dataframe.to_csv('test3.csv')
     dataframe["RawDataDatabaseId"] = dataframe.reset_index()["id"].values
     dataframe["Channel"] = dataframe["Channel"].replace("Far_Red", "Far Red")
 
-    # dataframe = dataframe.reset_index().set_index(['Channel', 'Processing Step', 'XPCR Module Serial'])
-
+    """
+    Get SPC2 Channel Based on Result Code Id
+    """
     if dataframe["Result Code"][0] in ["QUAL", "HCV", "CTNG"]:
         SPC2_channel = "Yellow"
     else:

@@ -4,12 +4,13 @@ import dash
 
 import pandas as pd
 from flask import Flask, session
-from flask_mail import Mail, Message
+
 import json
 
 from Shared.neumodx_objects import *
 from Shared.communication import *
 from Shared.appbuildhelpers import apply_layout_with_auth
+from Shared.Components import *
 
 import os
 import requests
@@ -60,35 +61,97 @@ def Add_Dash(app):
     apply_layout_with_auth(app, layout)
 
     @app.callback(
-        Output("review-group-options", "options"),
-        Output("created-runset-id", "data"),
-        [Input("submit-button", "n_clicks")],
-        [
-            State("sample-info", "data"),
-            State("runset-type-options", "value"),
-            State("runset-type-options", "options"),
-            State("post-response", "is_open"),
-        ],
+        Output(UserInputModal.ids.modal("data-explorer"), "is_open"),
+        Input("submit-button", "n_clicks"),
+        State(UserInputModal.ids.modal("data-explorer"), "is_open"),
         prevent_initial_call=True,
     )
-    def create_run_review(
-        submit_clicks,
-        data,
-        runset_type_selection_id,
-        runset_type_selection_options,
-        is_open,
+    def control_attempt_number_modal(confirm_runset_type_click, is_open):
+        return not is_open
+
+    @app.callback(
+        Output(
+            UserInputModal.ids.modal("data-explorer-run-attempt-validation"), "is_open"
+        ),
+        Output(
+            GoToRunSetButtonAIO.ids.store("data-explorer-run-attempt-validation"),
+            "data",
+        ),
+        Output("data-explorer-validation-check-pass", "data"),
+        Input(UserInputModal.ids.submit("data-explorer"), "n_clicks"),
+        State("sample-info", "data"),
+        State("runset-type-options", "value"),
+        State(RunSetAttemptModalBody.ids.attempt_number("data-explorer"), "value"),
+        State(
+            UserInputModal.ids.modal("data-explorer-run-attempt-validation"), "is_open"
+        ),
+        prevent_inital_call=True,
+    )
+    def validate_runset_attempt_number(
+        attempt_number_submit: int,
+        sample_data: list[dict],
+        runset_type_id: str,
+        attempt_number: int,
+        is_open: bool,
     ):
+        validate_runset_attempt_number_url = (
+            os.environ["RUN_REVIEW_API_BASE"] + "/RunSets/check-for-existing"
+        )
+
+        query_params = {
+            "xpcrmoduleserial": sample_data[0]["XPCR Module Serial"],
+            "runsettypeId": runset_type_id,
+            "attemptnumber": attempt_number,
+        }
+
+        print(query_params)
+
+        response = requests.get(
+            url=validate_runset_attempt_number_url, params=query_params, verify=False
+        )
+        print(response.status_code)
+
+        if response.status_code == 200:
+            return not is_open, response.json()["id"], no_update
+        else:
+            return is_open, no_update, True
+
+    @app.callback(
+        Output("review-group-options", "options"),
+        Output("created-runset-id", "data"),
+        Input(
+            UserInputModal.ids.submit("data-explorer-run-attempt-validation"),
+            "n_clicks",
+        ),
+        Input("data-explorer-validation-check-pass", "data"),
+        State("sample-info", "data"),
+        State("runset-type-options", "value"),
+        State("runset-type-options", "options"),
+        State(RunSetAttemptModalBody.ids.attempt_number("data-explorer"), "value"),
+        State("post-response", "is_open"),
+        prevent_initial_call=True,
+    )
+    def create_runset(
+        submit_clicks,
+        validation_check_pass,
+        data: list[dict],
+        runset_type_selection_id: str,
+        runset_type_selection_options: dict,
+        runset_attempt_number: int,
+        is_open: bool,
+    ):
+        print("Runset Attempt Number: ", runset_attempt_number)
         reviewgroup_options = {}
-        if submit_clicks:
+        if submit_clicks or validation_check_pass:
             dataframe = pd.DataFrame.from_dict(data)
             dataframe.drop_duplicates(["Test Guid", "Replicate Number"], inplace=True)
             """
-                This Block creates the run review dataset.
-                """
+            This Block creates the run review dataset.
+            """
             runset = {}
             runset["userId"] = session["user"].id
             runset["description"] = ""
-            runset["number"] = 0
+            runset["number"] = runset_attempt_number
             runset["runSetStartDate"] = (
                 dataframe["Start Date Time"]
                 .astype("datetime64[ms]")
@@ -162,42 +225,23 @@ def Add_Dash(app):
 
             created_runset = resp.json()
             created_runset_id = created_runset["id"]
-            # with open('test_runset.json', 'w') as f:
-            #     # Write the dictionary to the file as JSON
-            #     json.dump(created_runset, f)
             print("got created runset id " + created_runset_id)
 
-            # if os.environ['SEND_EMAILS'] == "Yes":
-            #     if 'XPCR Module Qualification' in runset_type_selection_options[runset_type_selection_id]:
-            #         msg = Message(runset['name']+" Ready for review", sender='neumodxsystemqcdatasync@gmail.com',
-            #                       recipients=['aripley2008@gmail.com'])
+            """
+            Get Review Groups
+            """
+            print("GETTING REVIEW GROUPS")
+            reviewgroups_url = os.environ["RUN_REVIEW_API_BASE"] + "ReviewGroups"
 
-            #         with mail.connect() as conn:
-            #             for user in mod_qual_review_subscribers:
-            #                 message = 'Hello '+user+", this message is sent to inform you that " + \
-            #                     runset['name']+" is now ready for your review."
-            #                 subject = runset['name']+" Ready for review"
-            #                 msg = Message(recipients=[mod_qual_review_subscribers[user]],
-            #                               body=message,
-            #                               subject=subject,
-            #                               sender='neumodxsystemqcdatasync@gmail.com')
+            reviewgroups_response = requests.get(reviewgroups_url, verify=False).json()
 
-            #                 conn.send(msg)
+            for reviewgroup in reviewgroups_response:
+                if reviewgroup["description"] != "System QC Tech I":
+                    reviewgroup_options[reviewgroup["id"]] = reviewgroup["description"]
 
-        """
-        Get Review Groups
-        """
-        reviewgroups_url = os.environ["RUN_REVIEW_API_BASE"] + "ReviewGroups"
-
-        reviewgroups_response = requests.get(reviewgroups_url, verify=False).json()
-
-        for reviewgroup in reviewgroups_response:
-            if reviewgroup["description"] != "System QC Tech I":
-                reviewgroup_options[reviewgroup["id"]] = reviewgroup["description"]
-
-        if submit_clicks:
             return reviewgroup_options, created_runset_id
-        return dash.no_update
+        else:
+            return dash.no_update
 
     @app.callback(
         Output("post-response", "is_open"),

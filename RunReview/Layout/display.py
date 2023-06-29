@@ -1,10 +1,31 @@
 from dash import html
 from dash import dcc
 import dash_bootstrap_components as dbc
+
+# import dash_mantine_components as dmc
 from .styles import *
 from plotly import graph_objects as go
 
-run_review_description = html.H1(id="runset-description")
+
+edit_runset_attempt_number_button = dbc.Button(
+    [
+        html.I(className="fa-solid fa-pencil"),
+    ],
+    style={
+        "margin-left": "10px",
+        "display": "inline-block",
+        "vertical-align": "middle",
+    },
+    id="edit-runset-attempt-number-button",
+)
+
+runset_description = html.H1(
+    id="runset-description",
+    style={"display": "inline-block", "vertical-align": "middle"},
+)
+run_review_description = html.Div(
+    [runset_description, edit_runset_attempt_number_button],
+)
 runset_info = html.Div(
     children=[
         html.H2(id="runset-creator-name", style=halfstyle),

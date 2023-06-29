@@ -1,5 +1,7 @@
 from .dependencies import *
 import app_config
+from Shared.Components import *
+import re
 
 
 def get_initialization_callbacks(app):
@@ -339,7 +341,115 @@ def get_initialization_callbacks(app):
         )
 
     @app.callback(
-        [Output("runset-description", "children"), Output("related-runsets", "data")],
+        Output("runset-description", "children"), Input("runset-selection-data", "data")
+    )
+    def get_runset_description(runset_selection):
+        return (
+            runset_selection["name"] + " Attempt # " + str(runset_selection["number"])
+        )
+
+    @app.callback(
+        Output(UserInputModal.ids.modal("run-review-edit-runset-attempt"), "is_open"),
+        Input("edit-runset-attempt-number-button", "n_clicks"),
+        State(UserInputModal.ids.modal("run-review-edit-runset-attempt"), "is_open"),
+        prevent_initial_call=True,
+    )
+    def open_edit_runset_attempt_modal(open_click, is_open):
+        """
+        Attempt
+        """
+        return not is_open
+
+    @app.callback(
+        Output(
+            UserInputModal.ids.modal("run-review-run-attempt-validation"), "is_open"
+        ),
+        Output(
+            GoToRunSetButtonAIO.ids.store("run-review-run-attempt-validation"),
+            "data",
+        ),
+        Output("run-review-validation-check-pass", "data"),
+        Input(UserInputModal.ids.submit("run-review-edit-runset-attempt"), "n_clicks"),
+        State("runset-selection-data", "data"),
+        State(
+            RunSetAttemptModalBody.ids.attempt_number("run-review-edit-runset-attempt"),
+            "value",
+        ),
+        State(UserInputModal.ids.modal("run-review-run-attempt-validation"), "is_open"),
+        prevent_inital_call=True,
+    )
+    def validate_runset_attempt_number(
+        attempt_number_submit: int,
+        runset_selection: dict,
+        attempt_number: int,
+        is_open: bool,
+    ):
+        validate_runset_attempt_number_url = (
+            os.environ["RUN_REVIEW_API_BASE"] + "/RunSets/check-for-existing"
+        )
+        module_pattern = r"V\d+"
+        query_params = {
+            "xpcrmoduleserial": re.findall(
+                string=runset_selection["name"], pattern=module_pattern
+            )[0],
+            "runsettypeId": runset_selection["runSetTypeId"],
+            "attemptnumber": attempt_number,
+        }
+
+        response = requests.get(
+            url=validate_runset_attempt_number_url, params=query_params, verify=False
+        )
+
+        if response.status_code == 200:
+            return not is_open, response.json()["id"], no_update
+        else:
+            return is_open, no_update, True
+
+    @app.callback(
+        Output("runset-description", "children", allow_duplicate=True),
+        Output(PostResponse.ids.modal("edit-runset-attempt-response"), "is_open"),
+        Output(
+            PostResponse.ids.response_status_code("edit-runset-attempt-response"),
+            "data",
+        ),
+        Input(
+            UserInputModal.ids.submit("run-review-run-attempt-validation"),
+            "n_clicks",
+        ),
+        Input("run-review-validation-check-pass", "data"),
+        State(
+            RunSetAttemptModalBody.ids.attempt_number("run-review-edit-runset-attempt"),
+            "value",
+        ),
+        State("runset-selection-data", "data"),
+        State(PostResponse.ids.modal("edit-runset-attempt-response"), "is_open"),
+        prevent_initial_call=True,
+    )
+    def update_runset_attempt(
+        submit_click,
+        runset_attempt_validated,
+        new_runset_attempt_number,
+        runset_selection,
+        response_is_open,
+    ):
+        """
+        A clientside-callback used to update the runset attempt number associated with the runset being reviewed.
+        """
+        update_runset_attempt_url = os.environ[
+            "RUN_REVIEW_API_BASE"
+        ] + "RunSets/{}/number".format(runset_selection["id"])
+        query_params = {"number": new_runset_attempt_number}
+        response = requests.put(url=update_runset_attempt_url, params=query_params)
+        status_code = response.status_code
+        new_runset_info = response.json()
+        new_description = (
+            new_runset_info["name"] + " Attempt # " + str(new_runset_info["number"])
+        )
+
+        return new_description, status_code, not response_is_open
+
+    @app.callback(
+        Output("related-runsets", "data"),
         Input("runset-selection-data", "data"),
     )
     def update_runset_description(runset_selection):
@@ -407,12 +517,7 @@ def get_initialization_callbacks(app):
                 related_xpcrmodule_runsets[xpcrmodule_runsets_df.loc[idx, "id"]] = i
                 i += 1
 
-            return (
-                runset_selection["name"]
-                + " Attempt # "
-                + str(xpcrmodule_runset_number),
-                related_xpcrmodule_runsets,
-            )
+            return related_xpcrmodule_runsets
 
         else:
             return no_update

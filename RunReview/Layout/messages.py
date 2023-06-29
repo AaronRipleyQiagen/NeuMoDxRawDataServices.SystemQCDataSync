@@ -2,6 +2,7 @@ import dash_bootstrap_components as dbc
 from dash import dcc
 from dash import html
 from .styles import *
+from Shared.Components import *
 
 issue_post_response = dbc.Modal(
     [
@@ -274,6 +275,30 @@ comments_delete_response = dbc.Modal(
     is_open=False,
 )
 
+edit_runset_attempt_modal = UserInputModal(
+    aio_id="run-review-edit-runset-attempt",
+    title_text="Edit Runset Attempt Number",
+    modal_body=RunSetAttemptModalBody("run-review-edit-runset-attempt"),
+)
+
+update_runset_attempt_response_modal = PostResponse(
+    aio_id="edit-runset-attempt-response",
+    title_text="Edit Runset Attempt Number Response",
+)
+
+run_attempt_validation_check_pass = dcc.Store(
+    id="run-review-validation-check-pass", storage_type="session"
+)
+
+run_attempt_validation = UserInputModal(
+    aio_id="run-review-run-attempt-validation",
+    title_text="Previously created Runset Matching Description Found",
+    submit_text="Continue",
+    modal_body=RunSetAttemptNumberValidation(
+        aio_id="run-review-run-attempt-validation", split_string="/run-review/"
+    ),
+)
+
 message_objects = html.Div(
     [
         issue_post_response,
@@ -293,5 +318,9 @@ message_objects = html.Div(
         comments_post_response,
         comments_delete_confirmation,
         comments_delete_response,
+        edit_runset_attempt_modal,
+        update_runset_attempt_response_modal,
+        run_attempt_validation_check_pass,
+        run_attempt_validation,
     ]
 )

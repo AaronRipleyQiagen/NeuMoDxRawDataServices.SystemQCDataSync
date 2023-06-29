@@ -21,7 +21,7 @@ def Add_Dash(app):
         url_base_pathname=url_base,
         use_pages=True,
         pages_folder="pages",
-        external_stylesheets=[dbc.themes.COSMO],
+        external_stylesheets=[dbc.themes.COSMO, dbc.icons.FONT_AWESOME],
     )
     apply_layout_with_auth(app, layout)
     get_run_review_callbacks(app)
