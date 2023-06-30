@@ -255,6 +255,25 @@ def add_run_review_kpi_callbacks(app):
         return fig
 
     @app.callback(
+        Output(GoToRunSetButtonAIO.ids.store("run-review-kpis-issue-summary"), "data"),
+        Output(
+            GoToXPCRModuleButtonAIO.ids.module_id("run-review-kpis-issue-summary"),
+            "data",
+        ),
+        Input("issues-summary-table", "selectionChanged"),
+    )
+    def get_ids_from_status_summary_selection(selection):
+        """
+        A server-side callback method that populates the runset_id & module_id
+        properities of the GoToRunSetButton & GoToXPCRModuleButton associated with
+        the issues-summary-table.
+        """
+        if selection:
+            return selection[0]["RunSetId"], selection[0]["XPCRModuleId"]
+        else:
+            return no_update
+
+    @app.callback(
         Output("module-runset-summaries", "data"),
         Input("runsets", "data"),
         State("date-range-selector", "start_date"),
