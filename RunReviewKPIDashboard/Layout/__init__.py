@@ -216,7 +216,15 @@ first_time_pass_rate_exclusion_note = html.P(
     "*Modules that are in queue or reviewing state with only 1 run available in DataSync are excluded from this calculation."
 )
 number_of_runs = dcc.Graph(id="number-of-runs-boxplot")
-
+module_run_count_summary_table = dag.AgGrid(
+    id="module-run-count-summary-table",
+    enableEnterpriseModules=True,
+    columnSize="sizeToFit",
+    defaultColDef=dict(
+        resizable=True,
+    ),
+    rowSelection="single",
+)
 kpis_summary = dcc.Loading(
     children=[
         first_time_pass_rate,
@@ -224,6 +232,7 @@ kpis_summary = dcc.Loading(
         first_time_pass_rate_exclusion_note,
         module_runset_summaries,
         number_of_runs,
+        module_run_count_summary_table,
     ]
 )
 kpis_summary_card = dbc.Card(dbc.CardBody([kpis_summary]), className="mt-3")
