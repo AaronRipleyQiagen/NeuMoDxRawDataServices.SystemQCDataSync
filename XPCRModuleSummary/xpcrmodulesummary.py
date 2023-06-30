@@ -27,9 +27,6 @@ if __name__ == "__main__":
     from Layout import *
     from Callbacks import *
 
-    # from ..Shared.appbuildhelpers import *
-    # from ..Shared.Components import *
-
     url_base = "/dashboard/XPCRModuleHistory/"
 
     dash_app = Dash(
