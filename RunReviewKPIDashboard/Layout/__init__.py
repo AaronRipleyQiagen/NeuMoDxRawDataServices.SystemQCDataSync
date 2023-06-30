@@ -148,6 +148,23 @@ issues_level_settings = html.Div(
     style={"width": "50%", "display": "inline-block", "vertical-align": "top"},
 )
 
+issue_summary_buttons = html.Div(
+    [
+        GoToRunSetButtonAIO(
+            aio_id="run-review-kpis-issue-summary",
+            split_string="/run-review-kpi-dashboard",
+            main_props={"style": double_button},
+            button_props={"style": {"width": "100%"}},
+        ),
+        GoToXPCRModuleButtonAIO(
+            aio_id="run-review-kpis-issue-summary",
+            split_string="/run-review-kpi-dashboard",
+            main_props={"style": double_button},
+            button_props={"style": {"width": "100%"}},
+        ),
+    ]
+)
+
 issues_summary_table = dag.AgGrid(
     id="issues-summary-table",
     enableEnterpriseModules=True,
