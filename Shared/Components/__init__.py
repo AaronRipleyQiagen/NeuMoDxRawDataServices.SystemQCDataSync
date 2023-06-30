@@ -198,10 +198,10 @@ class GoToXPCRModuleButtonAIO(html.Div):
             }
         }
         """,
-            Output(GoToRunSetButtonAIO.ids.div(MATCH), "children"),
-            Input(GoToRunSetButtonAIO.ids.button(MATCH), "n_clicks"),
-            State(GoToRunSetButtonAIO.ids.module_id(MATCH), "data"),
-            State(GoToRunSetButtonAIO.ids.split_string(MATCH), "data"),
+            Output(GoToXPCRModuleButtonAIO.ids.div(MATCH), "children"),
+            Input(GoToXPCRModuleButtonAIO.ids.button(MATCH), "n_clicks"),
+            State(GoToXPCRModuleButtonAIO.ids.module_id(MATCH), "data"),
+            State(GoToXPCRModuleButtonAIO.ids.split_string(MATCH), "data"),
         )
 
 
