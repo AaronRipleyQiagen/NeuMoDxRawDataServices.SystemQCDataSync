@@ -26,7 +26,7 @@ def populate_review_queue(
         user_id: The id of the user of interest.
         user_group_id: the id of the review group associated with the user of interest.
         reviewer_group_ids: The ids of the review groups to filter the runset review assignments to (Defaults to None).
-        runset_status_ids: The ids of the of the runset statuses to filter the runset review assignments to (Defaults to None).
+        runset_status_ids: The names of the of the runset statuses to filter the runset review assignments to (Defaults to None).
         my_runsets_filter: Whether or not to filter the runsets to results that were created by the user of interest (Defaults to False).
 
     """
