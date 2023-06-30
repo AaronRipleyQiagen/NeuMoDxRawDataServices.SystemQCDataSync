@@ -4,6 +4,7 @@ from Shared.appbuildhelpers import *
 import datetime
 import dash_daq as daq
 import dash_ag_grid as dag
+from Shared.Components import *
 
 """
 Define reusable_styles
@@ -81,8 +82,29 @@ status_summary_table = dag.AgGrid(
     rowSelection="single",
 )
 
+status_summary_buttons = html.Div(
+    [
+        GoToRunSetButtonAIO(
+            aio_id="run-review-kpis-status-summary",
+            main_props={"style": double_button},
+            button_props={"style": {"width": "100%"}},
+        ),
+        GoToXPCRModuleButtonAIO(
+            aio_id="run-review-kpis-status-summary",
+            main_props={"style": double_button},
+            button_props={"style": {"width": "100%"}},
+        ),
+    ]
+)
+
 status_summary = dcc.Loading(
-    children=[runsets, dcc.Graph(id="status-summary-barchart"), status_summary_table]
+    children=[
+        runsets,
+        dcc.Graph(id="status-summary-barchart"),
+        status_summary_table,
+        html.Br(),
+        status_summary_buttons,
+    ]
 )
 
 
