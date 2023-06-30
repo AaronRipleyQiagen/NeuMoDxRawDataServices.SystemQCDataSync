@@ -143,34 +143,34 @@ def add_callbacks(app: Dash) -> None:
 
                 gantt_lines.append(issue_data)
 
-            # Add runsetreviewassignment entries to gantt lines.
-            for runsetreviewassignment in runsetreviewassignments:
-                if runsetreviewassignment["completedDate"]:
-                    finish = datetime.strptime(
-                        runsetreviewassignment["completedDate"][:-1],
-                        "%Y-%m-%dT%H:%M:%S.%f",
-                    )
-                    _resource = "Review Assignment"
-                    _task = runsetreviewassignment["qualificationProtocol"]
-                else:
-                    finish = datetime.now()
-                    _resource = "Review Assignment"
-                    _task = (
-                        runsetreviewassignment["qualificationProtocol"]
-                        + " Open Review Assignment"
-                    )
+            # # Add runsetreviewassignment entries to gantt lines.
+            # for runsetreviewassignment in runsetreviewassignments:
+            #     if runsetreviewassignment["completedDate"]:
+            #         finish = datetime.strptime(
+            #             runsetreviewassignment["completedDate"][:-1],
+            #             "%Y-%m-%dT%H:%M:%S.%f",
+            #         )
+            #         _resource = "Review Assignment"
+            #         _task = runsetreviewassignment["qualificationProtocol"]
+            #     else:
+            #         finish = datetime.now()
+            #         _resource = "Review Assignment"
+            #         _task = (
+            #             runsetreviewassignment["qualificationProtocol"]
+            #             + " Open Review Assignment"
+            #         )
 
-                runsetreviewassignment_data = dict(
-                    Task=_task,
-                    Start=datetime.strptime(
-                        runsetreviewassignment["assignedDate"][:-1],
-                        "%Y-%m-%dT%H:%M:%S.%f",
-                    ),
-                    Finish=finish,
-                    Resource="Review Assignment",
-                )
+            #     runsetreviewassignment_data = dict(
+            #         Task=_task,
+            #         Start=datetime.strptime(
+            #             runsetreviewassignment["assignedDate"][:-1],
+            #             "%Y-%m-%dT%H:%M:%S.%f",
+            #         ),
+            #         Finish=finish,
+            #         Resource="Review Assignment",
+            #     )
 
-                gantt_lines.append(runsetreviewassignment_data)
+            #     gantt_lines.append(runsetreviewassignment_data)
 
             # Define colors to use on Gantt Chart.
             colors = {
