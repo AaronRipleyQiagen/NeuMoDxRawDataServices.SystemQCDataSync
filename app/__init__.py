@@ -48,6 +48,7 @@ def register_blueprints(server):
         "RunReviewTemplates",
         "RunReviewQueueTemplates",
         "RunReviewKPIDashboardTemplates",
+        "XPCRModuleHistoryTemplates",
     ]:
         print("Registering Blueprints for: ", module_name)
         module = import_module("app.{}.routes".format(module_name))

@@ -5,6 +5,8 @@ import os
 import datetime
 import pandas as pd
 from Shared.functions import *
+from Shared.Components import *
+from functools import reduce
 
 
 def add_run_review_kpi_callbacks(app):
@@ -78,12 +80,54 @@ def add_run_review_kpi_callbacks(app):
             query_params["RunSetTypeIds"] = assays
         if statuses:
             query_params["RunSetStatusIds"] = statuses
-        # print(query_params)
         runset_data_response = requests.get(
             url=runsets_url, params=query_params, verify=False
         )
-        # print("URL:", runset_data_response.url)
         return runset_data_response.json()
+
+    @app.callback(
+        Output("status-summary-table", "rowData"),
+        Output("status-summary-table", "columnDefs"),
+        Input("runsets", "data"),
+    )
+    def populate_status_summary_table(data):
+        """
+        A server-side callback method that populates the status summary table associated with Run Review KPIs
+        """
+        column_map = {
+            "runSetId": "RunSetId",
+            "xpcrModuleId": "XPCRModuleId",
+            "runSetType": "Type",
+            "xpcrModuleSerial": "XPCR Module Serial",
+            "runSetStatus": "Status",
+            "runSetStartDate": "Start Date",
+            "runSetEndDate": "End Date",
+        }
+
+        return get_dash_ag_grid_from_records(
+            records=data,
+            column_map=column_map,
+            group_columns=["Type", "XPCR Module Serial"],
+        )
+
+    @app.callback(
+        Output(GoToRunSetButtonAIO.ids.store("run-review-kpis-status-summary"), "data"),
+        Output(
+            GoToXPCRModuleButtonAIO.ids.module_id("run-review-kpis-status-summary"),
+            "data",
+        ),
+        Input("status-summary-table", "selectionChanged"),
+    )
+    def get_ids_from_status_summary_selection(selection):
+        """
+        A server-side callback method that populates the runset_id & module_id
+        properities of the GoToRunSetButton & GoToXPCRModuleButton associated with
+        the status-summary-table.
+        """
+        if selection:
+            return selection[0]["RunSetId"], selection[0]["XPCRModuleId"]
+        else:
+            return no_update
 
     @app.callback(Output("status-summary-barchart", "figure"), Input("runsets", "data"))
     def plot_runset_status_summary(runsets):
@@ -110,53 +154,122 @@ def add_run_review_kpi_callbacks(app):
 
         return fig
 
-    @app.callback(Output("issues", "data"), Input("runsets", "data"))
+    @app.callback(
+        Output("issues", "data"),
+        Input("runsets", "data"),
+    )
     def get_issues(runset_data):
         URLS = []
+        runset_xpcrmodule_serials = {}
+        runset_xpcrmodule_ids = {}
         for runset in runset_data:
+            runset_xpcrmodule_ids[runset["runSetId"]] = runset["xpcrModuleId"]
+            runset_xpcrmodule_serials[runset["runSetId"]] = runset["xpcrModuleSerial"]
             url = os.environ["RUN_REVIEW_API_BASE"] + "Reports/{}/runsetissues".format(
                 runset["runSetId"]
             )
             URLS.append(url)
 
         runset_issues = HttpGetAsync(urls=URLS)
-        issues_dataframe = pd.DataFrame()
-        idx = 0
-        for runset in runset_issues:
-            for issue in runset:
-                if len(issues_dataframe) == 0:
-                    issues_dataframe = pd.DataFrame(columns=[x for x in issue])
-
-                issues_dataframe.loc[idx] = issue
-                idx += 1
-
-        return issues_dataframe.to_dict(orient="records")
+        runset_issues = reduce(lambda x, y: x + y, runset_issues, [])
+        runset_issues = [
+            {
+                **x,
+                "xpcrModuleId": runset_xpcrmodule_ids[x["runSetId"]],
+                "xpcrModuleSerial": runset_xpcrmodule_serials[x["runSetId"]],
+            }
+            for x in runset_issues
+        ]
+        return runset_issues
 
     @app.callback(
-        Output("issues-summary-barchart", "figure"),
+        Output("filtered-issues", "data"),
         Input("issues", "data"),
         Input("issue-severity-selector", "value"),
         Input("issue-level-selector", "value"),
         State("issue-level-selector", "options"),
     )
-    def plot_issue_summary(
-        issues_data, issue_severities, issue_levels, issue_levels_dict
-    ):
-        issues_dataframe = pd.DataFrame.from_dict(issues_data)
+    def filter_issues(issues_data, severity_values, level_values, issue_levels_dict):
+        filtered_issues_data = issues_data
+
+        if severity_values != []:
+            filtered_issues_data = [
+                x for x in filtered_issues_data if x["severity"] in severity_values
+            ]
+        if level_values != []:
+            filtered_issues_data = [
+                x for x in filtered_issues_data if x["level"] in level_values
+            ]
+
+        filtered_issues_data = list(
+            map(
+                lambda d: {**d, "level": issue_levels_dict.get(d["level"], d["level"])},
+                filtered_issues_data,
+            )
+        )
+        return filtered_issues_data
+
+    @app.callback(
+        Output("issues-summary-table", "rowData"),
+        Output("issues-summary-table", "columnDefs"),
+        Input("filtered-issues", "data"),
+    )
+    def populate_issues_summary_table(data):
+        """
+        A server-side callback method that populates the status summary table associated with Run Review KPIs
+        """
+        column_map = {
+            "issueId": "IssueId",
+            "runSetId": "RunSetId",
+            "runSetReviewId": "RunSetReviewId",
+            "xpcrModuleId": "XPCRModuleId",
+            "severity": "Severity",
+            "xpcrModuleSerial": "XPCR Module Serial",
+            "level": "Level",
+            "type": "Type",
+            "status": "Status",
+            "assayChannel": "Assay Channel",
+            "targetName": "Target Name",
+        }
+
+        return get_dash_ag_grid_from_records(
+            records=data,
+            column_map=column_map,
+            group_columns=["Severity", "XPCR Module Serial", "Level", "Type"],
+        )
+
+    @app.callback(
+        Output("issues-summary-barchart", "figure"),
+        Input("filtered-issues", "data"),
+    )
+    def plot_issue_summary(filtered_issues_data):
+        issues_dataframe = pd.DataFrame.from_dict(filtered_issues_data)
         issues_dataframe["Issue Count"] = 1
-        issues_dataframe = issues_dataframe[
-            issues_dataframe["level"].isin(issue_levels)
-        ]
-        issues_dataframe = issues_dataframe[
-            issues_dataframe["severity"].isin(issue_severities)
-        ]
-        issues_dataframe["level"] = issues_dataframe["level"].replace(issue_levels_dict)
         issues_dataframe.rename({"level": "Level"}, axis=1, inplace=True)
         fig = px.histogram(
             issues_dataframe, color="type", x="Level", y="Issue Count", barmode="group"
         )
 
         return fig
+
+    @app.callback(
+        Output(GoToRunSetButtonAIO.ids.store("run-review-kpis-issue-summary"), "data"),
+        Output(
+            GoToXPCRModuleButtonAIO.ids.module_id("run-review-kpis-issue-summary"),
+            "data",
+        ),
+        Input("issues-summary-table", "selectionChanged"),
+    )
+    def get_ids_from_issues_summary_selection(selection):
+        """
+        A server-side callback method that populates the runset_id & module_id
+        properities of the GoToRunSetButton & GoToXPCRModuleButton associated with
+        the issues-summary-table.
+        """
+        if selection:
+            return selection[0]["RunSetId"], selection[0]["XPCRModuleId"]
+        else:
+            return no_update
 
     @app.callback(
         Output("module-runset-summaries", "data"),
@@ -212,6 +325,28 @@ def add_run_review_kpi_callbacks(app):
         return module_runsets_summaries_dataframe.to_dict(orient="records")
 
     @app.callback(
+        Output("module-run-count-summary-table", "rowData"),
+        Output("module-run-count-summary-table", "columnDefs"),
+        Input("module-runset-summaries", "data"),
+    )
+    def populate_module_run_count_summary_table(data):
+        column_map = {
+            "xpcrModuleId": "XPCRModuleId",
+            "xpcrModuleSerial": "XPCR Module Serial",
+            "runSetType": "Runset Type",
+            "minRunSetDateTime": "First Runset Start Date",
+            "maxRunSetDateTime": "Last Runset Start Date",
+            "runSetCount": "# of Runsets",
+            "lastRunSetStatus": "Status of Last Runset",
+        }
+
+        return get_dash_ag_grid_from_records(
+            records=data,
+            column_map=column_map,
+            group_columns=["Runset Type"],
+        )
+
+    @app.callback(
         Output("first-time-pass-rate", "value"),
         Output("first-time-pass-rate", "label"),
         Input("module-runset-summaries", "data"),
@@ -265,6 +400,26 @@ def add_run_review_kpi_callbacks(app):
         return first_time_pass_rate, "First Time Pass Rate (n={})".format(
             total_modules_count
         )
+
+    @app.callback(
+        Output(
+            GoToXPCRModuleButtonAIO.ids.module_id(
+                "run-review-kpis-module-run-count-summary"
+            ),
+            "data",
+        ),
+        Input("module-run-count-summary-table", "selectionChanged"),
+    )
+    def get_ids_from_status_summary_selection(selection):
+        """
+        A server-side callback method that populates the runset_id & module_id
+        properities of the GoToRunSetButton & GoToXPCRModuleButton associated with
+        the module-run-count-summary-table.
+        """
+        if selection:
+            return selection[0]["XPCRModuleId"]
+        else:
+            return no_update
 
     @app.callback(
         Output("number-of-runs-boxplot", "figure"),

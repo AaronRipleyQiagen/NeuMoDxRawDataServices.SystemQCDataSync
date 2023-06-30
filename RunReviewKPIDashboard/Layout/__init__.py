@@ -3,6 +3,8 @@ import dash_bootstrap_components as dbc
 from Shared.appbuildhelpers import *
 import datetime
 import dash_daq as daq
+import dash_ag_grid as dag
+from Shared.Components import *
 
 """
 Define reusable_styles
@@ -64,15 +66,51 @@ Define elements used to store data.
 
 runsets = dcc.Store(id="runsets", storage_type="session")
 issues = dcc.Store(id="issues", storage_type="session")
+filtered_issues = dcc.Store(id="filtered-issues", storage_type="session")
 module_runset_summaries = dcc.Store("module-runset-summaries", storage_type="session")
 
 """
 Generate Figures
 """
 
-status_summary = dcc.Loading(
-    children=[runsets, dcc.Graph(id="status-summary-barchart")]
+status_summary_table = dag.AgGrid(
+    id="status-summary-table",
+    enableEnterpriseModules=True,
+    columnSize="sizeToFit",
+    defaultColDef=dict(
+        resizable=True,
+    ),
+    rowSelection="single",
 )
+
+status_summary_buttons = html.Div(
+    [
+        GoToRunSetButtonAIO(
+            aio_id="run-review-kpis-status-summary",
+            split_string="/run-review-kpi-dashboard",
+            main_props={"style": double_button},
+            button_props={"style": {"width": "100%"}},
+        ),
+        GoToXPCRModuleButtonAIO(
+            aio_id="run-review-kpis-status-summary",
+            split_string="/run-review-kpi-dashboard",
+            main_props={"style": double_button},
+            button_props={"style": {"width": "100%"}},
+        ),
+    ]
+)
+
+status_summary = dcc.Loading(
+    children=[
+        runsets,
+        dcc.Graph(id="status-summary-barchart"),
+        status_summary_table,
+        html.Br(),
+        status_summary_buttons,
+    ]
+)
+
+
 status_summary_card = dbc.Card(dbc.CardBody([status_summary]), className="mt-3")
 
 issues_severity_selector_label = html.H4("Select Severity Level(s) To Include:")
@@ -111,7 +149,45 @@ issues_level_settings = html.Div(
     style={"width": "50%", "display": "inline-block", "vertical-align": "top"},
 )
 
-issues_summary = dcc.Loading(children=[issues, dcc.Graph(id="issues-summary-barchart")])
+issue_summary_buttons = html.Div(
+    [
+        GoToRunSetButtonAIO(
+            aio_id="run-review-kpis-issue-summary",
+            split_string="/run-review-kpi-dashboard",
+            main_props={"style": double_button},
+            button_props={"style": {"width": "100%"}},
+        ),
+        GoToXPCRModuleButtonAIO(
+            aio_id="run-review-kpis-issue-summary",
+            split_string="/run-review-kpi-dashboard",
+            main_props={"style": double_button},
+            button_props={"style": {"width": "100%"}},
+        ),
+    ]
+)
+
+issues_summary_table = dag.AgGrid(
+    id="issues-summary-table",
+    enableEnterpriseModules=True,
+    columnSize="sizeToFit",
+    defaultColDef=dict(
+        resizable=True,
+    ),
+    rowSelection="single",
+)
+
+issues_summary = dcc.Loading(
+    children=[
+        issues,
+        filtered_issues,
+        dcc.Graph(id="issues-summary-barchart"),
+        issues_summary_table,
+        html.Br(),
+        issue_summary_buttons,
+    ]
+)
+
+
 issues_summary_card = dbc.Card(
     dbc.CardBody([issues_severity_settings, issues_level_settings, issues_summary]),
     className="mt-3",
@@ -140,7 +216,24 @@ first_time_pass_rate_exclusion_note = html.P(
     "*Modules that are in queue or reviewing state with only 1 run available in DataSync are excluded from this calculation."
 )
 number_of_runs = dcc.Graph(id="number-of-runs-boxplot")
+module_run_count_summary_table = dag.AgGrid(
+    id="module-run-count-summary-table",
+    enableEnterpriseModules=True,
+    columnSize="sizeToFit",
+    defaultColDef=dict(
+        resizable=True,
+    ),
+    rowSelection="single",
+)
 
+module_run_count_summary_buttons = html.Div(
+    [
+        GoToXPCRModuleButtonAIO(
+            aio_id="run-review-kpis-module-run-count-summary",
+            split_string="/run-review-kpi-dashboard/",
+        )
+    ]
+)
 kpis_summary = dcc.Loading(
     children=[
         first_time_pass_rate,
@@ -148,6 +241,9 @@ kpis_summary = dcc.Loading(
         first_time_pass_rate_exclusion_note,
         module_runset_summaries,
         number_of_runs,
+        module_run_count_summary_table,
+        html.Br(),
+        module_run_count_summary_buttons,
     ]
 )
 kpis_summary_card = dbc.Card(dbc.CardBody([kpis_summary]), className="mt-3")
