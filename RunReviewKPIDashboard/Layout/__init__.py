@@ -66,6 +66,7 @@ Define elements used to store data.
 
 runsets = dcc.Store(id="runsets", storage_type="session")
 issues = dcc.Store(id="issues", storage_type="session")
+filtered_issues = dcc.Store(id="filtered-issues", storage_type="session")
 module_runset_summaries = dcc.Store("module-runset-summaries", storage_type="session")
 
 """
@@ -176,7 +177,14 @@ issues_summary_table = dag.AgGrid(
 )
 
 issues_summary = dcc.Loading(
-    children=[issues, dcc.Graph(id="issues-summary-barchart"), issues_summary_table]
+    children=[
+        issues,
+        filtered_issues,
+        dcc.Graph(id="issues-summary-barchart"),
+        issues_summary_table,
+        html.Br(),
+        issue_summary_buttons,
+    ]
 )
 
 
