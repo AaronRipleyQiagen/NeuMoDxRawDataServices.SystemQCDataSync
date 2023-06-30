@@ -184,24 +184,69 @@ def add_run_review_kpi_callbacks(app):
         return runset_issues
 
     @app.callback(
-        Output("issues-summary-barchart", "figure"),
+        Output("filtered-issues", "data"),
         Input("issues", "data"),
         Input("issue-severity-selector", "value"),
         Input("issue-level-selector", "value"),
         State("issue-level-selector", "options"),
     )
-    def plot_issue_summary(
-        issues_data, issue_severities, issue_levels, issue_levels_dict
-    ):
-        issues_dataframe = pd.DataFrame.from_dict(issues_data)
+    def filter_issues(issues_data, severity_values, level_values, issue_levels_dict):
+        filtered_issues_data = issues_data
+        save_json_response(filtered_issues_data, "issues-sample.json")
+
+        if severity_values != []:
+            filtered_issues_data = [
+                x for x in filtered_issues_data if x["severity"] in severity_values
+            ]
+        if level_values != []:
+            filtered_issues_data = [
+                x for x in filtered_issues_data if x["level"] in level_values
+            ]
+
+        filtered_issues_data = list(
+            map(
+                lambda d: {**d, "level": issue_levels_dict.get(d["level"], d["level"])},
+                filtered_issues_data,
+            )
+        )
+        return filtered_issues_data
+
+    @app.callback(
+        Output("issues-summary-table", "rowData"),
+        Output("issues-summary-table", "columnDefs"),
+        Input("filtered-issues", "data"),
+    )
+    def populate_issues_summary_table(data):
+        """
+        A server-side callback method that populates the status summary table associated with Run Review KPIs
+        """
+        column_map = {
+            "issueId": "IssueId",
+            "runSetId": "RunSetId",
+            "runSetReviewId": "RunSetReviewId",
+            "xpcrModuleId": "XPCRModuleId",
+            "severity": "Severity",
+            "xpcrModuleSerial": "XPCR Module Serial",
+            "level": "Level",
+            "type": "Type",
+            "status": "Status",
+            "assayChannel": "Assay Channel",
+            "targetName": "Target Name",
+        }
+
+        return get_dash_ag_grid_from_records(
+            records=data,
+            column_map=column_map,
+            group_columns=["Severity", "XPCR Module Serial", "Level", "Type"],
+        )
+
+    @app.callback(
+        Output("issues-summary-barchart", "figure"),
+        Input("filtered-issues", "data"),
+    )
+    def plot_issue_summary(filtered_issues_data):
+        issues_dataframe = pd.DataFrame.from_dict(filtered_issues_data)
         issues_dataframe["Issue Count"] = 1
-        issues_dataframe = issues_dataframe[
-            issues_dataframe["level"].isin(issue_levels)
-        ]
-        issues_dataframe = issues_dataframe[
-            issues_dataframe["severity"].isin(issue_severities)
-        ]
-        issues_dataframe["level"] = issues_dataframe["level"].replace(issue_levels_dict)
         issues_dataframe.rename({"level": "Level"}, axis=1, inplace=True)
         fig = px.histogram(
             issues_dataframe, color="type", x="Level", y="Issue Count", barmode="group"
