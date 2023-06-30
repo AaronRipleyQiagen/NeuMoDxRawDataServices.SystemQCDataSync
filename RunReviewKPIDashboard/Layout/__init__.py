@@ -70,9 +70,21 @@ module_runset_summaries = dcc.Store("module-runset-summaries", storage_type="ses
 Generate Figures
 """
 
-status_summary = dcc.Loading(
-    children=[runsets, dcc.Graph(id="status-summary-barchart")]
+status_summary_table = dag.AgGrid(
+    id="status-summary-table",
+    enableEnterpriseModules=True,
+    columnSize="sizeToFit",
+    defaultColDef=dict(
+        resizable=True,
+    ),
+    rowSelection="single",
 )
+
+status_summary = dcc.Loading(
+    children=[runsets, dcc.Graph(id="status-summary-barchart"), status_summary_table]
+)
+
+
 status_summary_card = dbc.Card(dbc.CardBody([status_summary]), className="mt-3")
 
 issues_severity_selector_label = html.H4("Select Severity Level(s) To Include:")
