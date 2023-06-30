@@ -111,6 +111,100 @@ class GoToRunSetButtonAIO(html.Div):
         )
 
 
+class GoToXPCRModuleButtonAIO(html.Div):
+    """An All-In-One (AIO) component that generates a button that will redirect to a particular XPCR Module page.
+
+    Parameters:
+        aio_id: The id to give to the GoToRunSetButton (Defaults to a randomly generated guid).
+        button_text (str): The text to add to the button (Defaults to Go to XPCR Module).
+        button_props (dict): Other properties to pass to the button. (Defaults to None).
+
+    Subcomponents:
+        button (dbc.button): The button to be displayed.
+        div (html.Div): An empty div that acts as a target for the callback for redirect.
+        module_id (dcc.Store): Storage component that stores the XPCRModuleId of interest to target for redirect.
+        split_string (dcc.Store): Storage component that stores the string to use as the splitString for redirect.
+
+    """
+
+    class ids:
+        button = lambda aio_id: {
+            "component": "GoToXPCRModuleButtonAIO",
+            "subcomponent": "button",
+            "aio_id": aio_id,
+        }
+
+        div = lambda aio_id: {
+            "component": "GoToXPCRModuleButtonAIO",
+            "subcomponent": "div",
+            "aio_id": aio_id,
+        }
+
+        module_id = lambda aio_id: {
+            "component": "GoToXPCRModuleButtonAIO",
+            "subcomponent": "module_id",
+            "aio_id": aio_id,
+        }
+
+        split_string = lambda aio_id: {
+            "component": "GoToXPCRModuleButtonAIO",
+            "subcomponent": "split_string",
+            "aio_id": aio_id,
+        }
+
+    ## Make ids publically accessible.
+    ids = ids
+    app = Dash(__name__)
+
+    def __init__(
+        self,
+        aio_id=None,
+        button_text: str = "Go To XPCR Module",
+        button_props: dict = None,
+        split_string: str = None,
+        main_props: dict = None,
+    ):
+        if not aio_id:
+            aio_id = str(uuid.uuid4())
+
+        button_props = button_props if button_props else {}
+        button_props["children"] = button_text
+        main_props = main_props if main_props else {}
+        super().__init__(
+            [
+                dbc.Button(id=self.ids.button(aio_id), **button_props),
+                html.Div(id=self.ids.div(aio_id)),
+                dcc.Store(id=self.ids.module_id(aio_id), storage_type="session"),
+                dcc.Store(
+                    id=self.ids.split_string(aio_id),
+                    storage_type="session",
+                    data=split_string,
+                ),
+            ],
+            **main_props,
+        )
+
+    def add_callbacks(app):
+        app.clientside_callback(
+            """
+        function navigateToRunReview(n_clicks, xpcrmodule_id, splitString) {
+            if (n_clicks && n_clicks > 0) {
+                var currentHref = window.top.location.href;
+                var hrefParts = currentHref.split(splitString);
+                if (hrefParts.length > 1) {
+                    var newHref = hrefParts[0] + '/xpcrmodule-history/' + xpcrmodule_id;
+                    window.top.location.href = newHref;
+                }
+            }
+        }
+        """,
+            Output(GoToRunSetButtonAIO.ids.div(MATCH), "children"),
+            Input(GoToRunSetButtonAIO.ids.button(MATCH), "n_clicks"),
+            State(GoToRunSetButtonAIO.ids.module_id(MATCH), "data"),
+            State(GoToRunSetButtonAIO.ids.split_string(MATCH), "data"),
+        )
+
+
 class DownloadBlobFileButton(html.Div):
     """An All-In-One (AIO) component that generates a button that will download a file from an azure blob storage account.
 
