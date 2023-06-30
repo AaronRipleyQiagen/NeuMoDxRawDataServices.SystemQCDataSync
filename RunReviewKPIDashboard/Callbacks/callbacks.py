@@ -5,6 +5,7 @@ import os
 import datetime
 import pandas as pd
 from Shared.functions import *
+from Shared.Components import *
 
 
 def add_run_review_kpi_callbacks(app):
@@ -107,6 +108,25 @@ def add_run_review_kpi_callbacks(app):
             column_map=column_map,
             group_columns=["Type", "XPCR Module Serial"],
         )
+
+    @app.callback(
+        Output(GoToRunSetButtonAIO.ids.store("run-review-kpis-status-summary"), "data"),
+        Output(
+            GoToXPCRModuleButtonAIO.ids.module_id("run-review-kpis-status-summary"),
+            "data",
+        ),
+        Input("status-summary-table", "selectionChanged"),
+    )
+    def get_ids_from_status_summary_selection(selection):
+        """
+        A server-side callback method that populates the runset_id & module_id
+        properities of the GoToRunSetButton & GoToXPCRModuleButton associated with
+        the status-summary-table.
+        """
+        if selection:
+            return selection[0]["RunSetId"], selection[0]["XPCRModuleId"]
+        else:
+            return no_update
 
     @app.callback(Output("status-summary-barchart", "figure"), Input("runsets", "data"))
     def plot_runset_status_summary(runsets):
