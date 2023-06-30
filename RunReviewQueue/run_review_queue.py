@@ -94,7 +94,7 @@ runset_status_selections = dcc.Dropdown(
         "Rejected": "Rejected",
     },
     multi=True,
-    value=["Queue", "Reviewing"],
+    value=["Queue", "Reviewing", "Rejected"],
     style={
         "display": "inline-block",
         "vertical-align": "middle",
