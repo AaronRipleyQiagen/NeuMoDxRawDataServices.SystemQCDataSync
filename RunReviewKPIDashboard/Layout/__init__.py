@@ -123,7 +123,21 @@ issues_level_settings = html.Div(
     style={"width": "50%", "display": "inline-block", "vertical-align": "top"},
 )
 
-issues_summary = dcc.Loading(children=[issues, dcc.Graph(id="issues-summary-barchart")])
+issues_summary_table = dag.AgGrid(
+    id="issues-summary-table",
+    enableEnterpriseModules=True,
+    columnSize="sizeToFit",
+    defaultColDef=dict(
+        resizable=True,
+    ),
+    rowSelection="single",
+)
+
+issues_summary = dcc.Loading(
+    children=[issues, dcc.Graph(id="issues-summary-barchart"), issues_summary_table]
+)
+
+
 issues_summary_card = dbc.Card(
     dbc.CardBody([issues_severity_settings, issues_level_settings, issues_summary]),
     className="mt-3",
