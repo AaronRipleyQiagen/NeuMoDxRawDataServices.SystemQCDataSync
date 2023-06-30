@@ -6,6 +6,7 @@ import datetime
 import pandas as pd
 from Shared.functions import *
 from Shared.Components import *
+from functools import reduce
 
 
 def add_run_review_kpi_callbacks(app):
@@ -153,27 +154,34 @@ def add_run_review_kpi_callbacks(app):
 
         return fig
 
-    @app.callback(Output("issues", "data"), Input("runsets", "data"))
+    @app.callback(
+        Output("issues", "data"),
+        Input("runsets", "data"),
+    )
     def get_issues(runset_data):
         URLS = []
+        runset_xpcrmodule_serials = {}
+        runset_xpcrmodule_ids = {}
         for runset in runset_data:
+            runset_xpcrmodule_ids[runset["runSetId"]] = runset["xpcrModuleId"]
+            runset_xpcrmodule_serials[runset["runSetId"]] = runset["xpcrModuleSerial"]
             url = os.environ["RUN_REVIEW_API_BASE"] + "Reports/{}/runsetissues".format(
                 runset["runSetId"]
             )
             URLS.append(url)
 
         runset_issues = HttpGetAsync(urls=URLS)
-        issues_dataframe = pd.DataFrame()
-        idx = 0
-        for runset in runset_issues:
-            for issue in runset:
-                if len(issues_dataframe) == 0:
-                    issues_dataframe = pd.DataFrame(columns=[x for x in issue])
-
-                issues_dataframe.loc[idx] = issue
-                idx += 1
-
-        return issues_dataframe.to_dict(orient="records")
+        runset_issues = reduce(lambda x, y: x + y, runset_issues, [])
+        runset_issues = [
+            {
+                **x,
+                "xpcrModuleId": runset_xpcrmodule_ids[x["runSetId"]],
+                "xpcrModuleSerial": runset_xpcrmodule_serials[x["runSetId"]],
+            }
+            for x in runset_issues
+        ]
+        save_json_response(runset_issues, "issue-sample.json")
+        return runset_issues
 
     @app.callback(
         Output("issues-summary-barchart", "figure"),
