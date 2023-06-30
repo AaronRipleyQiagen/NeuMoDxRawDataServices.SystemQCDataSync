@@ -232,7 +232,9 @@ def get_dataframe_from_records(records: list[dict], column_map: dict) -> pd.Data
 
 
 def get_column_defs(
-    dataframe: pd.DataFrame, hide_columns: list[str] = None
+    dataframe: pd.DataFrame,
+    hide_columns: list[str] = None,
+    group_columns: list[str] = None,
 ) -> list[dict]:
     """
     A function used to get the columnDefs for the DataFrame inputed.
@@ -246,6 +248,7 @@ def get_column_defs(
     if hide_columns == None:
         hide_columns = [x for x in dataframe.columns if "Id" in x or "id" in x]
 
+    group_columns = group_columns if group_columns else []
     for column in dataframe.columns:
         column_definition = {
             "headerName": column,
@@ -257,7 +260,10 @@ def get_column_defs(
             column_definition["hide"] = True
         else:
             column_definition["hide"] = False
-
+        if column in group_columns:
+            column_definition["rowGroup"] = True
+        else:
+            column_definition["rowGroup"] = False
         column_definitions.append(column_definition)
 
     return column_definitions
@@ -296,6 +302,7 @@ def get_dash_ag_grid_from_records(
     date_columns: list[str] | None = None,
     date_format: str = "%d %B %Y %H:%M:%S",
     hide_columns: list[str] = None,
+    group_columns: list[str] = None,
 ) -> tuple[list[dict], list[dict]]:
     """
     A function used to provide a standardized method to populate the rowData and columnDefs of a Dash AG Grid from a list of records
@@ -303,11 +310,11 @@ def get_dash_ag_grid_from_records(
     Args:
         records: Records to be used to populate DataFrame.
         column_map: Dictionary to be used to map properties of records to columns in DataFrame. Key: Source -> Record property, Value: Target -> DataFrame Column
-
     Optional Args:
-        date_columns: List of columns to be converted.  Defaults to columns containing "Date" or "date".
-        date_format: The strftime format to convert target columns to. Defaults to "%d %B %Y %H:%M:%S" (22 February 2023 18:19:43)
-        hide_columns: Columns in the DataFrame to hide. Defaults to columns containing "Id" or "id".
+        date_columns: List of columns to be converted.  (Defaults to columns containing "Date" or "date").
+        date_format: The strftime format to convert target columns to. (Defaults to "%d %B %Y %H:%M:%S" (22 February 2023 18:19:43)).
+        hide_columns: Columns in the DataFrame to hide. (Defaults to columns containing "Id" or "id")
+        group_columns: Columns in the DataFrame to allow to be grouped.  (Defaults to None).
 
     Returns:
         A tuple containing two list[dict] (RowData, ColumnDefs)
@@ -317,7 +324,9 @@ def get_dash_ag_grid_from_records(
     dataframe.pipe(
         clean_date_columns, date_columns=date_columns, date_format=date_format
     )
-    columnDefs = get_column_defs(dataframe, hide_columns=hide_columns)
+    columnDefs = get_column_defs(
+        dataframe, hide_columns=hide_columns, group_columns=group_columns
+    )
 
     return dataframe.to_dict("records"), columnDefs
 

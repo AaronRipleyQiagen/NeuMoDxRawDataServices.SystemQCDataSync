@@ -94,7 +94,7 @@ runset_status_selections = dcc.Dropdown(
         "Rejected": "Rejected",
     },
     multi=True,
-    value=["Queue", "Reviewing"],
+    value=["Queue", "Reviewing", "Rejected"],
     style={
         "display": "inline-block",
         "vertical-align": "middle",
@@ -376,22 +376,21 @@ def Add_Dash(app):
             if isinstance(review_assignment_selections, str):
                 review_assignment_selections = [review_assignment_selections]
 
-            if True in review_group_completed_filter:
-                review_group_filter = session["user"].group_id
-            else:
-                review_group_filter = None
+            user_group_id = (
+                session["user"].group_id
+                if True in review_group_completed_filter
+                else None,
+            )
 
             if True in my_runsets_filter:
                 my_runset_filter_value = True
             else:
                 my_runset_filter_value = False
-            print("MY RUNSETS FILTER: ", my_runset_filter_value)
             rowData, columnDefs = populate_review_queue(
                 session["user"].id,
-                session["user"].group_display,
+                user_group_id=user_group_id,
                 review_group_ids=review_assignment_selections,
-                runset_statuses=runset_status_selections,
-                reviewer_group_id=review_group_filter,
+                runset_status_ids=runset_status_selections,
                 my_runsets_filter=my_runset_filter_value,
             )
 
