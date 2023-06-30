@@ -180,7 +180,6 @@ def add_run_review_kpi_callbacks(app):
             }
             for x in runset_issues
         ]
-        save_json_response(runset_issues, "issue-sample.json")
         return runset_issues
 
     @app.callback(
@@ -192,7 +191,6 @@ def add_run_review_kpi_callbacks(app):
     )
     def filter_issues(issues_data, severity_values, level_values, issue_levels_dict):
         filtered_issues_data = issues_data
-        save_json_response(filtered_issues_data, "issues-sample.json")
 
         if severity_values != []:
             filtered_issues_data = [
@@ -262,7 +260,7 @@ def add_run_review_kpi_callbacks(app):
         ),
         Input("issues-summary-table", "selectionChanged"),
     )
-    def get_ids_from_status_summary_selection(selection):
+    def get_ids_from_issues_summary_selection(selection):
         """
         A server-side callback method that populates the runset_id & module_id
         properities of the GoToRunSetButton & GoToXPCRModuleButton associated with
@@ -325,6 +323,27 @@ def add_run_review_kpi_callbacks(app):
         ]
 
         return module_runsets_summaries_dataframe.to_dict(orient="records")
+
+    @app.callback(
+        Output("module-run-count-summary-table", "rowData"),
+        Output("module-run-count-summary-table", "columnDefs"),
+        Input("module-runset-summaries", "data"),
+    )
+    def populate_module_run_count_summary_table(data):
+        column_map = {
+            "xpcrModuleSerial": "XPCR Module Serial",
+            "runSetType": "Runset Type",
+            "minRunSetDateTime": "First Runset Start Date",
+            "maxRunSetDateTime": "Last Runset Start Date",
+            "runSetCount": "# of Runsets",
+            "lastRunSetStatus": "Status of Last Runset",
+        }
+
+        return get_dash_ag_grid_from_records(
+            records=data,
+            column_map=column_map,
+            group_columns=["Runset Type"],
+        )
 
     @app.callback(
         Output("first-time-pass-rate", "value"),
