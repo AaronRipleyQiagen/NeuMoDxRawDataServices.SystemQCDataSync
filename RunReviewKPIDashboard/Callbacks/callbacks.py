@@ -78,12 +78,35 @@ def add_run_review_kpi_callbacks(app):
             query_params["RunSetTypeIds"] = assays
         if statuses:
             query_params["RunSetStatusIds"] = statuses
-        # print(query_params)
         runset_data_response = requests.get(
             url=runsets_url, params=query_params, verify=False
         )
-        # print("URL:", runset_data_response.url)
         return runset_data_response.json()
+
+    @app.callback(
+        Output("status-summary-table", "rowData"),
+        Output("status-summary-table", "columnDefs"),
+        Input("runsets", "data"),
+    )
+    def populate_status_summary_table(data):
+        """
+        A server-side callback method that populates the status summary table associated with Run Review KPIs
+        """
+        column_map = {
+            "runSetId": "RunSetId",
+            "xpcrModuleId": "XPCRModuleId",
+            "runSetType": "Type",
+            "xpcrModuleSerial": "XPCR Module Serial",
+            "runSetStatus": "Status",
+            "runSetStartDate": "Start Date",
+            "runSetEndDate": "End Date",
+        }
+
+        return get_dash_ag_grid_from_records(
+            records=data,
+            column_map=column_map,
+            group_columns=["Type", "XPCR Module Serial"],
+        )
 
     @app.callback(Output("status-summary-barchart", "figure"), Input("runsets", "data"))
     def plot_runset_status_summary(runsets):
