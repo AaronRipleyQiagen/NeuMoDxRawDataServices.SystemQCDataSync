@@ -645,3 +645,4 @@ def add_AIO_callbacks(app):
     DownloadBlobFileButton.add_callbacks(app)
     UserInputModal.add_callbacks(app)
     PostResponse.add_callbacks(app)
+    GoToXPCRModuleButtonAIO.add_callbacks(app)
