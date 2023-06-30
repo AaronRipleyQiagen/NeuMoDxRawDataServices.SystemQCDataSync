@@ -74,8 +74,8 @@ def populate_review_queue(
 
     column_map = {
         "id": "Id",
-        "My Status": "My Status",
         "Overall Status": "Overall Status",
+        "My Status": "My Status",
         "XPCR Module": "XPCR Module",
         "name": "Description",
         "Created By": "Created By",
@@ -83,7 +83,7 @@ def populate_review_queue(
         "validFrom": "Created Date",
     }
 
-    groupable_columns = ["My Status"]
+    groupable_columns = ["My Status", "Overall Status"]
 
     return get_dash_ag_grid_from_records(
         records=runsets, column_map=column_map, group_columns=groupable_columns
