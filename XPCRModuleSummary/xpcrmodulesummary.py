@@ -6,9 +6,7 @@ from Shared.appbuildhelpers import *
 
 warnings.filterwarnings("ignore")
 
-url_base = "/dashboard/XPCRModuleHistory/"
-
-# layout = xpcrmodulesummary_layout
+url_base = "/dashboard/xpcrmodule-history/"
 
 
 def Add_Dash(app):
