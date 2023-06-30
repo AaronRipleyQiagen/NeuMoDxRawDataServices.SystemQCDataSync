@@ -3,6 +3,7 @@ import dash_bootstrap_components as dbc
 from Shared.appbuildhelpers import *
 import datetime
 import dash_daq as daq
+import dash_ag_grid as dag
 
 """
 Define reusable_styles
