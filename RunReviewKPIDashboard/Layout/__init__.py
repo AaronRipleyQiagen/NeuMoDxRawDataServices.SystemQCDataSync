@@ -86,11 +86,13 @@ status_summary_buttons = html.Div(
     [
         GoToRunSetButtonAIO(
             aio_id="run-review-kpis-status-summary",
+            split_string="/run-review-kpi-dashboard",
             main_props={"style": double_button},
             button_props={"style": {"width": "100%"}},
         ),
         GoToXPCRModuleButtonAIO(
             aio_id="run-review-kpis-status-summary",
+            split_string="/run-review-kpi-dashboard",
             main_props={"style": double_button},
             button_props={"style": {"width": "100%"}},
         ),
