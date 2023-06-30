@@ -331,6 +331,7 @@ def add_run_review_kpi_callbacks(app):
     )
     def populate_module_run_count_summary_table(data):
         column_map = {
+            "xpcrModuleId": "XPCRModuleId",
             "xpcrModuleSerial": "XPCR Module Serial",
             "runSetType": "Runset Type",
             "minRunSetDateTime": "First Runset Start Date",
@@ -399,6 +400,26 @@ def add_run_review_kpi_callbacks(app):
         return first_time_pass_rate, "First Time Pass Rate (n={})".format(
             total_modules_count
         )
+
+    @app.callback(
+        Output(
+            GoToXPCRModuleButtonAIO.ids.module_id(
+                "run-review-kpis-module-run-count-summary"
+            ),
+            "data",
+        ),
+        Input("module-run-count-summary-table", "selectionChanged"),
+    )
+    def get_ids_from_status_summary_selection(selection):
+        """
+        A server-side callback method that populates the runset_id & module_id
+        properities of the GoToRunSetButton & GoToXPCRModuleButton associated with
+        the module-run-count-summary-table.
+        """
+        if selection:
+            return selection[0]["XPCRModuleId"]
+        else:
+            return no_update
 
     @app.callback(
         Output("number-of-runs-boxplot", "figure"),
