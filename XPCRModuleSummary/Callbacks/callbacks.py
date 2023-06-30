@@ -565,7 +565,7 @@ def add_run_performance_callbacks(app: Dash) -> None:
         Input("run-performance-statistic-type", "value"),
         Input("run-performance-assay-type", "value"),
         Input("run-performance-channel-type", "value"),
-        State("runset-stats-data-by-runset", "data"),
+        Input("runset-stats-data-by-runset", "data"),
         State("runset-stats-data-by-cartridge", "data"),
     )
     def get_run_performance_table(
