@@ -225,6 +225,15 @@ module_run_count_summary_table = dag.AgGrid(
     ),
     rowSelection="single",
 )
+
+module_run_count_summary_buttons = html.Div(
+    [
+        GoToXPCRModuleButtonAIO(
+            aio_id="run-review-kpis-module-run-count-summary",
+            split_string="/run-review-kpi-dashboard/",
+        )
+    ]
+)
 kpis_summary = dcc.Loading(
     children=[
         first_time_pass_rate,
@@ -233,6 +242,8 @@ kpis_summary = dcc.Loading(
         module_runset_summaries,
         number_of_runs,
         module_run_count_summary_table,
+        html.Br(),
+        module_run_count_summary_buttons,
     ]
 )
 kpis_summary_card = dbc.Card(dbc.CardBody([kpis_summary]), className="mt-3")
