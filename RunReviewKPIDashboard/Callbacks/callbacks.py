@@ -443,6 +443,9 @@ def add_run_review_kpi_callbacks(app):
         prevent_initial_call=True,
     )
     def get_runset_ids(runsets_data: list[dict]):
+        """
+        A server-side callback used to populate the list of runSetIds to used for RemediationActionEffectivenessCard associated with run-review-kpis.
+        """
         if runsets_data:
             return list(set(map(lambda x: x["runSetId"], runsets_data)))
         else:
