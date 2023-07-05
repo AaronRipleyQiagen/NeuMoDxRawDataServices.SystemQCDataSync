@@ -13,6 +13,11 @@ import dash_bootstrap_components as dbc
 import uuid
 from Shared.functions import *
 from Shared.styles import *
+import dash_ag_grid as dag
+from functools import reduce
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import plotly.express as px
 
 ## For Information related to All-In-One Component (AIO) Pattern please see https://dash.plotly.com/all-in-one-components
 
@@ -59,7 +64,6 @@ class GoToRunSetButtonAIO(html.Div):
 
     ## Make ids publically accessible.
     ids = ids
-    app = Dash(__name__)
 
     def __init__(
         self,
@@ -563,8 +567,6 @@ class PostResponse(dbc.Modal):
             Input(PostResponse.ids.response_status_code(MATCH), "data"),
         )
         def control_message(data):
-            print("RAN CONTROL MESSAGE")
-            print(data)
             if data == "200":
                 return False, True
             else:
@@ -581,7 +583,8 @@ class PostResponse(dbc.Modal):
 
 
 class RunSetAttemptNumberValidation(dbc.ModalBody):
-    """An All-In-One (AIO) component that generates a ModalBody alert a user if a Particular XPCR Module has a runset matching the attempt number & runset type they have specified that already exists in the database.
+    """
+    An All-In-One (AIO) component that generates a ModalBody alert a user if a Particular XPCR Module has a runset matching the attempt number & runset type they have specified that already exists in the database.
 
     Parameters:
         aio_id: The id to give to the GoToRunSetButton (Defaults to a randomly generated guid).
@@ -640,9 +643,368 @@ class RunSetAttemptNumberValidation(dbc.ModalBody):
         )
 
 
+class RemediationActionEffectivenessCard(dbc.Card):
+    """
+    An All-In-One (AIO) component that generates a Card that is used to display information related to the effectiveness of various remediation actions for given issues.
+
+    Parameters:
+        aio_id: The id to give to the GoToRunSetButton (Defaults to a randomly generated guid).
+    Subcomponents:
+        runset_ids (dcc.Store): Session Storage for the runset_ids to use for data calculation.
+        remediation_attempts_raw_data (dcc.Store): Session Storage for the raw data for remediation attempts related to runset_ids.
+        remediation_attempts_summary_data (dcc.Store): Session Storage for the aggregation / summarization of remediation attempts related to runset_ids
+        issue_levels (dcc.Dropdown): Dropdown selector for the issueLevels to be included in the summarizaton.
+        issue_types (dcc.Dropdown): Dropdown selector for the issueTypes to be included in the summarization.
+        figure (dcc.Graph): Figure used for summarization.
+        table (dag.DashAgGrid): Table used for summarization.
+    """
+
+    class ids:
+        runset_ids = lambda aio_id: {
+            "component": "RemediationActionEffectivenessCard",
+            "subcomponent": "runset_ids",
+            "aio_id": aio_id,
+        }
+
+        remediation_attempts_raw_data = lambda aio_id: {
+            "component": "RemediationActionEffectivenessCard",
+            "subcomponent": "remediation_attempts_raw_data",
+            "aio_id": aio_id,
+        }
+
+        remediation_attempts_summary_data = lambda aio_id: {
+            "component": "RemediationActionEffectivenessCard",
+            "subcomponent": "remediation_attempts_summary_data",
+            "aio_id": aio_id,
+        }
+
+        issue_levels = lambda aio_id: {
+            "component": "RemediationActionEffectivenessCard",
+            "subcomponent": "issue_levels",
+            "aio_id": aio_id,
+        }
+
+        issue_types = lambda aio_id: {
+            "component": "RemediationActionEffectivenessCard",
+            "subcomponent": "issue_types",
+            "aio_id": aio_id,
+        }
+
+        figure = lambda aio_id: {
+            "component": "RemediationActionEffectivenessCard",
+            "subcomponent": "figure",
+            "aio_id": aio_id,
+        }
+
+        table = lambda aio_id: {
+            "component": "RemediationActionEffectivenessCard",
+            "subcomponent": "table",
+            "aio_id": aio_id,
+        }
+
+    ids = ids
+
+    def __init__(
+        self,
+        aio_id: str = None,
+    ):
+        if not aio_id:
+            aio_id = str(uuid.uuid4())
+
+        super().__init__(
+            dbc.CardBody(
+                [
+                    dcc.Loading(
+                        [
+                            dcc.Store(
+                                id=self.ids.runset_ids(aio_id), storage_type="session"
+                            ),
+                            dcc.Store(
+                                id=self.ids.remediation_attempts_raw_data(aio_id),
+                                storage_type="session",
+                            ),
+                            dcc.Store(
+                                id=self.ids.remediation_attempts_summary_data(aio_id),
+                                storage_type="session",
+                            ),
+                            html.Div(
+                                [
+                                    html.Div(
+                                        [
+                                            html.P(
+                                                "Select Issue Level(s) of Interest: ",
+                                                # style=halfstyle,
+                                            ),
+                                            dcc.Dropdown(
+                                                id=self.ids.issue_levels(aio_id),
+                                                # style=halfstyle,
+                                                multi=True,
+                                            ),
+                                        ],
+                                        style=halfstyle,
+                                    ),
+                                    html.Div(
+                                        [
+                                            html.P(
+                                                "Select Issue Type(s) of Interest: ",
+                                                # style=halfstyle,
+                                            ),
+                                            dcc.Dropdown(
+                                                id=self.ids.issue_types(aio_id),
+                                                # style=halfstyle,
+                                                multi=True,
+                                            ),
+                                        ],
+                                        style=halfstyle,
+                                    ),
+                                ]
+                            ),
+                            dcc.Graph(id=self.ids.figure(aio_id)),
+                            dag.AgGrid(
+                                id=self.ids.table(aio_id),
+                                enableEnterpriseModules=True,
+                                columnSize="sizeToFit",
+                                defaultColDef=dict(
+                                    resizable=True,
+                                ),
+                                rowSelection="single",
+                            ),
+                        ]
+                    )
+                ]
+            )
+        )
+
+    def add_callbacks(app):
+        @app.callback(
+            Output(
+                RemediationActionEffectivenessCard.ids.remediation_attempts_raw_data(
+                    MATCH
+                ),
+                "data",
+            ),
+            Input(RemediationActionEffectivenessCard.ids.runset_ids(MATCH), "data"),
+            prevent_initial_call=True,
+        )
+        def get_raw_remediation_attempts(runset_ids: list[str]) -> list[dict]:
+            """
+            A server-side callback used to populate the remediation_attempts_raw_data store object associated with the RemediationActionEffectivenessCard.
+            """
+            if runset_ids and runset_ids != []:
+                URLS = []
+
+                for runset_id in runset_ids:
+                    url = os.environ[
+                        "RUN_REVIEW_API_BASE"
+                    ] + "Reports/runset/{}/RemediationActionDetails".format(runset_id)
+                    URLS.append(url)
+                remediation_attempts_data = HttpGetAsync(urls=URLS)
+                return reduce(lambda x, y: x + y, remediation_attempts_data, [])
+
+            else:
+                return no_update
+
+        @app.callback(
+            Output(
+                RemediationActionEffectivenessCard.ids.issue_levels(MATCH), "options"
+            ),
+            Input(
+                RemediationActionEffectivenessCard.ids.remediation_attempts_raw_data(
+                    MATCH
+                ),
+                "data",
+            ),
+            prevent_initial_call=True,
+        )
+        def get_issue_levels(remediation_attempts_raw_data: list[dict]) -> list[str]:
+            """
+            A server-side callback used to populate the options of the issue_levels dropdown associated with the RemediationActionEffectivenessCard.
+            """
+            if remediation_attempts_raw_data and remediation_attempts_raw_data != []:
+                return list(
+                    set(map(lambda x: x["issueLevel"], remediation_attempts_raw_data))
+                )
+            else:
+                return no_update
+
+        @app.callback(
+            Output(
+                RemediationActionEffectivenessCard.ids.issue_types(MATCH), "options"
+            ),
+            Input(
+                RemediationActionEffectivenessCard.ids.remediation_attempts_raw_data(
+                    MATCH
+                ),
+                "data",
+            ),
+        )
+        def get_issue_types(remediation_attempts_raw_data: list[dict]) -> list[str]:
+            """
+            A server-side callback used to populate the options of the issue_types dropdown associated with the RemediationActionEffectivenessCard.
+            """
+
+            if remediation_attempts_raw_data and remediation_attempts_raw_data != []:
+                return list(
+                    set(map(lambda x: x["issueType"], remediation_attempts_raw_data))
+                )
+            else:
+                return no_update
+
+        @app.callback(
+            Output(
+                RemediationActionEffectivenessCard.ids.remediation_attempts_summary_data(
+                    MATCH
+                ),
+                "data",
+            ),
+            Input(
+                RemediationActionEffectivenessCard.ids.remediation_attempts_raw_data(
+                    MATCH
+                ),
+                "data",
+            ),
+            Input(RemediationActionEffectivenessCard.ids.issue_levels(MATCH), "value"),
+            Input(RemediationActionEffectivenessCard.ids.issue_types(MATCH), "value"),
+            prevent_initial_call=True,
+        )
+        def get_remediation_attempts_summary_data(
+            remediation_attempts_raw_data: list[dict],
+            issue_levels: list[str],
+            issue_types: list[str],
+        ) -> list[dict]:
+            """
+            A server-side callback used to create the remediation_attempts_summary_data associated with the RemediationActionEffectivenessCard.
+            """
+            if remediation_attempts_raw_data and remediation_attempts_raw_data != []:
+                raw_data = pd.DataFrame.from_dict(remediation_attempts_raw_data)
+                ## filter for issue levels selected
+                if issue_levels and issue_levels != []:
+                    raw_data = raw_data[raw_data["issueLevel"].isin(issue_levels)]
+
+                ## filter for issue types selected
+                if issue_types and issue_types != []:
+                    raw_data = raw_data[raw_data["issueType"].isin(issue_types)]
+
+                ## Create Summary DataFrame
+                summary_data = (
+                    raw_data.groupby(
+                        ["issueLevel", "issueType", "remediationActionType"]
+                    )
+                    .agg({"success": "mean"})
+                    .reset_index()
+                )
+
+                ## Convert success rate to percentage.
+                summary_data["success"] *= 100
+
+                return summary_data.to_dict(orient="records")
+
+            else:
+                return no_update
+
+        @app.callback(
+            Output(
+                RemediationActionEffectivenessCard.ids.table(MATCH),
+                "rowData",
+            ),
+            Output(
+                RemediationActionEffectivenessCard.ids.table(MATCH),
+                "columnDefs",
+            ),
+            Input(
+                RemediationActionEffectivenessCard.ids.remediation_attempts_summary_data(
+                    MATCH
+                ),
+                "data",
+            ),
+            prevent_initial_call=True,
+        )
+        def populate_remediation_action_effectiveness_table(
+            remediation_attempts_summary_data: list[dict],
+        ) -> tuple[list[dict], list[dict]]:
+            """
+            A server-side callback used to populate the remediation action effectiveness table associated with the RemediationActionEffectivenessCard.
+            """
+            if (
+                remediation_attempts_summary_data
+                and remediation_attempts_summary_data != []
+            ):
+                column_map = {
+                    "issueLevel": "Level",
+                    "issueType": "Issue Type",
+                    "remediationActionType": "Remediation Action Type",
+                    "success": "Success Rate (%)",
+                }
+
+                return get_dash_ag_grid_from_records(
+                    records=remediation_attempts_summary_data, column_map=column_map
+                )
+            else:
+                return no_update
+
+        @app.callback(
+            Output(RemediationActionEffectivenessCard.ids.figure(MATCH), "figure"),
+            Input(
+                RemediationActionEffectivenessCard.ids.remediation_attempts_summary_data(
+                    MATCH
+                ),
+                "data",
+            ),
+            prevent_initial_call=True,
+        )
+        def populate_remediation_action_effectivenes_plot(
+            remediation_attempts_summary_data: list[dict],
+        ) -> go.Figure:
+            """
+            A server-side callback used to populate the remediation action effectiveness plot associated with the RemediationActionEffectivenessCard
+            """
+            if (
+                remediation_attempts_summary_data
+                and remediation_attempts_summary_data != []
+            ):
+                ## Create DataFrame From Dictionary.
+                df = pd.DataFrame.from_dict(remediation_attempts_summary_data)
+
+                ## Define Column Name Map
+                column_map = {
+                    "issueLevel": "Level",
+                    "issueType": "Issue Type",
+                    "remediationActionType": "Remediation Action Type",
+                    "success": "Success Rate (%)",
+                }
+
+                ## Rename Columns in DataFrame.
+                df = df.rename(column_map, axis=1)
+
+                col = 0
+
+                ##Create a plot for each Level of Issue Selected.
+                plots = []
+                for level in df["Level"].unique():
+                    col += 1
+                    plot = px.histogram(
+                        df,
+                        x="Issue Type",
+                        y="Success Rate (%)",
+                        color="Remediation Action Type",
+                    )
+                    plots.append(plot)
+
+                ## Generate Subplots based on number of unique plots created.
+                fig = make_subplots(rows=1, cols=len(plots))
+
+                for i, plot in enumerate(plots):
+                    for trace in range(len(plot["data"])):
+                        fig.append_trace(plot["data"][trace], row=1, col=i + 1)
+                return fig
+            else:
+                return no_update
+
+
 def add_AIO_callbacks(app):
     GoToRunSetButtonAIO.add_callbacks(app)
     DownloadBlobFileButton.add_callbacks(app)
     UserInputModal.add_callbacks(app)
     PostResponse.add_callbacks(app)
     GoToXPCRModuleButtonAIO.add_callbacks(app)
+    RemediationActionEffectivenessCard.add_callbacks(app)

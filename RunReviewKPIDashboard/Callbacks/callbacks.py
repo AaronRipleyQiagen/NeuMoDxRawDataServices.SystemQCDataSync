@@ -433,3 +433,20 @@ def add_run_review_kpi_callbacks(app):
         fig = px.box(module_runset_summaries_dataframe, x="runSetType", y="runSetCount")
 
         return fig
+
+    @app.callback(
+        Output(
+            RemediationActionEffectivenessCard.ids.runset_ids("run-review-kpis"),
+            "data",
+        ),
+        Input("runsets", "data"),
+        prevent_initial_call=True,
+    )
+    def get_runset_ids(runsets_data: list[dict]):
+        """
+        A server-side callback used to populate the list of runSetIds to used for RemediationActionEffectivenessCard associated with run-review-kpis.
+        """
+        if runsets_data:
+            return list(set(map(lambda x: x["runSetId"], runsets_data)))
+        else:
+            return no_update
