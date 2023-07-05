@@ -248,6 +248,15 @@ kpis_summary = dcc.Loading(
 )
 kpis_summary_card = dbc.Card(dbc.CardBody([kpis_summary]), className="mt-3")
 
+
+"""
+Add RemediationEffectiveness Dashboard
+"""
+
+remediation_action_effectiveness_card = RemediationActionEffectivenessCard(
+    aio_id="run-review-kpis"
+)
+
 dashboard_tabs = dbc.Tabs(
     children=[
         dbc.Tab(
@@ -257,6 +266,11 @@ dashboard_tabs = dbc.Tabs(
             issues_summary_card, label="Issues Summary", tab_id="issue-summary-tab"
         ),
         dbc.Tab(kpis_summary_card, label="Other KPIs", tab_id="kpis-summary-tab"),
+        dbc.Tab(
+            remediation_action_effectiveness_card,
+            label="Remediation Action Effectiveness",
+            tab_id="remediation-action-effectiveness-summary-tab",
+        ),
     ],
     id="review-tabs",
 )
