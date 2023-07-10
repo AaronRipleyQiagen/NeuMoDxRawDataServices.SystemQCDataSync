@@ -70,6 +70,7 @@ review_queue = dcc.Loading(
             ),
             rowSelection="single",
             id="review-queue-table",
+            style={"height": 600},
         )
     ],
     type="circle",
