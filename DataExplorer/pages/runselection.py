@@ -46,8 +46,6 @@ def getXPCRModuleCartridges(module_id):
             cartridge_assays = []
             for sample in cartridge_details['samples']:
                 sample_ids.append(sample['id'])
-                # requests.get("https://localhost:7107/api/samples/{}/info-channelsummary-readings".format(sample['id']), verify=False).json()
-
                 if sample['assay']['assayName'] not in cartridge_assays:
                     cartridge_assays.append(sample['assay']['assayName'])
 
