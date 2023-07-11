@@ -567,10 +567,10 @@ class PostResponse(dbc.Modal):
             Input(PostResponse.ids.response_status_code(MATCH), "data"),
         )
         def control_message(data):
-            if data == "200":
+            if data == 200:
                 return False, True
             else:
-                return False, True
+                return True, False
 
         @app.callback(
             Output(PostResponse.ids.modal(MATCH), "is_open", allow_duplicate=True),
