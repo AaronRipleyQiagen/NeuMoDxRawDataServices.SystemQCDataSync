@@ -1200,19 +1200,21 @@ class SampleExclusionControls(html.Div):
             """
 
             sample_exclusion_body = {
-                "runsetId": runset_id,
+                "runSetId": runset_id,
                 "sampleId": sample_id,
-                "runsetreviewId": runset_review_id,
+                "runSetReviewId": runset_review_id,
                 "userId": user_id,
             }
-
+            save_json_response(sample_exclusion_body, "sample_exclusion_test.json")
             sample_exclusion_url = (
-                os.environ["RUN_REVIEW_API_BASE"] + "/SampleExclusions"
+                os.environ["RUN_REVIEW_API_BASE"] + "/SampleExclusion"
             )
 
             response = requests.post(
                 url=sample_exclusion_url, json=sample_exclusion_body
             )
+
+            print(response.__dict__)
 
             return not is_open, response.status_code
 
