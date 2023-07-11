@@ -560,3 +560,18 @@ def get_initialization_callbacks(app):
         neumodx_system_details_string = neumodx_system_details_string[:-2]
 
         return neumodx_system_details_string
+
+    @app.callback(
+        Output(
+            SampleExclusionControls.ids.runset_id(
+                "run-review-add-sample-exclusion-result"
+            ),
+            "data",
+        ),
+        Input("runset-id", "data"),
+    )
+    def update_sample_exclusion_control_runset_id(runset_id: str):
+        """
+        A server-side callback that updates the runset_id component for the SampleExclusionController associated with run-review page.
+        """
+        return runset_id
