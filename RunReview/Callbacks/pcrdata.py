@@ -14,6 +14,12 @@ def get_pcr_data_callbacks(app):
         Input("channel-selected", "data"),
         Input("run-review-process-step-selector", "value"),
         Input("run-review-color-selector", "value"),
+        Input(
+            ManageRunsetSampleExclusions.ids.sample_exclusions(
+                "run-review-manage-runset-sample-exclusions"
+            ),
+            "data",
+        ),
         State("runset-sample-data", "data"),
         State("runset-selection-data", "data"),
         State("runset-channel-options", "data"),
@@ -26,6 +32,7 @@ def get_pcr_data_callbacks(app):
         channel_selected,
         process_step,
         color_option_selected,
+        excluded_samples,
         data,
         runset_data,
         channel_options,
@@ -137,6 +144,17 @@ def get_pcr_data_callbacks(app):
             df_Channel_Step["Readings Array"] = [
                 np.column_stack(zip(cycles, x)) for x in readings_columns.values
             ]
+            df_Channel_Step["Excluded"] = ""
+            if excluded_samples:
+                df_Channel_Step["Excluded"] = np.where(
+                    df_Channel_Step["SampleId"].isin(
+                        [x["sampleId"] for x in excluded_samples]
+                    ),
+                    "Excluded",
+                    "",
+                )
+
+            excluded_styles = {"Excluded": "dash", "": None}
 
             samples_selected = []
             for idx in df_Channel_Step.index:
@@ -156,7 +174,8 @@ def get_pcr_data_callbacks(app):
                         line=dict(
                             color=colorDict[
                                 df_Channel_Step.loc[idx, color_option_selected]
-                            ]
+                            ],
+                            dash=excluded_styles[df_Channel_Step.loc[idx, "Excluded"]],
                         ),
                     )
                 )
