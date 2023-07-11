@@ -464,18 +464,3 @@ def get_pcr_data_callbacks(app):
                 None,
             )
         return no_update, None
-
-    @app.callback(
-        Output(
-            SampleExclusionControls.ids.sample_id(
-                "run-review-add-sample-exclusion-result"
-            ),
-            "data",
-        ),
-        Input("runset-sample-results", "selectionChanged"),
-    )
-    def update_sample_exclusion_control_sample_id(selection: list[dict]):
-        """
-        A server-side callback that updates the sample_id component for the SampleExclusionController associated with run-review page.
-        """
-        return selection[0]["SampleId"]
