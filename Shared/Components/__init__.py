@@ -1003,7 +1003,7 @@ class RemediationActionEffectivenessCard(dbc.Card):
 
 class SampleExclusionControls(html.Div):
     """
-    An All-In-One (AIO) component that generates a Button that allows users to assign or remove a SampleExclusion to a particular Sample / Runset Combination.
+    An All-In-One (AIO) component that generates a set of Buttons that allows users to assign or remove a SampleExclusion to a particular Sample / Runset Combination.
     """
 
     class ids:
@@ -1022,6 +1022,12 @@ class SampleExclusionControls(html.Div):
         runset_review_id = lambda aio_id: {
             "component": "ExcludeSampleFromRunSetButton",
             "subcomponent": "runset_review_id",
+            "aio_id": aio_id,
+        }
+
+        user_id = lambda aio_id: {
+            "component": "ExcludeSampleFromRunSetButton",
+            "subcomponent": "user_id",
             "aio_id": aio_id,
         }
 
@@ -1061,7 +1067,7 @@ class SampleExclusionControls(html.Div):
                 html.Div(
                     [
                         dbc.Button(
-                            id=self.ids.remove_button(
+                            id=self.ids.assign_button(
                                 aio_id + "-add-sample-exclusion-result"
                             ),
                             **assign_button_props,
@@ -1116,6 +1122,25 @@ class SampleExclusionControls(html.Div):
                     success_text="Sample Exclusion Successfully Removed.",
                     failed_text="Remove Sample Exclusion Failed.",
                 ),
+                dcc.Store(
+                    id=self.ids.runset_id(aio_id + "-add-sample-exclusion-result"),
+                    storage_type="session",
+                ),
+                dcc.Store(
+                    id=self.ids.runset_review_id(
+                        aio_id + "-add-sample-exclusion-result"
+                    ),
+                    storage_type="session",
+                ),
+                dcc.Store(
+                    id=self.ids.sample_id(aio_id + "-add-sample-exclusion-result"),
+                    storage_type="session",
+                    data="Hi",
+                ),
+                dcc.Store(
+                    id=self.ids.user_id(aio_id + "-add-sample-exclusion-result"),
+                    storage_type="session",
+                ),
             ]
         )
 
@@ -1130,9 +1155,7 @@ class SampleExclusionControls(html.Div):
             State(UserInputModal.ids.modal(MATCH), "is_open"),
             prevent_initial_call=True,
         )
-        def open_confirmation_modal(
-            assign_clicks, submit_clicks, cancel_clicks, is_open
-        ):
+        def open_confirmation_modal(assign_clicks, is_open):
             """
             A server-side callback method that opens and closes the UserInputModal object related to confirmation of SampleExclusion Assignment and Removal.
             """
@@ -1152,6 +1175,46 @@ class SampleExclusionControls(html.Div):
                 return not is_open
             else:
                 return no_update
+
+        @app.callback(
+            Output(PostResponse.ids.modal(MATCH), "is_open", allow_duplicate=True),
+            Output(
+                PostResponse.ids.response_status_code(MATCH),
+                "data",
+                allow_duplicate=True,
+            ),
+            Input(UserInputModal.ids.submit(MATCH), "n_clicks"),
+            State(SampleExclusionControls.ids.runset_id(MATCH), "data"),
+            State(SampleExclusionControls.ids.runset_review_id(MATCH), "data"),
+            State(SampleExclusionControls.ids.sample_id(MATCH), "data"),
+            State(SampleExclusionControls.ids.user_id(MATCH), "data"),
+            State(PostResponse.ids.modal(MATCH), "is_open"),
+            prevent_initial_call=True,
+        )
+        def add_sample_exclusion(
+            add_click, runset_id, runset_review_id, sample_id, user_id, is_open
+        ):
+            """
+            A server-side callback that executes a "AddSampleExclusion" API call and opens a PostResponse
+            that communicates if the API call returned a successful result.
+            """
+
+            sample_exclusion_body = {
+                "runsetId": runset_id,
+                "sampleId": sample_id,
+                "runsetreviewId": runset_review_id,
+                "userId": user_id,
+            }
+
+            sample_exclusion_url = (
+                os.environ["RUN_REVIEW_API_BASE"] + "/SampleExclusions"
+            )
+
+            response = requests.post(
+                url=sample_exclusion_url, json=sample_exclusion_body
+            )
+
+            return not is_open, response.status_code
 
 
 def add_AIO_callbacks(app):
