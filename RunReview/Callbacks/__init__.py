@@ -8,6 +8,7 @@ from .tadm_pictures import *
 from .comments import *
 from .misc_files import *
 from .runset_review import *
+from .sample_exclusion import *
 
 
 def get_run_review_callbacks(app):
@@ -21,3 +22,4 @@ def get_run_review_callbacks(app):
     get_comment_callbacks(app)
     get_misc_file_callbacks(app)
     get_runset_review_callbacks(app)
+    get_sample_exclusion_callbacks(app)
