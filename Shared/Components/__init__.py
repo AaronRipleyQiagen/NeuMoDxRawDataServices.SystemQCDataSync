@@ -1389,7 +1389,11 @@ class ManageRunsetSampleExclusions(html.Div):
 
     def add_callbacks(app):
         @app.callback(
-            Output(ManageRunsetSampleExclusions.ids.sample_exclusions(MATCH), "data"),
+            Output(
+                ManageRunsetSampleExclusions.ids.sample_exclusions(MATCH),
+                "data",
+                allow_duplicate=True,
+            ),
             Input(ManageRunsetSampleExclusions.ids.runset_id(MATCH), "data"),
             Input(ManageRunsetSampleExclusions.ids.sample_details(MATCH), "data"),
             Input(PostResponse.ids.modal(MATCH), "is_open"),
@@ -1405,9 +1409,10 @@ class ManageRunsetSampleExclusions(html.Div):
 
                 sample_exclusion_results = pd.DataFrame(
                     requests.get(url=runset_sample_exclusions_url).json()
-                ).set_index("sampleId")
-
+                )
                 if len(sample_exclusion_results) > 0:
+                    sample_exclusion_results.set_index("sampleId", inplace=True)
+
                     sample_details_frame = pd.DataFrame.from_dict(
                         sample_details
                     ).set_index("sampleId")
@@ -1419,7 +1424,9 @@ class ManageRunsetSampleExclusions(html.Div):
                         "sample-exclusion-details.json",
                     )
 
-                    return sample_exclusion_results.to_dict(orient="records")
+                    return sample_exclusion_results.reset_index().to_dict(
+                        orient="records"
+                    )
                 else:
                     return []
             else:
@@ -1431,23 +1438,26 @@ class ManageRunsetSampleExclusions(html.Div):
             Input(ManageRunsetSampleExclusions.ids.sample_exclusions(MATCH), "data"),
         )
         def populate_sample_exclusions_table(sample_exclusion_records: list[dict]):
-            column_map = {
-                "id": "Id",
-                "runSetId": "RunSetId",
-                "runSetReviewId": "RunSetReviewId",
-                "sampleId": "SampleId",
-                "N500 Serial Number": "N500 Serial Number",
-                "XPCR Module Serial": "XPCR Module Serial",
-                "XPCR Module Lane": "XPCR Module Lane",
-                "Sample ID": "Sample ID",
-                "Overall Result": "Overall Result",
-                "addedBy": "Added By",
-                "createdDate": "Created Date",
-            }
+            if sample_exclusion_records:
+                column_map = {
+                    "id": "Id",
+                    "runSetId": "RunSetId",
+                    "runSetReviewId": "RunSetReviewId",
+                    "sampleId": "SampleId",
+                    "N500 Serial Number": "N500 Serial Number",
+                    "XPCR Module Serial": "XPCR Module Serial",
+                    "XPCR Module Lane": "XPCR Module Lane",
+                    "Sample ID": "Sample ID",
+                    "Overall Result": "Overall Result",
+                    "addedBy": "Added By",
+                    "createdDate": "Created Date",
+                }
 
-            return get_dash_ag_grid_from_records(
-                records=sample_exclusion_records, column_map=column_map
-            )
+                return get_dash_ag_grid_from_records(
+                    records=sample_exclusion_records, column_map=column_map
+                )
+            else:
+                return no_update
 
         @app.callback(
             Output(RemoveSampleExclusionButton.ids.sample_exclusion_id(MATCH), "data"),
