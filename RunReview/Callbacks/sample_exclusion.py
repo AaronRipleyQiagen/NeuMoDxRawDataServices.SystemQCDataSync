@@ -111,3 +111,60 @@ def get_sample_exclusion_callbacks(app):
 
         else:
             return no_update
+
+    @app.callback(
+        Output(
+            ManageRunsetSampleExclusions.ids.sample_exclusions(
+                "run-review-manage-runset-sample-exclusions"
+            ),
+            "data",
+            allow_duplicate=True,
+        ),
+        Input(
+            PostResponse.ids.modal("run-review-add-sample-exclusion-button"), "is_open"
+        ),
+        State(
+            ManageRunsetSampleExclusions.ids.runset_id(
+                "run-review-manage-runset-sample-exclusions"
+            ),
+            "data",
+        ),
+        State(
+            ManageRunsetSampleExclusions.ids.sample_details(
+                "run-review-manage-runset-sample-exclusions"
+            ),
+            "data",
+        ),
+        prevent_initial_call=True,
+    )
+    def get_sample_exclusions(
+        is_open: bool,
+        runset_id: str,
+        sample_details: list[dict],
+    ):
+        if runset_id and sample_details and not is_open:
+            runset_sample_exclusions_url = os.environ[
+                "RUN_REVIEW_API_BASE"
+            ] + "Reports/RunSet/{}/SampleExclusionDetails".format(runset_id)
+
+            sample_exclusion_results = pd.DataFrame(
+                requests.get(url=runset_sample_exclusions_url).json()
+            ).set_index("sampleId")
+
+            if len(sample_exclusion_results) > 0:
+                sample_details_frame = pd.DataFrame.from_dict(sample_details).set_index(
+                    "sampleId"
+                )
+                sample_exclusion_results = sample_exclusion_results.join(
+                    sample_details_frame
+                )
+                save_json_response(
+                    sample_exclusion_results.to_dict(orient="records")[0],
+                    "sample-exclusion-details.json",
+                )
+
+                return sample_exclusion_results.reset_index().to_dict(orient="records")
+            else:
+                return []
+        else:
+            return no_update
