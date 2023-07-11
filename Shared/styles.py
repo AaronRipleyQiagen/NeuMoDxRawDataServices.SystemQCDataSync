@@ -31,7 +31,7 @@ threequarterstyle = {
 }
 
 double_button = {
-    "width": "30%",
+    "width": "35%",
     "margin-left": "10%",
     "display": "inline-block",
 }
