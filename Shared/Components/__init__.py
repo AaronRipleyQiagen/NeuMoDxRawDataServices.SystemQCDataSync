@@ -1001,6 +1001,159 @@ class RemediationActionEffectivenessCard(dbc.Card):
                 return no_update
 
 
+class SampleExclusionControls(html.Div):
+    """
+    An All-In-One (AIO) component that generates a Button that allows users to assign or remove a SampleExclusion to a particular Sample / Runset Combination.
+    """
+
+    class ids:
+        sample_id = lambda aio_id: {
+            "component": "ExcludeSampleFromRunSetButton",
+            "subcomponent": "sample_id",
+            "aio_id": aio_id,
+        }
+
+        runset_id = lambda aio_id: {
+            "component": "ExcludeSampleFromRunSetButton",
+            "subcomponent": "runset_id",
+            "aio_id": aio_id,
+        }
+
+        runset_review_id = lambda aio_id: {
+            "component": "ExcludeSampleFromRunSetButton",
+            "subcomponent": "runset_review_id",
+            "aio_id": aio_id,
+        }
+
+        assign_button = lambda aio_id: {
+            "component": "ExcludeSampleFromRunSetButton",
+            "subcomponent": "assign_button",
+            "aio_id": aio_id,
+        }
+
+        remove_button = lambda aio_id: {
+            "component": "ExcludeSampleFromRunSetButton",
+            "subcomponent": "remove_button",
+            "aio_id": aio_id,
+        }
+
+    def __init__(
+        self,
+        aio_id: str,
+        assign_button_text: str = "Exclude Sample From RunSet",
+        assign_button_props: dict = None,
+        remove_button_text: str = "Remove Sample Exclusion",
+        remove_button_props: dict = None,
+    ):
+        if not aio_id:
+            aio_id = str(uuid.uuid4())
+
+        assign_button_props = assign_button_props if assign_button_props else {}
+        assign_button_props["children"] = assign_button_text
+        assign_button_props["style"] = double_button
+
+        remove_button_props = remove_button_props if remove_button_props else {}
+        remove_button_props["children"] = remove_button_text
+        remove_button_props["style"] = double_button
+
+        super().__init__(
+            [
+                html.Div(
+                    [
+                        dbc.Button(
+                            id=self.ids.remove_button(
+                                aio_id + "-add-sample-exclusion-result"
+                            ),
+                            **assign_button_props,
+                        ),
+                        dbc.Button(
+                            id=self.ids.remove_button(
+                                aio_id + "-remove-sample-exclusion-result"
+                            ),
+                            **remove_button_props,
+                        ),
+                    ]
+                ),
+                UserInputModal(
+                    aio_id=aio_id + "-add-sample-exclusion-result",
+                    submit_text="Yes",
+                    cancel_text="No",
+                    title_text="Confirm Sample Exclusion",
+                    modal_body=dbc.ModalBody(
+                        children=[
+                            html.P(
+                                [
+                                    "Are you sure you want to exclude this sample from the RunSet?"
+                                ]
+                            )
+                        ]
+                    ),
+                ),
+                PostResponse(
+                    aio_id=aio_id + "-add-sample-exclusion-result",
+                    title_text="Add Sample Exclusion Result",
+                    success_text="Sample Exclusion Successfully Added.",
+                    failed_text="Adding Sample Exclusion Failed.",
+                ),
+                UserInputModal(
+                    aio_id=aio_id + "-remove-sample-exclusion-result",
+                    submit_text="Yes",
+                    cancel_text="No",
+                    title_text="Confirm Sample Exclusion Removal",
+                    modal_body=dbc.ModalBody(
+                        [
+                            html.P(
+                                [
+                                    "Are you sure you want to remove the Sample Exclusion for this sample?"
+                                ]
+                            )
+                        ]
+                    ),
+                ),
+                PostResponse(
+                    aio_id=aio_id + "-remove-sample-exclusion-result",
+                    title_text="Remove Sample Exclusion Result",
+                    success_text="Sample Exclusion Successfully Removed.",
+                    failed_text="Remove Sample Exclusion Failed.",
+                ),
+            ]
+        )
+
+    def add_callbacks(app):
+        """
+        Adds callback methods for SampleExclusionControls to the app.
+        """
+
+        @app.callback(
+            Output(UserInputModal.ids.modal(MATCH), "is_open", allow_duplicate=True),
+            Input(SampleExclusionControls.ids.assign_button(MATCH), "n_clicks"),
+            State(UserInputModal.ids.modal(MATCH), "is_open"),
+            prevent_initial_call=True,
+        )
+        def open_confirmation_modal(
+            assign_clicks, submit_clicks, cancel_clicks, is_open
+        ):
+            """
+            A server-side callback method that opens and closes the UserInputModal object related to confirmation of SampleExclusion Assignment and Removal.
+            """
+            return not is_open
+
+        @app.callback(
+            Output(UserInputModal.ids.modal(MATCH), "is_open", allow_duplicate=True),
+            Input(SampleExclusionControls.ids.remove_button(MATCH), "n_clicks"),
+            State(UserInputModal.ids.modal(MATCH), "is_open"),
+            prevent_initial_call=True,
+        )
+        def open_confirmation_modal(assign_clicks, is_open):
+            """
+            A server-side callback method that opens and closes the UserInputModal object related to confirmation of SampleExclusion Removal.
+            """
+            if assign_clicks:
+                return not is_open
+            else:
+                return no_update
+
+
 def add_AIO_callbacks(app):
     GoToRunSetButtonAIO.add_callbacks(app)
     DownloadBlobFileButton.add_callbacks(app)
@@ -1008,3 +1161,4 @@ def add_AIO_callbacks(app):
     PostResponse.add_callbacks(app)
     GoToXPCRModuleButtonAIO.add_callbacks(app)
     RemediationActionEffectivenessCard.add_callbacks(app)
+    SampleExclusionControls.add_callbacks(app)
