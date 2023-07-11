@@ -7,8 +7,12 @@ review_tabs = dbc.Tabs(
         dbc.Tab(
             line_data_content, label="View Line Data", tab_id="run-review-line-data"
         ),
-        dbc.Tab(run_summary_content, label="View Run Stats",
-                tab_id="run-summary-data"),
+        dbc.Tab(
+            excluded_samples_content,
+            label="View Excluded Samples",
+            tab_id="excluded-samples",
+        ),
+        dbc.Tab(run_summary_content, label="View Run Stats", tab_id="run-summary-data"),
         dbc.Tab(
             module_issue_content,
             label="Note Module Issue",
@@ -45,12 +49,9 @@ review_tabs = dbc.Tabs(
             label="Cartridge Pictures",
             tab_id="cartidge-pictures",
         ),
-        dbc.Tab(tadm_pictures_content, label="TADM Pictures",
-                tab_id="tadm-pictures"),
-        dbc.Tab(misc_files_content, label="Miscellaneous Files",
-                tab_id="misc-files"),
-        dbc.Tab(run_review_content, label="Runset Reviews",
-                tab_id="runset-reviews"),
+        dbc.Tab(tadm_pictures_content, label="TADM Pictures", tab_id="tadm-pictures"),
+        dbc.Tab(misc_files_content, label="Miscellaneous Files", tab_id="misc-files"),
+        dbc.Tab(run_review_content, label="Runset Reviews", tab_id="runset-reviews"),
         dbc.Tab(comments_content, label="Comments", tab_id="runset-comments"),
     ],
     id="review-tabs",
