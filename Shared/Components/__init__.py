@@ -19,6 +19,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import plotly.express as px
 
+
 ## For Information related to All-In-One Component (AIO) Pattern please see https://dash.plotly.com/all-in-one-components
 
 
@@ -511,6 +512,8 @@ class PostResponse(dbc.Modal):
             "aio_id": aio_id,
         }
 
+    ids = ids
+
     def __init__(
         self,
         aio_id: str = None,
@@ -561,6 +564,10 @@ class PostResponse(dbc.Modal):
         )
 
     def add_callbacks(app):
+        """
+        Adds callbacks associated with the PostResponse AIO to the app.
+        """
+
         @app.callback(
             Output(PostResponse.ids.success(MATCH), "hidden"),
             Output(PostResponse.ids.failed(MATCH), "hidden"),
