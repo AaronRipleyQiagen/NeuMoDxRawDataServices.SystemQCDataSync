@@ -1,4 +1,5 @@
 from .dependencies import *
+from Shared.Components import SampleExclusionControls
 
 run_review_line_data = dag.AgGrid(
     enableEnterpriseModules=True,
@@ -11,7 +12,9 @@ run_review_line_data = dag.AgGrid(
     id="runset-sample-results",
 )
 
+sample_exclusion_controls = SampleExclusionControls(aio_id="run-review")
+
 line_data_content = dbc.Card(
-    dbc.CardBody([run_review_line_data]),
+    dbc.CardBody([run_review_line_data, html.Br(), sample_exclusion_controls]),
     className="mt-3",
 )
