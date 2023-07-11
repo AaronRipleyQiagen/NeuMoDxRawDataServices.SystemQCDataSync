@@ -590,3 +590,18 @@ def get_initialization_callbacks(app):
         A server-side callback that updates the runset_review_id component for the SampleExclusionController associated with run-review page.
         """
         return runset_review["id"]
+
+    @app.callback(
+        Output(
+            SampleExclusionControls.ids.user_id(
+                "run-review-add-sample-exclusion-result"
+            ),
+            "data",
+        ),
+        Input("runset-review", "data"),
+    )
+    def update_sample_exclusion_control_user_id(runset_review: dict):
+        """
+        A server-side callback that updates the user_id component for the SampleExclusionController associated with run-review page.
+        """
+        return runset_review["validFromUser"]
