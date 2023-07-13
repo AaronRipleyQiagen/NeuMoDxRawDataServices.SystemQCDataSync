@@ -10,3 +10,4 @@ from Shared.neumodx_objects import SampleJSONReader, getSampleDataAsync, colorDi
 import logging
 import json
 from plotly import graph_objects as go
+from Shared.Components import *

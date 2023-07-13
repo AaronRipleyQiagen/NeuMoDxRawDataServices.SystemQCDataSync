@@ -12,3 +12,4 @@ from .tadm_picture_content import tadm_pictures_content
 from .misc_files_content import misc_files_content
 from .comments_content import comments_content
 from .run_review_content import run_review_content
+from .excluded_samples import excluded_samples_content

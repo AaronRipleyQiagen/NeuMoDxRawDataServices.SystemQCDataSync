@@ -384,26 +384,31 @@ def get_initialization_callbacks(app):
         attempt_number: int,
         is_open: bool,
     ):
-        validate_runset_attempt_number_url = (
-            os.environ["RUN_REVIEW_API_BASE"] + "/RunSets/check-for-existing"
-        )
-        module_pattern = r"V\d+"
-        query_params = {
-            "xpcrmoduleserial": re.findall(
-                string=runset_selection["name"], pattern=module_pattern
-            )[0],
-            "runsettypeId": runset_selection["runSetTypeId"],
-            "attemptnumber": attempt_number,
-        }
+        if attempt_number_submit:
+            validate_runset_attempt_number_url = (
+                os.environ["RUN_REVIEW_API_BASE"] + "/RunSets/check-for-existing"
+            )
+            module_pattern = r"V\d+"
+            query_params = {
+                "xpcrmoduleserial": re.findall(
+                    string=runset_selection["name"], pattern=module_pattern
+                )[0],
+                "runsettypeId": runset_selection["runSetTypeId"],
+                "attemptnumber": attempt_number,
+            }
 
-        response = requests.get(
-            url=validate_runset_attempt_number_url, params=query_params, verify=False
-        )
+            response = requests.get(
+                url=validate_runset_attempt_number_url,
+                params=query_params,
+                verify=False,
+            )
 
-        if response.status_code == 200:
-            return not is_open, response.json()["id"], no_update
+            if response.status_code == 200:
+                return not is_open, response.json()["id"], no_update
+            else:
+                return is_open, no_update, True
         else:
-            return is_open, no_update, True
+            return no_update
 
     @app.callback(
         Output("runset-description", "children", allow_duplicate=True),
@@ -432,21 +437,24 @@ def get_initialization_callbacks(app):
         runset_selection,
         response_is_open,
     ):
-        """
-        A clientside-callback used to update the runset attempt number associated with the runset being reviewed.
-        """
-        update_runset_attempt_url = os.environ[
-            "RUN_REVIEW_API_BASE"
-        ] + "RunSets/{}/number".format(runset_selection["id"])
-        query_params = {"number": new_runset_attempt_number}
-        response = requests.put(url=update_runset_attempt_url, params=query_params)
-        status_code = response.status_code
-        new_runset_info = response.json()
-        new_description = (
-            new_runset_info["name"] + " Attempt # " + str(new_runset_info["number"])
-        )
+        if submit_click:
+            """
+            A clientside-callback used to update the runset attempt number associated with the runset being reviewed.
+            """
+            update_runset_attempt_url = os.environ[
+                "RUN_REVIEW_API_BASE"
+            ] + "RunSets/{}/number".format(runset_selection["id"])
+            query_params = {"number": new_runset_attempt_number}
+            response = requests.put(url=update_runset_attempt_url, params=query_params)
+            status_code = response.status_code
+            new_runset_info = response.json()
+            new_description = (
+                new_runset_info["name"] + " Attempt # " + str(new_runset_info["number"])
+            )
 
-        return new_description, status_code, not response_is_open
+            return new_description, status_code, not response_is_open
+        else:
+            return no_update
 
     @app.callback(
         Output("related-runsets", "data"),
