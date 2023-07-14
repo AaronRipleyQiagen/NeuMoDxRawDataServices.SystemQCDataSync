@@ -11,21 +11,31 @@ from flask import session
 
 
 def add_data_reviewer_callbacks(app) -> None:
-    @app.callback(Output("cartridge-ids", "data"), Input("url", "href"))
+    @app.callback(
+        Output("cartridge-ids", "data"),
+        Output(FindXPCRModuleRunsButton.ids.xpcrmodule_id("data-explorer"), "data"),
+        Input("url", "href"),
+    )
     def get_cartridge_ids(url):
         if url:
             parsed_url = urlparse(url)
             query_params = parse_qs(parsed_url.query)
 
-            params_list = []
+            cartridge_list = []
+            module_list = []
             for param, values in query_params.items():
-                params_list.extend(values)
+                if param == "cartridgeid":
+                    cartridge_list.extend(values)
+                elif param == "xpcrmoduleid":
+                    module_list.extend(values)
+                # else:
 
-            print(params_list)
+            print(cartridge_list)
+            print("XPCR", module_list)
 
-            return params_list
+            return cartridge_list, module_list[0]
         else:
-            return no_update
+            return no_update, no_update
 
     @app.callback(
         Output("channel-selector", "value"),
