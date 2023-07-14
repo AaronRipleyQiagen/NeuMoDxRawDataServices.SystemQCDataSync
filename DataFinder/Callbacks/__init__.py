@@ -119,14 +119,15 @@ def add_data_finder_callbacks(app):
 
     app.clientside_callback(
         """
-            function goToRunSetPage(n_clicks, runset_ids) {
+            function goToRunSetPage(n_clicks, cartridge_ids, xpcrmodule_id) {
                 if (n_clicks && n_clicks > 0) {
                     var currentHref = window.top.location.href;
                     var splitString = '/data-finder/';
                     var hrefParts = currentHref.split(splitString);
-                    var runset_ids_query_params = runset_ids.map(id => 'cartridgeid=' + encodeURIComponent(id)).join('&');
+                    var cartridge_query_params = cartridge_ids.map(id => 'cartridgeid=' + encodeURIComponent(id)).join('&');
+                    var xpcrmodule_query_params = 'xpcrmoduleid=' + xpcrmodule_id;
                     if (hrefParts.length > 1) {
-                        var newHref = hrefParts[0] + '/data-reviewer?' + runset_ids_query_params;
+                        var newHref = hrefParts[0] + '/data-reviewer?' + cartridge_query_params + "&" + xpcrmodule_query_params;
                         window.top.location.href = newHref;
                     }
                 }
@@ -135,4 +136,5 @@ def add_data_finder_callbacks(app):
         Output("data-finder-external-redirect", "children"),
         Input("get-data", "n_clicks"),
         State("cartridge-ids-selected", "data"),
+        State("xpcrmodule-id-selected", "data"),
     )
