@@ -119,7 +119,7 @@ process_step_selector = html.Div(
     style=halfstyle,
 )
 create_run_review_button = dbc.Button(
-    "Create Run Review from Dataset", id="create-run-review-button", style=halfstyle
+    "Create Run Review from Dataset", id="create-run-review-button", style=double_button
 )
 run_review_confirmation = html.H1(id="run-review-confirmation")
 fig = dcc.Graph(id="curves", figure=fig)
@@ -134,6 +134,10 @@ run_attempt_validation = UserInputModal(
         aio_id="data-explorer-run-attempt-validation", split_string="/data-explorer/"
     ),
 )
+back_to_search_button = FindXPCRModuleRunsButton(
+    aio_id="data-explorer", split_string="/data-reviewer/"
+)
+
 data_reviewer_layout = html.Div(
     children=[
         dcc.Location(id="url"),
@@ -151,7 +155,9 @@ data_reviewer_layout = html.Div(
                 fig,
                 sample_results_table,
                 html.Br(),
-                create_run_review_button,
+                html.Div(
+                    [create_run_review_button, back_to_search_button],
+                ),
                 run_review_confirmation,
             ],
         ),
