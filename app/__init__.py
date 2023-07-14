@@ -2,7 +2,6 @@ import dash
 import requests
 from flask import Flask, render_template, session, request, redirect, url_for
 from flask.helpers import get_root_path
-from DataExplorer import data_explorer
 from RunReview import run_review
 from RunReviewQueue import run_review_queue
 from RunReviewKPIDashboard import run_review_kpi_dashboard
@@ -23,13 +22,12 @@ def create_app():
     # register_extensions(server)
     register_blueprints(server)
 
-    server = data_explorer.Add_Dash(server)
     server = data_finder.Add_Dash(server)
+    server = data_reviewer.Add_Dash(server)
     server = run_review.Add_Dash(server)
     server = run_review_queue.Add_Dash(server)
     server = run_review_kpi_dashboard.Add_Dash(server)
     server = xpcrmodulesummary.Add_Dash(server)
-    server = data_reviewer.Add_Dash(server)
 
     return server
 
@@ -48,7 +46,6 @@ def register_blueprints(server):
 
     server.register_blueprint(server_bp)
     for module_name in [
-        "DataExplorerTemplates",
         "RunReviewTemplates",
         "RunReviewQueueTemplates",
         "RunReviewKPIDashboardTemplates",
