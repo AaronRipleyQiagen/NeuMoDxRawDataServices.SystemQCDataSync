@@ -18,6 +18,7 @@ from functools import reduce
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import plotly.express as px
+from .findxpcrmodulebutton import FindXPCRModuleRunsButton
 
 
 ## For Information related to All-In-One Component (AIO) Pattern please see https://dash.plotly.com/all-in-one-components
@@ -1480,3 +1481,4 @@ def add_AIO_callbacks(app):
     AddSampleExclusionButton.add_callbacks(app)
     RemoveSampleExclusionButton.add_callbacks(app)
     ManageRunsetSampleExclusions.add_callbacks(app)
+    FindXPCRModuleRunsButton.add_callbacks(app)

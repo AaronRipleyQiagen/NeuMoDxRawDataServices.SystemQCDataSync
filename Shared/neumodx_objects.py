@@ -1917,7 +1917,7 @@ def getSampleDataAsync(sample_ids):
         ) as session:
             tasks = []
             for sample_id in sample_ids:
-                url = os.environ["API_HOST"] + "/api/samples/{}/all-info".format(
+                url = os.environ["RAW_DATA_API_BASE"] + "samples/{}/all-info".format(
                     sample_id
                 )
                 tasks.append(asyncio.ensure_future(getSampleData(session, url)))
