@@ -489,8 +489,8 @@ def add_run_performance_callbacks(app: Dash) -> None:
         for runset_id in cartridges_groups:
             request_arguments_list.append(
                 GetRequestArguments(
-                    url=os.environ["API_HOST"]
-                    + "/api/Reports/cartridges/datasetchannelsummaries",
+                    url=os.environ["RAW_DATA_API_BASE"]
+                    + "Reports/cartridges/datasetchannelsummaries",
                     params={"cartridgeIds": cartridges_groups[runset_id]},
                     label=runset_id,
                 )
@@ -534,8 +534,8 @@ def add_run_performance_callbacks(app: Dash) -> None:
         for cartridge in cartridges:
             request_arguments_list.append(
                 GetRequestArguments(
-                    url=os.environ["API_HOST"]
-                    + "/api/Reports/cartridges/datasetchannelsummaries",
+                    url=os.environ["RAW_DATA_API_BASE"]
+                    + "Reports/cartridges/datasetchannelsummaries",
                     params={"cartridgeIds": [cartridge]},
                     label=cartridge,
                 )

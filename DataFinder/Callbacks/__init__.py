@@ -8,7 +8,7 @@ from Shared.functions import save_json_response, get_dash_ag_grid_from_records
 def update_modules():
     modules_update = {}
     module_results = requests.get(
-        os.environ["API_HOST"] + "/api/xpcrmodules", verify=False
+        os.environ["RAW_DATA_API_BASE"] + "xpcrmodules", verify=False
     ).json()
     for module in module_results:
         if pd.isnull(module["xpcrModuleSerial"]) == False:
@@ -32,8 +32,8 @@ def add_data_finder_callbacks(app):
     def get_run_options(module_id: str):
         if module_id:
             run_details_url = os.environ[
-                "API_HOST"
-            ] + "/api/reports/xpcrmodule/{}/rundetails".format(module_id)
+                "RAW_DATA_API_BASE"
+            ] + "reports/xpcrmodule/{}/rundetails".format(module_id)
 
             run_details = requests.get(url=run_details_url)
 
