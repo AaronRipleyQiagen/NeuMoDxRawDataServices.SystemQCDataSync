@@ -77,7 +77,7 @@ def add_data_finder_callbacks(app):
                     var hrefParts = currentHref.split(splitString);
                     var runset_ids_query_params = runset_ids.map(id => 'runset_ids=' + encodeURIComponent(id)).join('&');
                     if (hrefParts.length > 1) {
-                        var newHref = hrefParts[0] + '/data-explorer/' + runset_ids_query_params;
+                        var newHref = hrefParts[0] + '/data-reviewer?' + runset_ids_query_params;
                         window.top.location.href = newHref;
                     }
                 }
