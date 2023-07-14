@@ -94,19 +94,34 @@ runset_attempt_prompt = UserInputModal(
     title_text="Define Runset Attempt Number",
     modal_body=RunSetAttemptModalBody(aio_id="data-explorer"),
 )
-channel_selector = dcc.Dropdown(
-    ["Yellow", "Green", "Orange", "Red", "Far Red"],
-    value="Yellow",
-    id="channel-selector",
+channel_selector = html.Div(
+    [
+        html.H3("Select Channel:", style=halfstyle),
+        dcc.Dropdown(
+            ["Yellow", "Green", "Orange", "Red", "Far Red"],
+            value="Yellow",
+            id="channel-selector",
+            style=halfstyle,
+        ),
+    ],
+    style=halfstyle,
 )
-process_step_selector = dcc.Dropdown(
-    ["Normalized", "Raw", "2nd"], value="Raw", id="process-step-selector"
+process_step_selector = html.Div(
+    [
+        html.H3("Select Process Step:", style=halfstyle),
+        dcc.Dropdown(
+            ["Normalized", "Raw", "2nd"],
+            value="Raw",
+            id="process-step-selector",
+            style=halfstyle,
+        ),
+    ],
+    style=halfstyle,
 )
 create_run_review_button = dbc.Button(
-    "Create Run Review from Dataset", id="create-run-review-button"
+    "Create Run Review from Dataset", id="create-run-review-button", style=halfstyle
 )
 run_review_confirmation = html.H1(id="run-review-confirmation")
-
 fig = dcc.Graph(id="curves", figure=fig)
 run_attempt_validation_check_pass = dcc.Store(
     id="data-explorer-validation-check-pass", storage_type="session"
@@ -125,16 +140,17 @@ data_reviewer_layout = html.Div(
         cartridge_ids,
         created_runset_id,
         sample_info,
-        html.H1(id="h1_1", children="Results Viewer"),
+        html.H1(children="Results Viewer"),
+        html.Br(),
         dcc.Loading(
             id="samples-loading",
             type="graph",
             fullscreen=True,
             children=[
-                channel_selector,
-                process_step_selector,
+                html.Div([channel_selector, process_step_selector]),
                 fig,
                 sample_results_table,
+                html.Br(),
                 create_run_review_button,
                 run_review_confirmation,
             ],
