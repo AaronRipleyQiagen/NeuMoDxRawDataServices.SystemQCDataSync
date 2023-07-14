@@ -14,6 +14,7 @@ data_explorer_external_link_redirect = html.Div(
 )
 created_runset_id = dcc.Store(id="created-runset-id", storage_type="session")
 cartridge_ids = dcc.Store(id="cartridge-ids", storage_type="session")
+sample_info = dcc.Store(id="sample-info", storage_type="session")
 sample_results_table = dag.AgGrid(
     enableEnterpriseModules=True,
     rowData=[],
@@ -123,6 +124,7 @@ data_reviewer_layout = html.Div(
         dcc.Location(id="url"),
         cartridge_ids,
         created_runset_id,
+        sample_info,
         html.H1(id="h1_1", children="Results Viewer"),
         dcc.Loading(
             id="samples-loading",
