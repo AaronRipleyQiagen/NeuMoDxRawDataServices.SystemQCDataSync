@@ -9,7 +9,10 @@ from DataReviewer import data_reviewer
 @login_required
 def runreview():
     cartridge_ids = request.args.getlist("cartridgeid")
-    query_string = urlencode({"cartridgeid": cartridge_ids}, doseq=True)
+    xpcrmodule_ids = request.args.getlist("xpcrmoduleid")
+    query_string = urlencode(
+        {"cartridgeid": cartridge_ids, "xpcrmoduleid": xpcrmodule_ids}, doseq=True
+    )
     return render_template(
         "data-reviewer.html", dash_url=data_reviewer.url_base + "?" + query_string
     )
