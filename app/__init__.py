@@ -11,6 +11,7 @@ from flask_session import Session
 import msal
 import app_config
 from DataFinder import data_finder
+from DataReviewer import data_reviewer
 
 
 def create_app():
@@ -28,6 +29,7 @@ def create_app():
     server = run_review_queue.Add_Dash(server)
     server = run_review_kpi_dashboard.Add_Dash(server)
     server = xpcrmodulesummary.Add_Dash(server)
+    server = data_reviewer.Add_Dash(server)
 
     return server
 
@@ -52,6 +54,7 @@ def register_blueprints(server):
         "RunReviewKPIDashboardTemplates",
         "XPCRModuleHistoryTemplates",
         "DataFinderTemplates",
+        "DataReviewerTemplates",
     ]:
         print("Registering Blueprints for: ", module_name)
         module = import_module("app.{}.routes".format(module_name))
