@@ -1,7 +1,7 @@
 import dash_bootstrap_components as dbc
 from dash import Dash
 from .Layout import data_finder_layout
-from .Callbacks import *
+from .Callbacks import add_data_finder_callbacks
 from Shared.appbuildhelpers import apply_layout_with_auth
 
 url_base = "/dashboard/data-finder/"
@@ -18,5 +18,5 @@ def Add_Dash(app):
     )
 
     apply_layout_with_auth(app, layout)
-
+    add_data_finder_callbacks(app)
     return app.server
