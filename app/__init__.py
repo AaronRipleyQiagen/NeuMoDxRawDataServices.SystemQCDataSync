@@ -18,10 +18,7 @@ def create_app():
     server.secret_key = app_config.SECRET_KEY
     server.config.from_object(app_config)
     Session(server)
-
-    # register_extensions(server)
     register_blueprints(server)
-
     server = data_finder.Add_Dash(server)
     server = data_reviewer.Add_Dash(server)
     server = run_review.Add_Dash(server)
@@ -30,14 +27,6 @@ def create_app():
     server = xpcrmodulesummary.Add_Dash(server)
 
     return server
-
-
-def _protect_dashviews(dashapp):
-    for view_func in dashapp.server.view_functions:
-        if view_func.startswith(dashapp.config.url_base_pathname):
-            dashapp.server.view_functions[view_func] = login_required(
-                dashapp.server.view_functions[view_func]
-            )
 
 
 def register_blueprints(server):
@@ -55,5 +44,4 @@ def register_blueprints(server):
     ]:
         print("Registering Blueprints for: ", module_name)
         module = import_module("app.{}.routes".format(module_name))
-
         server.register_blueprint(module.blueprint)
