@@ -71,7 +71,7 @@ def add_data_finder_callbacks(app):
             module_runs_url = os.environ[
                 "RAW_DATA_API_BASE"
             ] + "reports/xpcrmodule/{}/rundetails".format(module_id)
-            module_runs_data = requests.get(url=module_runs_url)
+            module_runs_data = requests.get(url=module_runs_url, verify=False)
             return module_runs_data.json()
         else:
             return no_update

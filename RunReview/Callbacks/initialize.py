@@ -417,10 +417,10 @@ def get_initialization_callbacks(app):
             PostResponse.ids.response_status_code("edit-runset-attempt-response"),
             "data",
         ),
-        Input(
-            UserInputModal.ids.submit("run-review-run-attempt-validation"),
-            "n_clicks",
-        ),
+        # Input(
+        #     UserInputModal.ids.submit("run-review-run-attempt-validation"),
+        #     "n_clicks",
+        # ),
         Input("run-review-validation-check-pass", "data"),
         State(
             RunSetAttemptModalBody.ids.attempt_number("run-review-edit-runset-attempt"),
@@ -431,13 +431,15 @@ def get_initialization_callbacks(app):
         prevent_initial_call=True,
     )
     def update_runset_attempt(
-        submit_click,
+        # submit_click,
         runset_attempt_validated,
         new_runset_attempt_number,
         runset_selection,
         response_is_open,
     ):
-        if submit_click:
+        print(ctx.triggered_id)
+        if runset_attempt_validated:
+            print("TRYING")
             """
             A clientside-callback used to update the runset attempt number associated with the runset being reviewed.
             """
@@ -445,8 +447,11 @@ def get_initialization_callbacks(app):
                 "RUN_REVIEW_API_BASE"
             ] + "RunSets/{}/number".format(runset_selection["id"])
             query_params = {"number": new_runset_attempt_number}
-            response = requests.put(url=update_runset_attempt_url, params=query_params)
+            response = requests.put(
+                url=update_runset_attempt_url, params=query_params, verify=False
+            )
             status_code = response.status_code
+            print(status_code)
             new_runset_info = response.json()
             new_description = (
                 new_runset_info["name"] + " Attempt # " + str(new_runset_info["number"])

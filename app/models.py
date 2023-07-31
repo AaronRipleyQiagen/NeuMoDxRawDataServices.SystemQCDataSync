@@ -69,8 +69,7 @@ class User:
         test_endpoint = f"{app_config.GRAPH_URL}/users/{self.id}/appRoleAssignments"
 
         groups = requests.get(  # Use token to call downstream service
-            test_endpoint,
-            headers={"Authorization": access_token},
+            test_endpoint, headers={"Authorization": access_token}, verify=False
         ).json()
 
         for group in groups["value"]:

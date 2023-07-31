@@ -92,6 +92,7 @@ def graphcall():
     graph_data = requests.get(  # Use token to call downstream service
         app_config.ENDPOINT,
         headers={'Authorization': 'Bearer ' + token['access_token']},
+        verify=False,
     ).json()
     return render_template('display.html', result=graph_data)
 
