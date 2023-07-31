@@ -576,9 +576,9 @@ class PostResponse(dbc.Modal):
         )
         def control_message(data):
             if data == 200:
-                return False, True
-            else:
                 return True, False
+            else:
+                return False, True
 
         @app.callback(
             Output(PostResponse.ids.modal(MATCH), "is_open", allow_duplicate=True),
@@ -1173,11 +1173,11 @@ class AddSampleExclusionButton(html.Div):
                 }
                 save_json_response(sample_exclusion_body, "sample_exclusion_test.json")
                 sample_exclusion_url = (
-                    os.environ["RUN_REVIEW_API_BASE"] + "/SampleExclusion"
+                    os.environ["RUN_REVIEW_API_BASE"] + "SampleExclusion"
                 )
 
                 response = requests.post(
-                    url=sample_exclusion_url, json=sample_exclusion_body
+                    url=sample_exclusion_url, json=sample_exclusion_body, verify=False
                 )
 
                 # print(response.__dict__)
@@ -1306,13 +1306,11 @@ class RemoveSampleExclusionButton(html.Div):
             that communicates if the API call returned a successful result.
             """
             if action_confirmed:
-                print("FIRE AWAY")
-
                 sample_exclusion_delete_url = os.environ[
                     "RUN_REVIEW_API_BASE"
-                ] + "/SampleExclusion/{}".format(sample_exclusion_id)
+                ] + "SampleExclusion/{}".format(sample_exclusion_id)
 
-                response = requests.delete(sample_exclusion_delete_url)
+                response = requests.delete(sample_exclusion_delete_url, verify=False)
 
                 return not is_open, response.status_code
             else:
@@ -1409,7 +1407,7 @@ class ManageRunsetSampleExclusions(html.Div):
                 ] + "Reports/RunSet/{}/SampleExclusionDetails".format(runset_id)
 
                 sample_exclusion_results = pd.DataFrame(
-                    requests.get(url=runset_sample_exclusions_url).json()
+                    requests.get(url=runset_sample_exclusions_url, verify=False).json()
                 )
                 if len(sample_exclusion_results) > 0:
                     sample_exclusion_results.set_index("sampleId", inplace=True)

@@ -83,6 +83,7 @@ def add_run_review_kpi_callbacks(app):
         runset_data_response = requests.get(
             url=runsets_url, params=query_params, verify=False
         )
+        print(runset_data_response.status_code)
         return runset_data_response.json()
 
     @app.callback(

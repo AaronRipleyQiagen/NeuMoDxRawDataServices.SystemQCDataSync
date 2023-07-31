@@ -30,7 +30,8 @@ def get_sample_exclusion_callbacks(app):
         """
         A server-side callback that updates the runset_review_id component for the SampleExclusionController associated with run-review page.
         """
-        return runset_review["id"]
+        if runset_review:
+            return runset_review["id"]
 
     @app.callback(
         Output(
@@ -45,7 +46,8 @@ def get_sample_exclusion_callbacks(app):
         """
         A server-side callback that updates the user_id component for the SampleExclusionController associated with run-review page.
         """
-        return runset_review["validFromUser"]
+        if runset_review:
+            return runset_review["validFromUser"]
 
     @app.callback(
         Output(
@@ -148,7 +150,7 @@ def get_sample_exclusion_callbacks(app):
             ] + "Reports/RunSet/{}/SampleExclusionDetails".format(runset_id)
 
             sample_exclusion_results = pd.DataFrame(
-                requests.get(url=runset_sample_exclusions_url).json()
+                requests.get(url=runset_sample_exclusions_url, verify=False).json()
             ).set_index("sampleId")
 
             if len(sample_exclusion_results) > 0:
